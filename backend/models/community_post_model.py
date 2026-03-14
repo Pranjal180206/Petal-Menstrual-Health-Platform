@@ -1,29 +1,44 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from database import PyObjectId
 
+class AuthorInfo(BaseModel):
+    user_id: str
+    name: str
+    avatar: Optional[str] = None
 
-class CommunityPost(BaseModel):
-
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-
-    anonymous_user_id: str
-
-    title: str
-
+class ForumReplyReq(BaseModel):
     content: str
+    is_anonymous: bool = False
 
-    tags: List[str]
+class ForumReplyResponse(BaseModel):
+    id: str
+    author: AuthorInfo
+    content: str
+    is_anonymous: bool
+    created_at: datetime
+    is_flagged: bool
 
-    likes: int = 0
+class ForumPostReq(BaseModel):
+    title: str
+    content: str
+    category: str
+    is_anonymous: bool = False
 
-    replies_count: int = 0
-
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-
+class ForumPostResponse(BaseModel):
+    id: str
+    title: str
+    content: str
+    category: str
+    author: AuthorInfo
+    is_anonymous: bool
+    created_at: datetime
+    likes: List[str] = []
+    likes_count: int = 0
+    replies: List[ForumReplyResponse] = []
+    is_flagged: bool = False
+    
     class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}

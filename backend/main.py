@@ -1,0 +1,73 @@
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from dotenv import load_dotenv
+
+from database import connect_to_mongo, close_mongo_connection
+from config import limiter
+
+load_dotenv()
+
+# Lifecycle events for MongoDB connection
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup actions
+    await connect_to_mongo()
+    yield
+    await close_mongo_connection()
+
+app = FastAPI(
+    title="Petal Menstrual Health Platform API",
+    description="API for Petal - Menstrual Health Awareness Platform",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Register rate limiter exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS configuration
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Global rate limit example (can be overridden on specific endpoints)
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    # We can add custom global middlewares here
+    response = await call_next(request)
+    return response
+
+# Root endpoint for health check
+@app.get("/")
+@limiter.limit("50/minute")
+async def root(request: Request):
+    return {"message": "Petal API is running."}
+
+from routes.auth import router as auth_router
+from routes.chatbot import router as chatbot_router
+from routes.quiz import router as quiz_router
+from routes.period_tracker import router as tracker_router
+from routes.forum import router as forum_router
+from routes.users import router as users_router
+from routes.education import router as education_router
+
+app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
+app.include_router(users_router, prefix="/api/users", tags=["Users"])
+app.include_router(chatbot_router, prefix="/api/chatbot", tags=["Chatbot"])
+app.include_router(quiz_router, prefix="/api/quizzes", tags=["Quiz"])
+app.include_router(tracker_router, prefix="/api/period-tracker", tags=["Tracker"])
+app.include_router(forum_router, prefix="/api/forum", tags=["Forum"])
+app.include_router(education_router, prefix="/api/education", tags=["Education"])
