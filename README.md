@@ -38,7 +38,6 @@ Machine Learning code should be split based on its purpose (Training vs. Serving
    - **Why?** Because the backend needs to serve the ML model's predictions via API endpoints to the frontend.
 
 ## 🚀 Getting Started
-## 🚀 Getting Started
 
 ### 📥 Clone the Repository
 ```bash
