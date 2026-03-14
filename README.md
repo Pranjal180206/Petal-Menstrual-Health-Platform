@@ -38,4 +38,60 @@ Machine Learning code should be split based on its purpose (Training vs. Serving
    - **Why?** Because the backend needs to serve the ML model's predictions via API endpoints to the frontend.
 
 ## 🚀 Getting Started
-*(Add instructions here later on how to run the backend, frontend, and install dependencies)*
+
+### 📥 Clone the Repository
+```bash
+# Clone via HTTPS
+git clone https://github.com/Pranjal180206/Petal-Menstrual-Health-Platform.git
+
+# Or clone via SSH (recommended if you have SSH keys set up)
+git clone git@github.com:Pranjal180206/Petal-Menstrual-Health-Platform.git
+
+# Navigate into the project
+cd Petal-Menstrual-Health-Platform
+```
+
+### 🔄 Staying Up to Date
+```bash
+# Pull the latest changes from the main branch
+git pull origin main
+```
+
+### 💾 Making and Committing Changes
+```bash
+# Check what files have changed
+git status
+
+# Stage specific files
+git add path/to/your/file.py
+
+# Or stage all changed files
+git add .
+
+# Commit with a descriptive message
+git commit -m "feat: add cycle prediction model to ml/ folder"
+
+# Push your branch to GitHub
+git push origin your-branch-name
+```
+
+### 🌿 Branching (Recommended Workflow)
+```bash
+# Create and switch to a new feature branch
+git checkout -b feat/your-feature-name
+
+# After committing, push the branch and open a PR
+git push origin feat/your-feature-name
+```
+
+### 🧹 Other Useful Commands
+```bash
+# See commit history
+git log --oneline
+
+# Discard unstaged changes in a file
+git checkout -- path/to/file
+
+# Fetch remote changes without merging
+git fetch origin
+```

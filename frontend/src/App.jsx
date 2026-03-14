@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -39,27 +40,29 @@ const LandingPage = () => {
 
 function App() {
   return (
-    <Router>
-      <div className="w-full min-h-screen bg-white font-sans text-brand-dark overflow-x-hidden">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/community" element={<CommunityHub />} />
-          <Route path="/education" element={<Education />} />
+    <AuthProvider>
+      <Router>
+        <div className="w-full min-h-screen bg-white font-sans text-brand-dark overflow-x-hidden">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/community" element={<CommunityHub />} />
+            <Route path="/education" element={<Education />} />
 
-          {/* Authenticated Dashboard Routes */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<DashboardOverview />} />
-            <Route path="tracker" element={<CycleTracker />} />
-          </Route>
+            {/* Authenticated Dashboard Routes */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<DashboardOverview />} />
+              <Route path="tracker" element={<CycleTracker />} />
+            </Route>
 
-          {/* Risk Analysis Routes (Different Layout) */}
-          <Route path="/risk" element={<RiskLayout />}>
-            <Route index element={<RiskAnalysis />} />
-          </Route>
-        </Routes>
-      </div>
-    </Router>
+            {/* Risk Analysis Routes (Different Layout) */}
+            <Route path="/risk" element={<RiskLayout />}>
+              <Route index element={<RiskAnalysis />} />
+            </Route>
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -1,10 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Droplet, Sparkles, Lock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PetalIcon from '../components/PetalIcon';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+    const { login, register } = useAuth();
+    const navigate = useNavigate();
+    const [isLogin, setIsLogin] = useState(true);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        gender: 'female',
+        age: 18,
+        is_menstruating: true
+    });
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        try {
+            if (isLogin) {
+                await login({ email: formData.email, password: formData.password });
+            } else {
+                await register(formData);
+            }
+            navigate('/dashboard'); // route from existing original UI
+        } catch (err) {
+            setError(err.response?.data?.detail || 'Authentication failed');
+        }
+    };
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
     return (
         <div className="min-h-screen bg-white flex flex-col font-sans text-[#1D1D2C]">
             {/* Background Pattern */}
@@ -87,16 +119,29 @@ const Login = () => {
                 >
                     <div className="bg-white rounded-[3rem] p-10 shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-gray-100/50">
                         <div className="text-center mb-10">
-                            <h2 className="text-3xl font-heading font-extrabold mb-3">Welcome back! 👋</h2>
-                            <p className="text-gray-500 font-medium">We missed you! Log in to see your updates.</p>
+                            <h2 className="text-3xl font-heading font-extrabold mb-3">{isLogin ? 'Welcome back! 👋' : 'Create Account ✨'}</h2>
+                            <p className="text-gray-500 font-medium">{isLogin ? 'We missed you! Log in to see your updates.' : 'Join our safe community today.'}</p>
+                            {error && <p className="text-[#FF6B9A] font-bold text-sm mt-2">{error}</p>}
                         </div>
 
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
+                            {!isLogin && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-[#1D1D2C] ml-1">Name</label>
+                                    <input
+                                        type="text" name="name" required
+                                        value={formData.name} onChange={handleChange}
+                                        placeholder="How should we call you?"
+                                        className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all placeholder:text-gray-400 font-medium text-[#1D1D2C]"
+                                    />
+                                </div>
+                            )}
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-[#1D1D2C] ml-1">Username or Email</label>
+                                <label className="text-sm font-bold text-[#1D1D2C] ml-1">Email</label>
                                 <input
-                                    type="text"
-                                    placeholder="your_cool_name"
+                                    type="email" name="email" required
+                                    value={formData.email} onChange={handleChange}
+                                    placeholder="your_email@example.com"
                                     className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all placeholder:text-gray-400 font-medium text-[#1D1D2C]"
                                 />
                             </div>
@@ -104,14 +149,40 @@ const Login = () => {
                             <div className="space-y-2">
                                 <div className="flex justify-between items-center ml-1">
                                     <label className="text-sm font-bold text-[#1D1D2C]">Password</label>
-                                    <Link to="/contact" className="text-xs font-bold text-[#FF6B9A] hover:underline">Forgot?</Link>
+                                    {isLogin && <Link to="/contact" className="text-xs font-bold text-[#FF6B9A] hover:underline">Forgot?</Link>}
                                 </div>
                                 <input
-                                    type="password"
+                                    type="password" name="password" required
+                                    value={formData.password} onChange={handleChange}
                                     placeholder="••••••••"
                                     className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all placeholder:text-gray-400 font-medium text-[#1D1D2C]"
                                 />
                             </div>
+
+                            {!isLogin && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-[#1D1D2C] ml-1">Age</label>
+                                        <input
+                                            type="number" name="age" required min="10" max="100"
+                                            value={formData.age} onChange={handleChange}
+                                            className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all font-medium text-[#1D1D2C]"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-[#1D1D2C] ml-1">Gender</label>
+                                        <select
+                                            name="gender" value={formData.gender} onChange={handleChange}
+                                            className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-2xl px-5 py-4 outline-none transition-all font-medium text-[#1D1D2C]"
+                                        >
+                                            <option value="female">Female</option>
+                                            <option value="male">Male</option>
+                                            <option value="non-binary">Non-binary</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex items-center gap-3 ml-1 pt-2">
                                 <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#FF6B9A]">
@@ -121,16 +192,20 @@ const Login = () => {
                             </div>
 
                             <div className="pt-4">
-                                <button type="button" className="w-full bg-[#FF6B9A] hover:bg-[#FF8A8A] text-white rounded-2xl py-4 font-bold text-lg transition-all shadow-[0_8px_20px_-6px_rgba(255,107,154,0.4)] hover:-translate-y-0.5">
-                                    Let's Go!
+                                <button type="submit" className="w-full bg-[#FF6B9A] hover:bg-[#FF8A8A] text-white rounded-2xl py-4 font-bold text-lg transition-all shadow-[0_8px_20px_-6px_rgba(255,107,154,0.4)] hover:-translate-y-0.5">
+                                    {isLogin ? "Let's Go!" : "Sign Up"}
                                 </button>
                             </div>
                         </form>
 
                         <div className="mt-8 text-center space-y-4">
-                            <p className="text-sm font-semibold text-gray-500">First time here?</p>
-                            <button type="button" className="w-full bg-white border-2 border-[#FF6B9A] text-[#FF6B9A] hover:bg-[#FFF5F7] rounded-2xl py-3.5 font-bold transition-all">
-                                Create an Account
+                            <p className="text-sm font-semibold text-gray-500">{isLogin ? 'First time here?' : 'Already have an account?'}</p>
+                            <button 
+                                type="button" 
+                                onClick={() => setIsLogin(!isLogin)}
+                                className="w-full bg-white border-2 border-[#FF6B9A] text-[#FF6B9A] hover:bg-[#FFF5F7] rounded-2xl py-3.5 font-bold transition-all"
+                            >
+                                {isLogin ? 'Create an Account' : 'Log In Instead'}
                             </button>
                         </div>
 
