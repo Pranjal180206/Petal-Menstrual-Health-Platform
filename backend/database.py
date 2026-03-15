@@ -1,0 +1,63 @@
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+from bson import ObjectId
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/petal_health")
+
+class Database:
+    client: AsyncIOMotorClient = None
+    db = None
+
+db_config = Database()
+
+async def connect_to_mongo():
+    if not MONGO_URI.startswith("mongodb"):
+        raise ValueError("Invalid MONGO_URI strictly defined configuration")
+    db_config.client = AsyncIOMotorClient(MONGO_URI)
+    # The database name could optionally be parsed from the URI, 
+    # but here we'll assume 'petal_health' if not explicitly defined in URI
+    db_name = MONGO_URI.split("/")[-1].split("?")[0]
+    if not db_name:
+        db_name = "petal_health"
+        
+    db_config.db = db_config.client[db_name]
+    print(f"Connected to MongoDB: {db_name}")
+
+async def close_mongo_connection():
+    if db_config.client:
+        db_config.client.close()
+        print("MongoDB connection closed")
+
+def get_db():
+    return db_config.db
+
+from typing import Any
+from pydantic_core import core_schema
+
+class PyObjectId(str):
+    @classmethod
+    def __get_pydantic_core_schema__(
+            cls, _source_type: Any, _handler: Any
+    ) -> core_schema.CoreSchema:
+        return core_schema.json_or_python_schema(
+            json_schema=core_schema.str_schema(),
+            python_schema=core_schema.union_schema([
+                core_schema.is_instance_schema(ObjectId),
+                core_schema.chain_schema([
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(cls.validate)
+                ])
+            ]),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda x: str(x)
+            ),
+        )
+
+    @classmethod
+    def validate(cls, value) -> ObjectId:
+        if not ObjectId.is_valid(value):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(value)
