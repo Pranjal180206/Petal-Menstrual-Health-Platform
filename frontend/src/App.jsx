@@ -14,6 +14,7 @@ import DashboardOverview from './pages/DashboardOverview';
 import CycleTracker from './pages/CycleTracker';
 import RiskLayout from './components/RiskLayout';
 import RiskAnalysis from './pages/RiskAnalysis';
+import UserProfile from './pages/UserProfile';
 
 import FloatingBackground from './components/FloatingBackground';
 
@@ -23,7 +24,7 @@ const LandingPage = () => {
       <FloatingBackground />
       {/* Top section with subtle gradient background */}
       <div className="bg-gradient-hero pb-12 relative z-10">
-        <Navbar />
+        <Navbar isHome={true} />
         <Hero />
       </div>
 
@@ -54,6 +55,9 @@ function App() {
               <Route index element={<DashboardOverview />} />
               <Route path="tracker" element={<CycleTracker />} />
             </Route>
+
+            {/* Profile Route */}
+            <Route path="/profile" element={<UserProfile />} />
 
             {/* Risk Analysis Routes (Different Layout) */}
             <Route path="/risk" element={<RiskLayout />}>

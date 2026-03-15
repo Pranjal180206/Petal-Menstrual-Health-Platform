@@ -1,23 +1,25 @@
 import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PetalIcon from './PetalIcon';
-
-const Navbar = () => {
+const Navbar = ({ isHome = false }) => {
     return (
-        <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
+        <nav className="w-full max-w-7xl mx-auto px-6 py-8 md:py-10 flex items-center justify-between relative z-50">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 cursor-pointer group">
                 <div className="bg-brand-pink text-white p-2 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-pink-200">
-                    <PetalIcon size={24} />
+                    <PetalIcon size={32} />
                 </div>
-                <span className="font-heading font-extrabold text-3xl text-brand-dark tracking-tighter">Petal</span>
+                <span className="font-heading font-extrabold text-4xl text-brand-dark tracking-tighter">Petal</span>
             </Link>
 
             {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-10 bg-white/50 backdrop-blur-sm px-8 py-3 rounded-full border border-pink-50 shadow-sm">
-                <Link to="/education" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Education 📚</Link>
-                <Link to="/community" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Community 💬</Link>
-                <Link to="/risk" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Risks ⚠️</Link>
+            <div className={`hidden md:flex items-center ${isHome ? 'gap-2 lg:gap-4 text-xs lg:text-sm px-4 lg:px-8' : 'gap-10 text-sm px-8'} bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md`}>
+                <Link to="/education" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Education</Link>
+                <Link to="/community" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Community</Link>
+                <Link to="/risk" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Risks</Link>
+                {isHome && (
+                    <Link to="/dashboard/tracker" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Mood Tracker</Link>
+                )}
             </div>
 
             {/* Actions */}
@@ -26,11 +28,11 @@ const Navbar = () => {
                     to="/login"
                     className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
                 >
-                    Sign In 🚀
+                    Sign In
                 </Link>
-                <button className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft">
+                <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
                     <span className="text-2xl">👩</span>
-                </button>
+                </Link>
             </div>
 
             {/* Mobile Menu */}
