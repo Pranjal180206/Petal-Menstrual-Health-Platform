@@ -19,6 +19,7 @@ import CycleTracker from './pages/CycleTracker';
 import RiskAnalysis from './pages/RiskAnalysis';
 import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
+import Settings from './pages/Settings';
 
 const LandingPage = () => {
   return (
@@ -61,6 +62,7 @@ function App() {
               <Route path="risk" element={<RiskAnalysis />} />
               <Route path="report" element={<ReportGenerator />} />
               <Route path="insights" element={<Insights />} />
+              <Route path="settings" element={<Settings />} />
             </Route>
 
             {/* Legacy redirects — keep old URLs working */}

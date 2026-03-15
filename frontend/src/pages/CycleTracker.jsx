@@ -1,114 +1,182 @@
-import { Search, Bell, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
+import Toast from '../components/Toast';
+
+const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+const FLOW_OPTIONS = ['Spotting', 'Light', 'Medium', 'Heavy', 'None'];
+const PHYSICAL_SYMPTOMS = ['Cramps', 'Headache', 'Bloating', 'Breast Tenderness', 'Backache', 'Acne', 'Nausea'];
+const MOOD_OPTIONS = [
+    { emoji: '🙂', label: 'Calm' },
+    { emoji: '😫', label: 'Tired' },
+    { emoji: '😠', label: 'Irritable' },
+    { emoji: '😟', label: 'Anxious' },
+    { emoji: '😊', label: 'Happy' },
+    { emoji: '😢', label: 'Sad' },
+];
+
+// Simulated data — will be replaced by API responses
+const PERIOD_DAYS_MOCK = [4, 5, 6, 7, 8];
+const PREDICTED_DAYS_MOCK = [16, 17, 18];
+const SYMPTOM_DOTS_MOCK = [10, 11, 21, 22];
 
 const CycleTracker = () => {
+    const today = new Date();
+    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const [currentYear, setCurrentYear] = useState(today.getFullYear());
+    const [selectedDay, setSelectedDay] = useState(today.getDate());
+    const [selectedFlow, setSelectedFlow] = useState('Light');
+    const [selectedSymptoms, setSelectedSymptoms] = useState(['Cramps', 'Bloating', 'Acne']);
+    const [selectedMoods, setSelectedMoods] = useState(['Tired']);
+    const [notes, setNotes] = useState('');
+    const [toast, setToast] = useState(null);
+    const [saved, setSaved] = useState(false);
+
+    const showToast = useCallback((message, type = 'success') => {
+        setToast({ message, type });
+    }, []);
+
+    /* ── Calendar Helpers ── */
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+    const calendarCells = [
+        ...Array(firstDayOfMonth).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ];
+
+    const isToday = (day) =>
+        day === today.getDate() &&
+        currentMonth === today.getMonth() &&
+        currentYear === today.getFullYear();
+
+    const prevMonth = () => {
+        if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); }
+        else setCurrentMonth(m => m - 1);
+    };
+    const nextMonth = () => {
+        if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(y => y + 1); }
+        else setCurrentMonth(m => m + 1);
+    };
+
+    /* ── Toggles ── */
+    const toggleSymptom = (s) =>
+        setSelectedSymptoms(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+
+    const toggleMood = (m) =>
+        setSelectedMoods(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
+
+    /* ── Save ── */
+    const handleSave = () => {
+        if (!selectedFlow) {
+            showToast('Please select a flow intensity.', 'warning');
+            return;
+        }
+        setSaved(true);
+        showToast('Daily log saved successfully! ✓', 'success');
+        // TODO: POST to /api/cycle-log when backend is connected
+        // payload: { date: `${currentYear}-${currentMonth+1}-${selectedDay}`, flow: selectedFlow, symptoms: selectedSymptoms, moods: selectedMoods, notes }
+    };
+
+    /* ── Calendar cell style ── */
+    const cellClass = (day) => {
+        const base = 'w-9 h-9 rounded-full flex items-center justify-center mx-auto text-sm font-bold transition-all cursor-pointer select-none';
+        if (isToday(day))
+            return `${base} border-2 border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]`;
+        if (PERIOD_DAYS_MOCK.includes(day) && currentMonth === today.getMonth())
+            return `${base} bg-[#D81B60] text-white shadow-md`;
+        if (PREDICTED_DAYS_MOCK.includes(day) && currentMonth === today.getMonth())
+            return `${base} border-2 border-dashed border-[#F48FB1] text-[#F48FB1]`;
+        if (selectedDay === day)
+            return `${base} bg-[#FFF0F4] text-[#D81B60]`;
+        return `${base} hover:bg-gray-100 text-[#1D1D2C]`;
+    };
+
+    /* ── Days until next period ── */
+    const nextPeriodDay = 20; // simulated — will come from API
+
     return (
         <div className="p-8 max-w-7xl mx-auto h-full flex flex-col lg:flex-row gap-8">
 
-            {/* Left Column (Calendar & Cycle Stats) */}
+            {/* Left Column */}
             <div className="flex-1 space-y-6">
-
-                {/* Header */}
-                <header className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-heading font-extrabold">Cycle & Symptom Tracker</h1>
+                <header className="flex justify-between items-center mb-2">
+                    <h1 className="text-2xl font-heading font-extrabold">Cycle &amp; Symptom Tracker</h1>
                 </header>
 
                 {/* Calendar Card */}
                 <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-xl font-heading font-extrabold flex items-center gap-2">
-                            October 2023
-                            <span className="text-gray-400 rotate-90 inline-block text-xs ml-1">›</span>
+                    {/* Month Header */}
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-heading font-extrabold">
+                            {MONTH_NAMES[currentMonth]} {currentYear}
                         </h2>
                         <div className="flex gap-2">
-                            <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+                            <button
+                                onClick={prevMonth}
+                                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors"
+                            >
                                 <ChevronLeft size={16} />
                             </button>
-                            <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+                            <button
+                                onClick={nextMonth}
+                                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors"
+                            >
                                 <ChevronRight size={16} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Calendar Grid Header */}
-                    <div className="grid grid-cols-7 gap-2 mb-6 text-center text-[10px] font-bold text-[#D81B60] tracking-widest uppercase">
-                        <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+                    {/* Day Headers */}
+                    <div className="grid grid-cols-7 gap-2 mb-4 text-center text-[10px] font-bold text-[#D81B60] tracking-widest uppercase">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
                     </div>
 
-                    {/* Calendar Grid (Hardcoded Mockup for October 2023 View) */}
-                    <div className="grid grid-cols-7 gap-y-6 gap-x-2 text-center text-sm font-bold text-[#1D1D2C]">
-
-                        {/* Week 1 */}
-                        <div></div><div></div><div></div>
-                        <div className="flex flex-col items-center justify-center gap-1 relative">
-                            <span>1</span>
-                            <div className="w-1 h-1 rounded-full bg-gray-300 absolute -bottom-3"></div>
-                        </div>
-                        <div className="flex items-center justify-center">2</div>
-                        <div className="flex items-center justify-center">3</div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-[#D81B60] text-white flex items-center justify-center shadow-md">4</div>
-                        </div>
-
-                        {/* Week 2 */}
-                        <div className="flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-[#D81B60] text-white flex items-center justify-center shadow-md">5</div>
-                        </div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-[#D81B60] text-white flex items-center justify-center shadow-md">6</div>
-                        </div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-[#D81B60] text-white flex items-center justify-center shadow-md">7</div>
-                        </div>
-                        <div className="flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-[#D81B60] text-white flex items-center justify-center shadow-md">8</div>
-                        </div>
-                        <div className="flex items-center justify-center">9</div>
-                        <div className="flex flex-col items-center justify-center gap-1 relative">
-                            <span>10</span>
-                            <div className="w-1 h-1 rounded-full bg-gray-300 absolute -bottom-3"></div>
-                        </div>
-                        <div className="flex flex-col items-center justify-center relative">
-                            <div className="w-12 h-12 rounded-[14px] border-2 border-[#F48FB1] bg-[#FFF0F4] text-[#D81B60] flex flex-col items-center justify-center absolute -top-1">
-                                <span className="leading-tight">11</span>
-                                <span className="text-[7px] font-extrabold tracking-widest uppercase opacity-80">Today</span>
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-y-3 gap-x-0 text-center">
+                        {calendarCells.map((day, idx) => (
+                            <div key={idx} className="flex flex-col items-center">
+                                {day !== null && (
+                                    <>
+                                        <button
+                                            onClick={() => setSelectedDay(day)}
+                                            className={cellClass(day)}
+                                        >
+                                            {day}
+                                        </button>
+                                        {SYMPTOM_DOTS_MOCK.includes(day) && currentMonth === today.getMonth() && (
+                                            <div className="w-1 h-1 rounded-full bg-gray-300 mt-1" />
+                                        )}
+                                    </>
+                                )}
                             </div>
-                        </div>
-
-                        {/* Week 3 */}
-                        <div className="flex items-center justify-center pt-2">12</div>
-                        <div className="flex items-center justify-center pt-2">13</div>
-                        <div className="flex items-center justify-center pt-2">14</div>
-                        <div className="flex items-center justify-center pt-2">15</div>
-                        <div className="flex items-center justify-center pt-2">
-                            <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#F48FB1] flex items-center justify-center text-[#F48FB1]">16</div>
-                        </div>
-                        <div className="flex items-center justify-center pt-2">
-                            <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#F48FB1] flex items-center justify-center text-[#F48FB1]">17</div>
-                        </div>
-                        <div className="flex items-center justify-center pt-2">
-                            <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#F48FB1] flex items-center justify-center text-[#F48FB1]">18</div>
-                        </div>
+                        ))}
                     </div>
 
-                    <p className="text-[10px] font-bold italic text-[#F48FB1] mt-8 mb-6">Predicted period: Oct 31 - Nov 4</p>
+                    <p className="text-[10px] font-bold italic text-[#F48FB1] mt-6 mb-4">
+                        Predicted period: based on your last 3 cycles
+                    </p>
 
-                    <div className="flex items-center gap-6 border-t border-gray-100 pt-6">
+                    {/* Legend */}
+                    <div className="flex items-center gap-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-[#D81B60]"></div>
+                            <div className="w-3 h-3 rounded-full bg-[#D81B60]" />
                             <span className="text-xs font-bold text-[#1D1D2C]">Period</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full border-2 border-dashed border-[#F48FB1]"></div>
-                            <span className="text-xs font-bold text-[#1D1D2C]">Predicted Period</span>
+                            <div className="w-3 h-3 rounded-full border-2 border-dashed border-[#F48FB1]" />
+                            <span className="text-xs font-bold text-[#1D1D2C]">Predicted</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-1"></div>
-                            <span className="text-xs font-bold text-[#1D1D2C]">Logged Symptoms</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-1" />
+                            <span className="text-xs font-bold text-[#1D1D2C]">Logged</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Small Stats Cards */}
+                {/* Stats Cards */}
                 <div className="flex gap-6">
                     <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 flex-1 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-[#FFF0F4] text-[#D81B60] flex items-center justify-center">
@@ -116,7 +184,9 @@ const CycleTracker = () => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">Cycle Day</p>
-                            <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">8 of 28</h3>
+                            <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
+                                {today.getDate()} of 28
+                            </h3>
                         </div>
                     </div>
 
@@ -126,64 +196,45 @@ const CycleTracker = () => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">Next Period</p>
-                            <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">20 days</h3>
+                            <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
+                                {nextPeriodDay} days
+                            </h3>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            {/* Right Column (Daily Log Panel) */}
-            <div className="w-[420px] bg-white rounded-[2rem] shadow-card border border-gray-100 p-8 flex flex-col h-full sticky top-8">
+            {/* Right Column — Daily Log Panel */}
+            <div className="w-full lg:w-[420px] bg-white rounded-[2rem] shadow-card border border-gray-100 p-8 flex flex-col">
 
-                {/* Top Header Row within Right Panel */}
-                <div className="flex justify-between items-center mb-8 absolute -top-16 right-0 left-0 px-2 lg:hidden">
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search insights..."
-                            className="bg-white border border-gray-100 rounded-full pl-10 pr-4 py-2 text-sm font-medium w-64 outline-none focus:border-[#D81B60] shadow-sm"
-                        />
-                    </div>
-                    <button className="relative text-gray-400">
-                        <Bell size={20} />
-                        <span className="absolute top-0 right-0 w-2 h-2 bg-[#D81B60] rounded-full border border-white"></span>
-                    </button>
-                </div>
-
-                {/* Real Header for Desktop Right Align */}
-                <div className="hidden lg:flex justify-end items-center mb-8 gap-6 absolute -top-16 right-0 w-[500px]">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search insights..."
-                            className="w-full bg-white border border-gray-100 rounded-full pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:border-[#D81B60] transition-colors shadow-sm"
-                        />
-                    </div>
-                    <button className="relative text-[#1D1D2C]">
-                        <Bell size={20} fill="currentColor" className="text-gray-300" />
-                        <span className="absolute top-0 right-0 w-2 h-2 bg-[#1D1D2C] rounded-full border border-white"></span>
-                    </button>
-                </div>
-
-                <div className="flex justify-between items-center mb-8 mt-2">
+                <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-heading font-extrabold">Daily Log</h2>
-                    <span className="bg-gray-100 text-[#1D1D2C] text-xs font-bold px-3 py-1.5 rounded-md">Oct 11, 2023</span>
+                    <span className="bg-gray-100 text-[#1D1D2C] text-xs font-bold px-3 py-1.5 rounded-md">
+                        {MONTH_NAMES[currentMonth].slice(0, 3)} {selectedDay}, {currentYear}
+                    </span>
                 </div>
 
-                <div className="space-y-8 flex-1 overflow-y-auto pr-2 pb-4 scrollbar-hide">
+                <div className="space-y-8 flex-1 overflow-y-auto pr-1 pb-4 scrollbar-hide">
 
                     {/* Flow Intensity */}
                     <div>
                         <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Flow Intensity</h4>
                         <div className="grid grid-cols-2 gap-3">
-                            <button className="border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-500 hover:border-gray-300 transition-colors">Spotting</button>
-                            <button className="border-2 border-[#D81B60] bg-[#FFF0F4] rounded-xl py-3 text-sm font-bold text-[#D81B60] transition-colors shadow-sm">Light</button>
-                            <button className="border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-500 hover:border-gray-300 transition-colors">Medium</button>
-                            <button className="border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-500 hover:border-gray-300 transition-colors">Heavy</button>
-                            <button className="border border-gray-200 rounded-xl py-3 text-sm font-bold text-gray-500 hover:border-gray-300 transition-colors col-span-2">None</button>
+                            {FLOW_OPTIONS.map(opt => (
+                                <button
+                                    key={opt}
+                                    onClick={() => setSelectedFlow(opt)}
+                                    className={`border-2 rounded-xl py-3 text-sm font-bold transition-all ${
+                                        opt === 'None' ? 'col-span-2' : ''
+                                    } ${
+                                        selectedFlow === opt
+                                            ? 'border-[#D81B60] bg-[#FFF0F4] text-[#D81B60] shadow-sm'
+                                            : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                    }`}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -191,12 +242,22 @@ const CycleTracker = () => {
                     <div>
                         <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Physical</h4>
                         <div className="flex flex-wrap gap-3">
-                            <button className="border-2 border-[#D81B60] text-[#D81B60] rounded-full px-4 py-2 text-sm font-bold shadow-sm">Cramps</button>
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors">Headache</button>
-                            <button className="border-2 border-[#D81B60] text-[#D81B60] rounded-full px-4 py-2 text-sm font-bold shadow-sm">Bloating</button>
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors">Breast Tenderness</button>
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors">Backache</button>
-                            <button className="border-2 border-[#D81B60] text-[#D81B60] rounded-full px-4 py-2 text-sm font-bold shadow-sm">Acne</button>
+                            {PHYSICAL_SYMPTOMS.map(s => {
+                                const active = selectedSymptoms.includes(s);
+                                return (
+                                    <button
+                                        key={s}
+                                        onClick={() => toggleSymptom(s)}
+                                        className={`rounded-full px-4 py-2 text-sm font-bold transition-all border-2 ${
+                                            active
+                                                ? 'border-[#D81B60] text-[#D81B60] bg-[#FFF0F4] shadow-sm'
+                                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -204,18 +265,22 @@ const CycleTracker = () => {
                     <div>
                         <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Mood</h4>
                         <div className="flex flex-wrap gap-3">
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors flex items-center gap-2">
-                                <span>🙂</span> Calm
-                            </button>
-                            <button className="border-2 border-[#D81B60] text-[#D81B60] rounded-full px-4 py-2 text-sm font-bold shadow-sm flex items-center gap-2">
-                                <span>😫</span> Tired
-                            </button>
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors flex items-center gap-2">
-                                <span>😠</span> Irritable
-                            </button>
-                            <button className="border border-gray-200 text-gray-500 rounded-full px-4 py-2 text-sm font-bold hover:border-gray-300 transition-colors flex items-center gap-2">
-                                <span>😟</span> Anxious
-                            </button>
+                            {MOOD_OPTIONS.map(({ emoji, label }) => {
+                                const active = selectedMoods.includes(label);
+                                return (
+                                    <button
+                                        key={label}
+                                        onClick={() => toggleMood(label)}
+                                        className={`rounded-full px-4 py-2 text-sm font-bold transition-all border-2 flex items-center gap-2 ${
+                                            active
+                                                ? 'border-[#D81B60] text-[#D81B60] bg-[#FFF0F4] shadow-sm'
+                                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        <span>{emoji}</span> {label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -223,24 +288,34 @@ const CycleTracker = () => {
                     <div>
                         <h4 className="text-xs font-bold text-[#8C8C8C] tracking-widest uppercase mb-4">Notes</h4>
                         <textarea
+                            value={notes}
+                            onChange={e => setNotes(e.target.value)}
                             placeholder="How are you feeling today?"
-                            className="w-full bg-[#FAFAFA] border border-transparent focus:border-gray-200 rounded-2xl p-5 text-sm font-medium resize-none h-32 outline-none placeholder:text-gray-400"
+                            className="w-full bg-[#FAFAFA] border border-transparent focus:border-gray-200 rounded-2xl p-5 text-sm font-medium resize-none h-28 outline-none placeholder:text-gray-400 transition-colors"
                         />
                     </div>
-
                 </div>
 
+                {/* Save Button */}
                 <div className="pt-6 border-t border-gray-100 mt-auto">
-                    <button className="w-full bg-[#D81B60] hover:bg-[#C2185B] text-white rounded-2xl py-4 font-bold text-lg transition-colors shadow-soft flex justify-center items-center gap-2 mb-3">
-                        <CalendarIcon size={20} /> Save Daily Log
+                    <button
+                        onClick={handleSave}
+                        className={`w-full rounded-2xl py-4 font-bold text-lg transition-all flex justify-center items-center gap-2 mb-3 shadow-soft ${
+                            saved
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                : 'bg-[#D81B60] hover:bg-[#C2185B] text-white'
+                        }`}
+                    >
+                        <CalendarIcon size={20} />
+                        {saved ? 'Log Saved! Update Again?' : 'Save Daily Log'}
                     </button>
                     <p className="text-[9px] text-gray-400 font-bold text-center leading-tight mx-4">
-                        Information logged is used for personalized health risk insights.
+                        Information logged is used for personalized health risk insights. Connected to backend when available.
                     </p>
                 </div>
-
             </div>
 
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 };

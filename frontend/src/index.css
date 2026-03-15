@@ -68,3 +68,8 @@ body::-webkit-scrollbar {
   background-image: radial-gradient(#f4f4f5 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+@keyframes toastSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
