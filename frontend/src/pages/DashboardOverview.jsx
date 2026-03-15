@@ -114,7 +114,10 @@ const DashboardOverview = () => {
                 </div>
 
                 {/* Cycle Status Panel (Spans 2 columns) */}
-                <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col h-full">
+                <div 
+                    data-tour-id="dashboard-status-card"
+                    className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col h-full"
+                >
                     <div className="flex justify-between items-start mb-10">
                         <h3 className="font-heading font-bold text-lg">Cycle Status</h3>
                         <button
@@ -164,7 +167,10 @@ const DashboardOverview = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* How are you feeling today */}
-                <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-card border border-gray-100">
+                <div 
+                    data-tour-id="dashboard-mood-logger"
+                    className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-card border border-gray-100"
+                >
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="font-heading font-bold text-lg">How are you feeling today?</h3>
                         {selectedMoods.length > 0 && (

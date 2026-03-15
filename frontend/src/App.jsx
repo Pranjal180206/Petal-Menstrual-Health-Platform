@@ -1,5 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { TourProvider } from './context/TourContext';
+import TourOverlay from './components/TourOverlay';
+import TourPrompt from './components/TourPrompt';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
@@ -46,8 +49,11 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="w-full min-h-screen bg-white font-sans text-brand-dark overflow-x-hidden">
-          <Routes>
+        <TourProvider>
+          <div className="w-full min-h-screen bg-white font-sans text-brand-dark overflow-x-hidden">
+            <TourOverlay />
+            <TourPrompt />
+            <Routes>
             {/* Public Pages */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
@@ -71,6 +77,7 @@ function App() {
             <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
           </Routes>
         </div>
+        </TourProvider>
       </Router>
     </AuthProvider>
   );

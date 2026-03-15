@@ -13,7 +13,10 @@ const Navbar = ({ isHome = false }) => {
             </Link>
 
             {/* Desktop Links */}
-            <div className={`hidden md:flex items-center ${isHome ? 'gap-2 lg:gap-4 text-xs lg:text-sm px-4 lg:px-8' : 'gap-10 text-sm px-8'} bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md`}>
+            <div 
+                data-tour-id="navbar-main"
+                className={`hidden md:flex items-center ${isHome ? 'gap-2 lg:gap-4 text-xs lg:text-sm px-4 lg:px-8' : 'gap-10 text-sm px-8'} bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md`}
+            >
                 <Link to="/education" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Education</Link>
                 <Link to="/community" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Community</Link>
                 <Link to="/cycle-tracker/risk" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Risks</Link>

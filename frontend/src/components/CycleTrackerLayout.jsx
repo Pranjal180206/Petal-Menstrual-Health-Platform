@@ -57,7 +57,10 @@ const CycleTrackerLayout = () => {
 
                 {/* Logo */}
                 <div className="px-5 pt-5 pb-3">
-                    <div className="flex items-center gap-3 px-1 mb-4">
+                    <div 
+                        data-tour-id="petal-logo-sidebar"
+                        className="flex items-center gap-3 px-1 mb-4"
+                    >
                         <div className="bg-gradient-to-br from-[#D81B60] to-[#F06292] text-white p-2 rounded-xl shadow-sm">
                             <PetalIcon size={20} />
                         </div>
@@ -98,6 +101,7 @@ const CycleTrackerLayout = () => {
                             to={link.to}
                             end={link.end}
                             className={linkClass}
+                            {...(link.label === 'Insights' ? { 'data-tour-id': 'nav-item-insights' } : {})}
                         >
                             {link.icon}
                             {link.label}

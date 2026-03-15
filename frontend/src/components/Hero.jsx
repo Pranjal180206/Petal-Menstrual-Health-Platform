@@ -2,8 +2,11 @@ import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import PetalIcon from './PetalIcon';
 import HeroIllustration from './HeroIllustration';
+import { useTour } from '../context/TourContext';
 
 const Hero = () => {
+    const { startTour } = useTour();
+
     return (
         <section className="w-full max-w-7xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row items-center gap-12 overflow-hidden">
             {/* Left Content */}
@@ -28,6 +31,7 @@ const Hero = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="text-5xl md:text-7xl font-heading font-extrabold leading-[1.1] tracking-tight"
+                    data-tour-id="hero-title"
                 >
                     Know Your <br /> Body, <span className="text-brand-pink text-gradient">Feel <br /> Amazing.</span>
                 </motion.h1>
@@ -47,10 +51,16 @@ const Hero = () => {
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="flex flex-wrap items-center gap-4"
                 >
-                    <button className="bg-gradient-pink hover:opacity-90 text-white px-8 py-4 rounded-full font-bold transition-all shadow-soft hover:-translate-y-1 hover:shadow-lg">
+                    <button 
+                        className="bg-gradient-pink hover:opacity-90 text-white px-8 py-4 rounded-full font-bold transition-all shadow-soft hover:-translate-y-1 hover:shadow-lg"
+                        data-tour-id="hero-get-started"
+                    >
                         Get Started
                     </button>
-                    <button className="bg-white border-2 border-gray-100 text-brand-dark hover:border-brand-pink hover:text-brand-pink px-8 py-3.5 rounded-full font-bold transition-all">
+                    <button 
+                        onClick={startTour}
+                        className="bg-white border-2 border-gray-100 text-brand-dark hover:border-brand-pink hover:text-brand-pink px-8 py-3.5 rounded-full font-bold transition-all"
+                    >
                         Take a Tour
                     </button>
                 </motion.div>
