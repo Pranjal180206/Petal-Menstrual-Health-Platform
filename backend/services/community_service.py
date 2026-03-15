@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 from bson import ObjectId
 from datetime import datetime
-from models.community_post_model import ForumPostReq, ForumReplyReq, AuthorInfo, ForumPostResponse, ForumReplyResponse
+from models.community_post_model import CommunityPostReq, CommunityReplyReq, AuthorInfo, CommunityPostResponse, CommunityReplyResponse
 from database import get_db
 
 def _anonymize_author(author_info: dict, is_anonymous: bool) -> dict:
@@ -42,16 +42,16 @@ def _format_post(post: dict) -> dict:
         "is_flagged": post.get("is_flagged", False)
     }
 
-class ForumService:
+class CommunityService:
     @staticmethod
     async def get_posts(skip: int = 0, limit: int = 20) -> List[dict]:
         db = get_db()
-        cursor = db["forum_posts"].find({"is_flagged": {"$ne": True}}).sort("created_at", -1).skip(skip).limit(limit)
+        cursor = db["community_posts"].find({"is_flagged": {"$ne": True}}).sort("created_at", -1).skip(skip).limit(limit)
         posts = await cursor.to_list(length=limit)
         return [_format_post(p) for p in posts]
 
     @staticmethod
-    async def create_post(data: ForumPostReq, current_user: Optional[dict]) -> dict:
+    async def create_post(data: CommunityPostReq, current_user: Optional[dict]) -> dict:
         db = get_db()
         author = {"user_id": "guest", "name": "Guest", "avatar": None}
         is_anonymous = True
@@ -76,12 +76,12 @@ class ForumService:
             "is_flagged": False
         }
         
-        result = await db["forum_posts"].insert_one(post_data)
-        created = await db["forum_posts"].find_one({"_id": result.inserted_id})
+        result = await db["community_posts"].insert_one(post_data)
+        created = await db["community_posts"].find_one({"_id": result.inserted_id})
         return _format_post(created)
 
     @staticmethod
-    async def add_reply(post_id: str, data: ForumReplyReq, current_user: Optional[dict]) -> Optional[dict]:
+    async def add_reply(post_id: str, data: CommunityReplyReq, current_user: Optional[dict]) -> Optional[dict]:
         db = get_db()
         author = {"user_id": "guest", "name": "Guest", "avatar": None}
         is_anonymous = True
@@ -108,7 +108,7 @@ class ForumService:
         except Exception:
             return None
         
-        updated = await db["forum_posts"].find_one_and_update(
+        updated = await db["community_posts"].find_one_and_update(
             {"_id": post_oid},
             {"$push": {"replies": reply}},
             return_document=True
@@ -126,7 +126,7 @@ class ForumService:
         except Exception:
             return None
             
-        post = await db["forum_posts"].find_one({"_id": post_oid})
+        post = await db["community_posts"].find_one({"_id": post_oid})
         if not post: return None
         
         likes = post.get("likes", [])
@@ -135,7 +135,7 @@ class ForumService:
         else:
             update_query = {"$addToSet": {"likes": user_id}}
             
-        updated = await db["forum_posts"].find_one_and_update(
+        updated = await db["community_posts"].find_one_and_update(
             {"_id": post_oid},
             update_query,
             return_document=True
@@ -150,10 +150,10 @@ class ForumService:
         except Exception:
             return False
             
-        result = await db["forum_posts"].update_one(
+        result = await db["community_posts"].update_one(
             {"_id": post_oid},
             {"$set": {"is_flagged": True}}
         )
         return result.modified_count > 0
 
-forum_service = ForumService()
+community_service = CommunityService()

@@ -9,11 +9,11 @@ class AuthorInfo(BaseModel):
     name: str
     avatar: Optional[str] = None
 
-class ForumReplyReq(BaseModel):
+class CommunityReplyReq(BaseModel):
     content: str
     is_anonymous: bool = False
 
-class ForumReplyResponse(BaseModel):
+class CommunityReplyResponse(BaseModel):
     id: str
     author: AuthorInfo
     content: str
@@ -21,13 +21,13 @@ class ForumReplyResponse(BaseModel):
     created_at: datetime
     is_flagged: bool
 
-class ForumPostReq(BaseModel):
+class CommunityPostReq(BaseModel):
     title: str
     content: str
     category: str
     is_anonymous: bool = False
 
-class ForumPostResponse(BaseModel):
+class CommunityPostResponse(BaseModel):
     id: str
     title: str
     content: str
@@ -37,7 +37,7 @@ class ForumPostResponse(BaseModel):
     created_at: datetime
     likes: List[str] = []
     likes_count: int = 0
-    replies: List[ForumReplyResponse] = []
+    replies: List[CommunityReplyResponse] = []
     is_flagged: bool = False
     
     class Config:
