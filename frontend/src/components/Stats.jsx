@@ -32,18 +32,21 @@ const Stats = () => {
                 {statsData.map((stat, index) => (
                     <motion.div
                         key={index}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: index * 0.2 }}
-                        className="bg-white rounded-[2rem] p-10 flex flex-col items-center text-center shadow-[0_4px_20px_rgba(255,107,154,0.05)] border border-pink-50"
+                        transition={{ delay: index * 0.2, type: "spring" }}
+                        whileHover={{ y: -10 }}
+                        className="bg-white rounded-[2.5rem] p-10 flex flex-col items-center text-center shadow-[0_10px_40px_rgba(255,107,154,0.08)] border-4 border-white relative overflow-hidden group"
                     >
-                        <div className={`w-14 h-14 rounded-full ${stat.bgColor} flex items-center justify-center mb-6`}>
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-pink-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        
+                        <div className={`w-16 h-16 rounded-3xl ${stat.bgColor} flex items-center justify-center mb-6 rotate-3 group-hover:rotate-0 transition-transform shadow-inner`}>
                             {stat.icon}
                         </div>
-                        <h5 className="text-xs font-bold text-brand-gray tracking-wider mb-2">{stat.label}</h5>
-                        <h2 className="text-5xl font-heading font-bold text-[#FF6B9A] mb-4">{stat.value}</h2>
-                        <p className="text-sm text-brand-gray">{stat.description}</p>
+                        <h5 className="text-[10px] font-extrabold text-[#D81B60] tracking-[0.2em] mb-3 uppercase">{stat.label}</h5>
+                        <h2 className="text-6xl font-heading font-black text-[#FF6B9A] mb-4 tracking-tighter">{stat.value}</h2>
+                        <p className="text-sm text-brand-gray font-bold px-4 leading-relaxed">{stat.description}</p>
                     </motion.div>
                 ))}
             </div>

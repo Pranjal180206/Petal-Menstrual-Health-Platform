@@ -15,21 +15,26 @@ import CycleTracker from './pages/CycleTracker';
 import RiskLayout from './components/RiskLayout';
 import RiskAnalysis from './pages/RiskAnalysis';
 
+import FloatingBackground from './components/FloatingBackground';
+
 const LandingPage = () => {
   return (
-    <>
+    <div className="relative overflow-hidden">
+      <FloatingBackground />
       {/* Top section with subtle gradient background */}
-      <div className="bg-gradient-hero pb-12">
+      <div className="bg-gradient-hero pb-12 relative z-10">
         <Navbar />
         <Hero />
       </div>
 
       {/* Rest of the sections */}
-      <Stats />
-      <HowItWorks />
-      <CTA />
-      <Footer />
-    </>
+      <div className="relative z-10">
+        <Stats />
+        <HowItWorks />
+        <CTA />
+        <Footer />
+      </div>
+    </div>
   );
 };
 

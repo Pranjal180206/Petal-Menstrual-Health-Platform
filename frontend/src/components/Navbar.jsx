@@ -4,32 +4,32 @@ import PetalIcon from './PetalIcon';
 
 const Navbar = () => {
     return (
-        <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+        <nav className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between relative z-50">
             {/* Logo */}
-            <div className="flex items-center gap-2 cursor-pointer">
-                <div className="bg-brand-pink text-white p-1.5 rounded-full flex items-center justify-center">
-                    <PetalIcon size={20} />
+            <Link to="/" className="flex items-center gap-2 cursor-pointer group">
+                <div className="bg-brand-pink text-white p-2 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-pink-200">
+                    <PetalIcon size={24} />
                 </div>
-                <span className="font-heading font-bold text-2xl text-brand-dark tracking-tight">Petal</span>
-            </div>
+                <span className="font-heading font-extrabold text-3xl text-brand-dark tracking-tighter">Petal</span>
+            </Link>
 
             {/* Desktop Links */}
-            <div className="hidden md:flex items-center gap-10">
-                <Link to="/education" className="text-sm font-semibold text-brand-gray hover:text-brand-pink transition-colors">Learn</Link>
-                <Link to="/community" className="text-sm font-semibold text-brand-gray hover:text-brand-pink transition-colors">Community</Link>
-                <Link to="/risk" className="text-sm font-semibold text-brand-gray hover:text-brand-pink transition-colors">Safety</Link>
+            <div className="hidden md:flex items-center gap-10 bg-white/50 backdrop-blur-sm px-8 py-3 rounded-full border border-pink-50 shadow-sm">
+                <Link to="/education" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Education 📚</Link>
+                <Link to="/community" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Community 💬</Link>
+                <Link to="/risk" className="text-sm font-bold text-brand-gray hover:text-brand-pink transition-colors">Risks ⚠️</Link>
             </div>
 
             {/* Actions */}
             <div className="hidden md:flex items-center gap-4">
                 <Link
                     to="/login"
-                    className="bg-[#FF6B9A] hover:bg-[#FF8A8A] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-soft"
+                    className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
                 >
-                    Sign Up
+                    Sign In 🚀
                 </Link>
-                <button className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-400">
-                    <span className="text-xl">👩</span>
+                <button className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft">
+                    <span className="text-2xl">👩</span>
                 </button>
             </div>
 
