@@ -63,6 +63,7 @@ from routes.period_tracker import router as tracker_router
 from routes.community import router as community_router
 from routes.users import router as users_router
 from routes.education import router as education_router
+from routes.reports import router as reports_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
@@ -71,3 +72,4 @@ app.include_router(quiz_router, prefix="/api/quizzes", tags=["Quiz"])
 app.include_router(tracker_router, prefix="/api/period-tracker", tags=["Tracker"])
 app.include_router(community_router, prefix="/api/community", tags=["Community"])
 app.include_router(education_router, prefix="/api/education", tags=["Education"])
+app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])

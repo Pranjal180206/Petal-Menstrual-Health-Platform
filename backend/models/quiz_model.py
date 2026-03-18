@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict
 from datetime import datetime
 from bson import ObjectId
@@ -23,9 +23,10 @@ class Quiz(BaseModel):
     is_published: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_encoders={ObjectId: str},
+    )
 
 class ScoreRequest(BaseModel):
     answers: List[Dict[str, str]] # e.g. [{"question_id": "1", "selected_option_id": "a"}]

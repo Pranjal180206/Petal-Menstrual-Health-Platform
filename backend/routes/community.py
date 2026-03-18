@@ -48,8 +48,17 @@ async def toggle_like(post_id: str, current_user: dict = Depends(get_current_use
 
 @router.patch("/{post_id}/flag", status_code=status.HTTP_200_OK)
 async def flag_post(post_id: str, current_user: dict = Depends(get_current_user)):
-    # Authenticated user required
-    success = await community_service.flag_post(post_id)
-    if not success:
+    user_id = str(current_user["_id"])
+    result = await community_service.flag_post(post_id, user_id)
+
+    if result is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    return {"message": "Post flagged successfully"}
+
+    if result.get("already_flagged"):
+        raise HTTPException(status_code=409, detail="already flagged by this user")
+
+    return {
+        "message": "Post flagged",
+        "flag_count": result["flag_count"],
+        "is_flagged": result["is_flagged"],
+    }

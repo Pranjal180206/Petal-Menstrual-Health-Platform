@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import timedelta, datetime
 from typing import Optional
+from email_validator import validate_email, EmailNotValidError
 
 from services.auth_service import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from services.user_service import user_service
@@ -12,11 +13,22 @@ router = APIRouter()
 
 class UserRegister(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     password: str
     gender: str
     age: int
     is_menstruating: bool
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def validate_email_syntax_only(cls, v: str) -> str:
+        """Validate email syntax without DNS/deliverability checks.
+        Allows test domains (@example.com, etc.) and avoids network calls."""
+        try:
+            info = validate_email(v, check_deliverability=False)
+            return info.normalized
+        except EmailNotValidError as e:
+            raise ValueError(str(e))
 
 class UserLogin(BaseModel):
     email: EmailStr

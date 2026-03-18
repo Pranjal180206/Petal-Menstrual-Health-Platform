@@ -35,3 +35,4 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+\n*.pyc\n*.pyo\n*.pyd\n*.egg-info/\nbuild/\n.pytest_cache/\n.mypy_cache/\n.ruff_cache/\n.env.*\n*.pem\n*.key\n*.suo\n*.user\ndesktop.ini\nfrontend/dist/\nfrontend/build/\n.parcel-cache/\n*.tsbuildinfo\n*.tmp\n*.bak\n*.orig\ndump.rdb

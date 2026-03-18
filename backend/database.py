@@ -13,6 +13,27 @@ class Database:
 
 db_config = Database()
 
+async def ensure_indexes():
+    """Create all required database indexes on startup."""
+    db = db_config.db
+    if db is None:
+        return
+
+    # users collection
+    await db["users"].create_index("email", unique=True)
+    await db["users"].create_index("created_at")
+
+    # community_posts collection
+    await db["community_posts"].create_index("created_at")
+    await db["community_posts"].create_index("is_flagged")
+    await db["community_posts"].create_index("author.user_id")
+
+    # cycle_logs collection
+    await db["cycle_logs"].create_index("user_id")
+    await db["cycle_logs"].create_index("created_at")
+
+    print("Database indexes ensured.")
+
 async def connect_to_mongo():
     if not MONGO_URI.startswith("mongodb"):
         raise ValueError("Invalid MONGO_URI strictly defined configuration")
@@ -25,6 +46,7 @@ async def connect_to_mongo():
         
     db_config.db = db_config.client[db_name]
     print(f"Connected to MongoDB: {db_name}")
+    await ensure_indexes()
 
 async def close_mongo_connection():
     if db_config.client:

@@ -2,6 +2,7 @@ from typing import Optional
 from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
 from bson import ObjectId
+from bson.errors import InvalidId
 from models.user_model import User
 from database import get_db
 
@@ -16,10 +17,16 @@ class UserService:
     async def get_user_by_id(user_id: str) -> Optional[dict]:
         db = get_db()
         try:
-            user = await db["users"].find_one({"_id": ObjectId(user_id)})
-            return user
-        except:
+            oid = ObjectId(user_id)
+        except (InvalidId, Exception):
             return None
+            
+        user = await db["users"].find_one({"_id": oid})
+        if user is None:
+            return None
+            
+        user["_id"] = str(user["_id"])
+        return user
 
     @staticmethod
     async def create_user(user_data: dict) -> dict:

@@ -142,18 +142,59 @@ class CommunityService:
         )
         return _format_post(updated)
 
+    FLAG_THRESHOLD = 3
+
     @staticmethod
-    async def flag_post(post_id: str) -> bool:
+    async def flag_post(post_id: str, user_id: str) -> Optional[dict]:
+        """
+        Idempotently add user_id to the post's flagged_by set.
+        Sets is_flagged=True only once flagged_by reaches FLAG_THRESHOLD users.
+
+        Returns:
+            {"already_flagged": True}  — user already flagged this post
+            {"already_flagged": False, "flag_count": N, "is_flagged": bool}
+            None — post not found
+        """
         db = get_db()
         try:
             post_oid = ObjectId(post_id)
         except Exception:
-            return False
-            
+            return None
+
+        # Use $addToSet for atomicity — if user_id is already present the
+        # set won't grow and modified_count will be 0.
         result = await db["community_posts"].update_one(
             {"_id": post_oid},
-            {"$set": {"is_flagged": True}}
+            {"$addToSet": {"flagged_by": user_id}}
         )
-        return result.modified_count > 0
+
+        # Post doesn't exist at all
+        if result.matched_count == 0:
+            return None
+
+        # User already flagged this post (set was not modified)
+        if result.modified_count == 0:
+            return {"already_flagged": True}
+
+        # Fetch updated document to get the current flag count
+        post = await db["community_posts"].find_one(
+            {"_id": post_oid},
+            {"flagged_by": 1, "is_flagged": 1}
+        )
+        flag_count = len(post.get("flagged_by", []))
+        is_flagged = flag_count >= CommunityService.FLAG_THRESHOLD
+
+        # Promote is_flagged once threshold is crossed
+        if is_flagged:
+            await db["community_posts"].update_one(
+                {"_id": post_oid},
+                {"$set": {"is_flagged": True}}
+            )
+
+        return {
+            "already_flagged": False,
+            "flag_count": flag_count,
+            "is_flagged": is_flagged,
+        }
 
 community_service = CommunityService()

@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from dotenv import load_dotenv
@@ -13,14 +12,28 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback_dev_secret")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import hashlib
+import base64
+import bcrypt
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
+def _prepare_password(password: str) -> str:
+    """
+    SHA-256 pre-hash a password before it reaches bcrypt.
+    """
+    digest = hashlib.sha256(password.encode("utf-8")).digest()
+    return base64.b64encode(digest).decode("utf-8")
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    p = _prepare_password(plain_password)
+    return bcrypt.checkpw(p.encode("utf-8"), hashed_password.encode("utf-8"))
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    p = _prepare_password(password)
+    # gensalt() generates a bcrypt-compatible salt
+    hashed_bytes = bcrypt.hashpw(p.encode("utf-8"), bcrypt.gensalt())
+    return hashed_bytes.decode("utf-8")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

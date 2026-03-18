@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
@@ -39,6 +39,6 @@ class CommunityPostResponse(BaseModel):
     likes_count: int = 0
     replies: List[CommunityReplyResponse] = []
     is_flagged: bool = False
-    
-    class Config:
-        json_encoders = {ObjectId: str}
+    flagged_by: List[str] = []
+
+    model_config = ConfigDict(json_encoders={ObjectId: str})

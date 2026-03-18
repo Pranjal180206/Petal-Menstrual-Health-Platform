@@ -9,6 +9,7 @@ class TrackerService:
     async def get_user_cycles(user_id: str) -> List[dict]:
         db = get_db()
         cursor = db["cycle_logs"].find({"user_id": user_id}).sort("cycle_start_date", -1)
+        # Motor AsyncIOMotorCursor requires await to fetch results
         cycles = await cursor.to_list(length=100)
         return cycles
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from bson import ObjectId
 from database import PyObjectId
@@ -32,7 +32,25 @@ class HealthReport(BaseModel):
 
     generated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        allow_population_by_field_name = True
-        arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+    model_config = ConfigDict(
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        json_encoders={ObjectId: str},
+    )
+
+from typing import List
+
+class RiskFactor(BaseModel):
+    icon_type: str
+    bg_color: str
+    title: str
+    badge_text: str
+    badge_bg: str
+    badge_color: str
+    description: str
+
+class RiskAnalysisResult(BaseModel):
+    cycle_consistency: int
+    symptom_intensity: str
+    average_cycle_length: int
+    factors: List[RiskFactor]
