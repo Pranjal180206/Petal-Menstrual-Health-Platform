@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Heart, MessageCircle, Sparkles, MoreHorizontal, X, Send, Smile } from 'lucide-react';
+import { Edit3, Heart, MessageCircle, Sparkles, MoreHorizontal, X, Send, Smile, Flag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
+import { useAuth } from '../context/AuthContext';
 
 const AVATAR_COLORS = ['#FF6B9A', '#A78BFA', '#34D399', '#60A5FA', '#FBBF24', '#F87171'];
 const ANONYMOUS_NAMES = ['MoonPetal', 'SilverWave', 'CosmicBloom', 'StarDust', 'NightBlossom', 'CrystalDew'];
@@ -61,11 +63,19 @@ const formatTimestamp = (isoString) => {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const PostCard = ({ post }) => {
-    const [localReactions, setLocalReactions] = useState(post.reactions);
+const PostCard = ({ post, onLike, onReply, onFlag }) => {
+    const [showReplyBox, setShowReplyBox] = useState(false);
+    const [replyText, setReplyText] = useState('');
+    const [isSendingReply, setIsSendingReply] = useState(false);
 
-    const handleReact = (type) => {
-        setLocalReactions(prev => ({ ...prev, [type]: prev[type] + 1 }));
+    const handleReplySubmit = async () => {
+        const trimmed = replyText.trim();
+        if (!trimmed) return;
+        setIsSendingReply(true);
+        await onReply(post.id, trimmed);
+        setReplyText('');
+        setShowReplyBox(false);
+        setIsSendingReply(false);
     };
 
     return (
@@ -95,7 +105,11 @@ const PostCard = ({ post }) => {
                         <p className="text-xs text-gray-400 font-medium">{formatTimestamp(post.createdAt)}</p>
                     </div>
                 </div>
-                <button className="text-gray-300 hover:text-gray-500 transition-colors">
+                <button
+                    onClick={() => onFlag(post.id)}
+                    className="text-gray-300 hover:text-red-400 transition-colors"
+                    title="Flag post"
+                >
                     <MoreHorizontal size={18} />
                 </button>
             </div>
@@ -118,39 +132,79 @@ const PostCard = ({ post }) => {
                 </div>
             )}
 
-            {/* Reactions */}
+            {/* Actions */}
             <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                 <div className="flex gap-2">
-                    {localReactions.heart > 0 && (
-                        <button
-                            onClick={() => handleReact('heart')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105"
-                            style={{ background: '#FFF0F4', color: '#FF6B9A' }}
-                        >
-                            <Heart size={13} fill="currentColor" strokeWidth={0} /> {localReactions.heart}
-                        </button>
-                    )}
-                    {localReactions.hug > 0 && (
-                        <button
-                            onClick={() => handleReact('hug')}
-                            className="flex items-center gap-1.5 bg-blue-50 text-blue-500 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-100 transition-all hover:scale-105"
-                        >
-                            🫂 {localReactions.hug}
-                        </button>
-                    )}
-                    {localReactions.sparkle > 0 && (
-                        <button
-                            onClick={() => handleReact('sparkle')}
-                            className="flex items-center gap-1.5 bg-yellow-50 text-yellow-600 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-yellow-100 transition-all hover:scale-105"
-                        >
-                            ✨ {localReactions.sparkle}
-                        </button>
-                    )}
+                    <button
+                        onClick={() => onLike(post.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 ${
+                            post.liked ? 'text-[#FF6B9A]' : 'text-gray-400 hover:text-[#FF6B9A]'
+                        }`}
+                        style={{ background: post.liked ? '#FFF0F4' : '#F9F9F9' }}
+                    >
+                        <Heart size={13} fill={post.liked ? 'currentColor' : 'none'} strokeWidth={post.liked ? 0 : 1.5} />
+                        {post.likesCount}
+                    </button>
                 </div>
-                <button className="flex items-center gap-1.5 text-gray-400 text-xs font-bold hover:text-[#FF6B9A] transition-colors">
-                    <MessageCircle size={14} /> {post.replies} Replies
+                <button
+                    onClick={() => setShowReplyBox(v => !v)}
+                    className="flex items-center gap-1.5 text-gray-400 text-xs font-bold hover:text-[#FF6B9A] transition-colors"
+                >
+                    <MessageCircle size={14} /> {post.replyCount} Replies
                 </button>
             </div>
+
+            {/* Reply panel */}
+            {showReplyBox && (
+                <div className="mt-4">
+                    {/* Existing replies */}
+                    {post.replies && post.replies.length > 0 && (
+                        <div className="space-y-3 mb-4">
+                            {post.replies.map(reply => (
+                                <div key={reply.id} className="flex gap-3 items-start">
+                                    <div
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0"
+                                        style={{ background: '#A78BFA' }}
+                                    >
+                                        {reply.is_anonymous ? 'A' : (reply.author?.name?.charAt(0).toUpperCase() || 'U')}
+                                    </div>
+                                    <div className="flex-1 bg-gray-50 rounded-2xl px-4 py-3">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-xs font-bold text-[#1D1D2C]">
+                                                {reply.is_anonymous ? 'Anonymous' : (reply.author?.name || 'User')}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400">{formatTimestamp(reply.created_at)}</span>
+                                        </div>
+                                        <p className="text-xs text-[#4A4A5C] leading-relaxed">{reply.content}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Reply input */}
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleReplySubmit()}
+                            placeholder="Write a reply..."
+                            className="flex-1 rounded-xl border border-gray-200 px-4 py-2 text-xs outline-none focus:border-[#FF6B9A] transition-colors"
+                            style={{ fontFamily: 'inherit' }}
+                            disabled={isSendingReply}
+                        />
+                        <button
+                            onClick={handleReplySubmit}
+                            disabled={!replyText.trim() || isSendingReply}
+                            className="px-3 py-2 rounded-xl text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                            style={{ background: 'linear-gradient(135deg, #FF9DBB, #FF6B9A)' }}
+                        >
+                            <Send size={13} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -270,32 +324,41 @@ const ShareStoryModal = ({ onClose, onSubmit }) => {
 };
 
 const CommunityHub = () => {
+    const { user } = useAuth();
+    const currentUserId = user?._id || user?.id || null;
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [activeFilter, setActiveFilter] = useState('All');
     const [selectedMood, setSelectedMood] = useState(null);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'info') => setToast({ message, type });
 
     const filters = ['All', 'Trending', 'New', 'My Posts'];
     const moodEmojis = ['😔', '😐', '🙂', '😊', '🌟'];
+
+    const mapPost = (p, overrides = {}) => ({
+        id: p.id,
+        initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
+        color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+        username: p.author?.name || 'Anonymous',
+        createdAt: p.created_at,
+        content: p.content,
+        tags: p.category && p.category !== "General" ? [p.category] : [],
+        likesCount: p.likes_count || 0,
+        liked: currentUserId ? (p.likes || []).includes(currentUserId) : false,
+        replies: p.replies || [],
+        replyCount: p.replies ? p.replies.length : 0,
+        isUserPost: false,
+        ...overrides,
+    });
 
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const response = await axiosInstance.get('/community/');
-                const mapped = response.data.map(p => ({
-                    id: p.id,
-                    initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
-                    color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
-                    username: p.author?.name || 'Anonymous',
-                    createdAt: p.created_at,
-                    content: p.content,
-                    tags: p.category && p.category !== "General" ? [p.category] : [],
-                    reactions: { heart: p.likes_count || 0, hug: 0, sparkle: 0 },
-                    replies: p.replies ? p.replies.length : 0,
-                    isUserPost: false
-                }));
-                setPosts(mapped);
+                setPosts(response.data.map(p => mapPost(p)));
             } catch (error) {
                 console.error('Failed to fetch posts:', error);
             } finally {
@@ -304,6 +367,62 @@ const CommunityHub = () => {
         };
         fetchPosts();
     }, []);
+
+    const handleLike = async (postId) => {
+        try {
+            const res = await axiosInstance.patch(`/community/${postId}/like`);
+            const updated = res.data;
+            setPosts(prev => prev.map(p =>
+                p.id === postId
+                    ? {
+                        ...p,
+                        likesCount: updated.likes_count,
+                        liked: currentUserId ? (updated.likes || []).includes(currentUserId) : false,
+                      }
+                    : p
+            ));
+        } catch (err) {
+            if (err.response?.status === 401) {
+                showToast('Please sign in to like posts', 'error');
+            } else {
+                console.error('Like failed:', err);
+            }
+        }
+    };
+
+    const handleReply = async (postId, content) => {
+        try {
+            const res = await axiosInstance.post(`/community/${postId}/reply`, {
+                content,
+                is_anonymous: true,
+            });
+            const updated = res.data;
+            setPosts(prev => prev.map(p =>
+                p.id === postId
+                    ? {
+                        ...p,
+                        replies: updated.replies || p.replies,
+                        replyCount: updated.replies ? updated.replies.length : p.replyCount,
+                      }
+                    : p
+            ));
+        } catch (err) {
+            console.error('Reply failed:', err);
+        }
+    };
+
+    const handleFlag = async (postId) => {
+        try {
+            await axiosInstance.patch(`/community/${postId}/flag`);
+            // No state update needed — post stays visible for current user
+        } catch (err) {
+            if (err.response?.status === 409) {
+                // Already flagged — silently ignore
+                return;
+            }
+            console.error('Flag failed:', err);
+        }
+    };
 
     const [emojiPop, setEmojiPop] = useState(null);
 
@@ -369,20 +488,7 @@ const CommunityHub = () => {
                 is_anonymous: true
             };
             const response = await axiosInstance.post('/community/', payload);
-            const p = response.data;
-            const newPost = {
-                id: p.id,
-                initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
-                color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
-                username: p.author?.name || 'Anonymous',
-                createdAt: p.created_at,
-                content: p.content,
-                tags: p.category && p.category !== "General" ? [p.category] : [],
-                reactions: { heart: p.likes_count || 0, hug: 0, sparkle: 0 },
-                replies: p.replies ? p.replies.length : 0,
-                isUserPost: true
-            };
-            setPosts(prev => [newPost, ...prev]);
+            setPosts(prev => [mapPost(response.data, { isUserPost: true }), ...prev]);
         } catch (error) {
             console.error('Failed to submit post:', error);
         }
@@ -393,8 +499,8 @@ const CommunityHub = () => {
         if (activeFilter === 'My Posts') return posts.filter(p => p.isUserPost);
         if (activeFilter === 'New') return [...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         if (activeFilter === 'Trending') return [...posts].sort((a, b) => {
-            const totalA = Object.values(a.reactions).reduce((s, v) => s + v, 0);
-            const totalB = Object.values(b.reactions).reduce((s, v) => s + v, 0);
+            const totalA = a.likesCount || 0;
+            const totalB = b.likesCount || 0;
             return totalB - totalA;
         });
         return posts; // All
@@ -403,7 +509,7 @@ const CommunityHub = () => {
     // Real stats
     const totalStories = posts.length;
     const totalMembers = [...new Set(posts.map(p => p.username))].length;
-    const totalReactions = posts.reduce((sum, p) => sum + Object.values(p.reactions).reduce((a, b) => a + b, 0), 0);
+    const totalReactions = posts.reduce((sum, p) => sum + (p.likesCount || 0), 0);
 
     return (
         <>
@@ -538,7 +644,12 @@ const CommunityHub = () => {
                             ) : (
                                 displayedPosts.map((post, i) => (
                                     <div key={post.id} style={{ animationDelay: `${i * 0.08}s` }}>
-                                        <PostCard post={post} />
+                                        <PostCard
+                                            post={post}
+                                            onLike={handleLike}
+                                            onReply={handleReply}
+                                            onFlag={handleFlag}
+                                        />
                                     </div>
                                 ))
                             )}
@@ -610,6 +721,9 @@ const CommunityHub = () => {
                         onSubmit={handleNewPost}
                     />
                 )}
+
+                {/* Toast */}
+                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             </div>
         </>
     );
