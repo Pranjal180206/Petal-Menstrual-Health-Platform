@@ -1,14 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from database import get_db
+import services.education_service as education_service
 
 router = APIRouter()
 
 @router.get("/articles")
-async def get_articles():
-    return [{"id": "1", "title": "Understanding your cycle", "content": "..."}]
+async def get_articles(db=Depends(get_db)):
+    return await education_service.get_articles(db)
 
 @router.get("/myth-facts")
-async def get_myth_facts(lang: str = "en"):
-    if lang == "hi":
-        return [{"id": "1", "myth": "आप मासिक धर्म के दौरान व्यायाम नहीं कर सकतीं", "fact": "व्यायाम वास्तव में ऐंठन से राहत दिला सकता है।"}]
-    
-    return [{"id": "1", "myth": "You cannot exercise on your period", "fact": "Exercise can actually relieve cramps."}]
+async def get_myth_facts(lang: str = "en", db=Depends(get_db)):
+    return await education_service.get_myth_facts(db)
