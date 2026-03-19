@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
 import Toast from '../components/Toast';
+import axiosInstance from '../api/axiosInstance';
 
 const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -18,11 +19,6 @@ const MOOD_OPTIONS = [
     { emoji: '😢', label: 'Sad' },
 ];
 
-// Simulated data — will be replaced by API responses
-const PERIOD_DAYS_MOCK = [4, 5, 6, 7, 8];
-const PREDICTED_DAYS_MOCK = [16, 17, 18];
-const SYMPTOM_DOTS_MOCK = [10, 11, 21, 22];
-
 const CycleTracker = () => {
     const today = new Date();
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -34,6 +30,51 @@ const CycleTracker = () => {
     const [notes, setNotes] = useState('');
     const [toast, setToast] = useState(null);
     const [saved, setSaved] = useState(false);
+
+    const [cycleLogs, setCycleLogs] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [averageCycleLength, setAverageCycleLength] = useState(28);
+    const [nextPeriodPrediction, setNextPeriodPrediction] = useState(null);
+
+    useEffect(() => {
+        const fetchTracker = async () => {
+            try {
+                const res = await axiosInstance.get('/period-tracker/');
+                setAverageCycleLength(res.data.average_cycle_length);
+                setNextPeriodPrediction(res.data.next_period_prediction ? new Date(res.data.next_period_prediction) : null);
+                setCycleLogs(res.data.past_cycles || []);
+            } catch (err) {
+                console.error("Failed to fetch tracker data", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchTracker();
+    }, []);
+
+    const getLogForDay = useCallback((day) => {
+        return cycleLogs.find(log => {
+            const date = new Date(log.cycle_start_date);
+            return date.getDate() === day && date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+        });
+    }, [cycleLogs, currentMonth, currentYear]);
+
+    useEffect(() => {
+        const log = getLogForDay(selectedDay);
+        if (log) {
+            setSelectedFlow(log.flow_intensity || 'None');
+            setSelectedSymptoms(log.symptoms || []);
+            setSelectedMoods(log.mood ? [log.mood] : []);
+            setNotes(log.notes || '');
+            setSaved(true);
+        } else {
+            setSelectedFlow('Light');
+            setSelectedSymptoms([]);
+            setSelectedMoods([]);
+            setNotes('');
+            setSaved(false);
+        }
+    }, [selectedDay, getLogForDay]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToast({ message, type });
@@ -69,15 +110,54 @@ const CycleTracker = () => {
         setSelectedMoods(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
 
     /* ── Save ── */
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!selectedFlow) {
             showToast('Please select a flow intensity.', 'warning');
             return;
         }
-        setSaved(true);
-        showToast('Daily log saved successfully! ✓', 'success');
-        // TODO: POST to /api/cycle-log when backend is connected
-        // payload: { date: `${currentYear}-${currentMonth+1}-${selectedDay}`, flow: selectedFlow, symptoms: selectedSymptoms, moods: selectedMoods, notes }
+
+        const dateStr = new Date(Date.UTC(currentYear, currentMonth, selectedDay)).toISOString();
+        const payload = {
+            cycle_start_date: dateStr,
+            flow_intensity: selectedFlow,
+            symptoms: selectedSymptoms,
+            mood: selectedMoods.length > 0 ? selectedMoods[0] : null,
+            notes: notes
+        };
+
+        const existingLog = getLogForDay(selectedDay);
+
+        try {
+            if (existingLog) {
+                const res = await axiosInstance.patch(`/period-tracker/cycles/${existingLog.id}`, payload);
+                setCycleLogs(prev => prev.map(log => log.id === existingLog.id ? res.data : log));
+            } else {
+                const res = await axiosInstance.post('/period-tracker/cycles', payload);
+                setCycleLogs(prev => [...prev, res.data]);
+            }
+            setSaved(true);
+            showToast('Daily log saved successfully! ✓', 'success');
+        } catch (err) {
+            console.error("Failed to save log", err);
+        }
+    };
+
+    /* ── Mocks replaced with real logic ── */
+    const isPeriodDay = (day) => {
+        const log = getLogForDay(day);
+        return log && log.flow_intensity && log.flow_intensity !== 'None';
+    };
+
+    const isPredictedDay = (day) => {
+        if (!nextPeriodPrediction) return false;
+        const date = new Date(currentYear, currentMonth, day);
+        const diff = (date - nextPeriodPrediction) / 86400000;
+        return diff >= 0 && diff < 5;
+    };
+
+    const hasSymptoms = (day) => {
+        const log = getLogForDay(day);
+        return log && ((log.symptoms && log.symptoms.length > 0) || log.mood);
     };
 
     /* ── Calendar cell style ── */
@@ -85,9 +165,9 @@ const CycleTracker = () => {
         const base = 'w-9 h-9 rounded-full flex items-center justify-center mx-auto text-sm font-bold transition-all cursor-pointer select-none';
         if (isToday(day))
             return `${base} border-2 border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]`;
-        if (PERIOD_DAYS_MOCK.includes(day) && currentMonth === today.getMonth())
+        if (isPeriodDay(day))
             return `${base} bg-[#D81B60] text-white shadow-md`;
-        if (PREDICTED_DAYS_MOCK.includes(day) && currentMonth === today.getMonth())
+        if (isPredictedDay(day))
             return `${base} border-2 border-dashed border-[#F48FB1] text-[#F48FB1]`;
         if (selectedDay === day)
             return `${base} bg-[#FFF0F4] text-[#D81B60]`;
@@ -95,7 +175,15 @@ const CycleTracker = () => {
     };
 
     /* ── Days until next period ── */
-    const nextPeriodDay = 20; // simulated — will come from API
+    const nextPeriodDay = nextPeriodPrediction ? Math.max(0, Math.ceil((nextPeriodPrediction - today) / 86400000)) : '--';
+
+    if (isLoading) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto h-full flex items-center justify-center">
+                <p className="text-gray-400 font-medium">Loading cycle tracking data...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto h-full flex flex-col lg:flex-row gap-8">
@@ -146,7 +234,7 @@ const CycleTracker = () => {
                                         >
                                             {day}
                                         </button>
-                                        {SYMPTOM_DOTS_MOCK.includes(day) && currentMonth === today.getMonth() && (
+                                        {hasSymptoms(day) && (
                                             <div className="w-1 h-1 rounded-full bg-gray-300 mt-1" />
                                         )}
                                     </>
