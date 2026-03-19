@@ -50,7 +50,12 @@ class RiskFactor(BaseModel):
     description: str
 
 class RiskAnalysisResult(BaseModel):
-    cycle_consistency: int
-    symptom_intensity: str
-    average_cycle_length: int
-    factors: List[RiskFactor]
+    data_insufficient: bool = False
+    cycles_logged: int = 0
+    overall_risk: str = "unknown"
+    cycle_consistency: int = 0
+    symptom_intensity: str = "unknown"
+    average_cycle_length: int = 0
+    factors: List[RiskFactor] = []
+    symptom_trend: list = []
+    cycle_comparison: list = []

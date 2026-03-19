@@ -1,12 +1,67 @@
 from typing import List
 from models.report_model import RiskAnalysisResult, RiskFactor
 from services.tracker_service import TrackerService
-import io
+from fpdf import FPDF
+from datetime import datetime
 
 class ReportsService:
     @staticmethod
     async def analyze_risks(user_id: str) -> RiskAnalysisResult:
+        from database import get_db
+        import datetime
         cycles = await TrackerService.get_user_cycles(user_id)
+        
+        if len(cycles) < 3:
+            return RiskAnalysisResult(
+                data_insufficient=True,
+                cycles_logged=len(cycles),
+                factors=[],
+                overall_risk="unknown",
+                symptom_trend=[],
+                cycle_comparison=[]
+            )
+            
+        cycle_comparison = []
+        recent_cycles = sorted(cycles, key=lambda x: x["cycle_start_date"], reverse=True)[:3]
+        for i, c in enumerate(recent_cycles):
+            c_len = 28
+            if i + 1 < len(cycles):
+                c_len = (c["cycle_start_date"] - cycles[i+1]["cycle_start_date"]).days
+            intensity = c.get("flow_intensity", "average")
+            label = f"Cycle 0{i+1}"
+            if i == 0:
+                label += " (Recent)"
+            elif i == 2:
+                label += " (Average)"
+            cycle_comparison.append({
+                "label": label,
+                "length": c_len,
+                "intensity": intensity
+            })
+
+        db = get_db()
+        thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
+        symptoms_cursor = db["daily_symptoms"].find({
+            "user_id": user_id, 
+            "date": {"$gte": thirty_days_ago}
+        })
+        daily_logs = await symptoms_cursor.to_list(length=100)
+        
+        symptom_trend_dict = {
+            "WK 01": {"week": "WK 01", "cramps": 0, "fatigue": 0},
+            "WK 02": {"week": "WK 02", "cramps": 0, "fatigue": 0},
+            "WK 03": {"week": "WK 03", "cramps": 0, "fatigue": 0},
+            "WK 04": {"week": "WK 04", "cramps": 0, "fatigue": 0},
+        }
+        for log in daily_logs:
+            week_num = min(4, max(1, (datetime.datetime.utcnow() - log["date"]).days // 7 + 1))
+            week_key = f"WK 0{5 - week_num}"
+            if week_key in symptom_trend_dict:
+                symptoms = log.get("symptoms", [])
+                symptom_trend_dict[week_key]["cramps"] += 1 if "cramps" in [s.lower() for s in symptoms] else 0
+                symptom_trend_dict[week_key]["fatigue"] += 1 if "fatigue" in [s.lower() for s in symptoms] else 0
+
+        symptom_trend = list(symptom_trend_dict.values())
         
         factors = []
         cycle_consistency = 100
@@ -96,32 +151,58 @@ class ReportsService:
             cycle_consistency=cycle_consistency,
             symptom_intensity=intensity_trend,
             average_cycle_length=avg_length,
-            factors=factors
+            factors=factors,
+            symptom_trend=symptom_trend,
+            cycle_comparison=cycle_comparison
         )
 
     @staticmethod
-    async def generate_risk_pdf(user_id: str) -> io.BytesIO:
-        # A simple text generation acting as our "PDF" / Report document for MVP
-        report_data = await ReportsService.analyze_risks(user_id)
+    async def generate_pdf_report(analysis_result: RiskAnalysisResult, user_name: str) -> bytes:
+        pdf = FPDF()
+        pdf.add_page()
         
-        content = "PETAL HEALTH RISK REPORT\n"
-        content += "=" * 30 + "\n\n"
-        content += f"Average Cycle Length: {report_data.average_cycle_length} Days\n"
-        content += f"Cycle Consistency: {report_data.cycle_consistency}%\n"
-        content += f"Symptom Intensity Trend: {report_data.symptom_intensity}\n\n"
+        # Header
+        pdf.set_font("helvetica", "B", 16)
+        pdf.cell(0, 10, "PETAL HEALTH PLATFORM - RISK ANALYSIS REPORT", ln=True, align="C")
         
-        content += "DETECTED RISK FACTORS\n"
-        content += "-" * 30 + "\n"
-        if not report_data.factors:
-            content += "No elevated risks detected.\n"
+        # User details
+        pdf.set_font("helvetica", "", 12)
+        pdf.cell(0, 10, f"User: {user_name}", ln=True)
+        pdf.cell(0, 10, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC", ln=True)
+        pdf.ln(5)
+        
+        if analysis_result.data_insufficient:
+            pdf.set_font("helvetica", "B", 14)
+            pdf.cell(0, 10, "Data Insufficient", ln=True)
+            pdf.set_font("helvetica", "", 12)
+            pdf.cell(0, 10, f"You have logged {analysis_result.cycles_logged} cycles.", ln=True)
+            pdf.cell(0, 10, "Please log at least 3 cycles before a full risk report can be generated.", ln=True)
+            return pdf.output()
+            
+        # Overall Risk Summary
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "Summary", ln=True)
+        pdf.set_font("helvetica", "", 12)
+        pdf.cell(0, 8, f"Cycle Consistency: {analysis_result.cycle_consistency}%", ln=True)
+        pdf.cell(0, 8, f"Average Cycle Length: {analysis_result.average_cycle_length} Days", ln=True)
+        pdf.cell(0, 8, f"Symptom Intensity Trend: {analysis_result.symptom_intensity}", ln=True)
+        pdf.ln(5)
+        
+        # Risk Factors
+        pdf.set_font("helvetica", "B", 14)
+        pdf.cell(0, 10, "Detected Risk Factors", ln=True)
+        
+        if not analysis_result.factors:
+            pdf.set_font("helvetica", "I", 12)
+            pdf.cell(0, 10, "No elevated risks detected.", ln=True)
         else:
-            for factor in report_data.factors:
-                content += f"[{factor.badge_text}] {factor.title}\n"
-                content += f"   {factor.description}\n\n"
+            for factor in analysis_result.factors:
+                pdf.set_font("helvetica", "B", 12)
+                pdf.cell(0, 8, f"[{factor.badge_text}] {factor.title}", ln=True)
+                pdf.set_font("helvetica", "", 11)
+                pdf.multi_cell(0, 6, factor.description)
+                pdf.ln(3)
                 
-        content += "\nGenerated securely by Petal Health."
-        
-        file_stream = io.BytesIO(content.encode("utf-8"))
-        return file_stream
+        return pdf.output()
 
 reports_service = ReportsService()
