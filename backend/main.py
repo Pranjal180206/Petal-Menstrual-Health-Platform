@@ -68,7 +68,7 @@ from routes.dashboard import router as dashboard_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
-app.include_router(chatbot_router, prefix="/api/chatbot", tags=["Chatbot"])
+app.include_router(chatbot_router, prefix="/api", tags=["Chatbot"])
 app.include_router(quiz_router, prefix="/api/quizzes", tags=["Quiz"])
 app.include_router(tracker_router, prefix="/api/period-tracker", tags=["Tracker"])
 app.include_router(community_router, prefix="/api/community", tags=["Community"])
