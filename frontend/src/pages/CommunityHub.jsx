@@ -3,8 +3,7 @@ import { Edit3, Heart, MessageCircle, Sparkles, MoreHorizontal, X, Send, Smile }
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-const STORAGE_KEY = 'community_hub_posts';
+import axiosInstance from '../api/axiosInstance';
 
 const AVATAR_COLORS = ['#FF6B9A', '#A78BFA', '#34D399', '#60A5FA', '#FBBF24', '#F87171'];
 const ANONYMOUS_NAMES = ['MoonPetal', 'SilverWave', 'CosmicBloom', 'StarDust', 'NightBlossom', 'CrystalDew'];
@@ -271,14 +270,8 @@ const ShareStoryModal = ({ onClose, onSubmit }) => {
 };
 
 const CommunityHub = () => {
-    const [posts, setPosts] = useState(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : [];
-        } catch {
-            return [];
-        }
-    });
+    const [posts, setPosts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [activeFilter, setActiveFilter] = useState('All');
     const [selectedMood, setSelectedMood] = useState(null);
@@ -286,12 +279,31 @@ const CommunityHub = () => {
     const filters = ['All', 'Trending', 'New', 'My Posts'];
     const moodEmojis = ['😔', '😐', '🙂', '😊', '🌟'];
 
-    // Persist to localStorage whenever posts change
     useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-        } catch {}
-    }, [posts]);
+        const fetchPosts = async () => {
+            try {
+                const response = await axiosInstance.get('/community/');
+                const mapped = response.data.map(p => ({
+                    id: p.id,
+                    initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
+                    color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+                    username: p.author?.name || 'Anonymous',
+                    createdAt: p.created_at,
+                    content: p.content,
+                    tags: p.category && p.category !== "General" ? [p.category] : [],
+                    reactions: { heart: p.likes_count || 0, hug: 0, sparkle: 0 },
+                    replies: p.replies ? p.replies.length : 0,
+                    isUserPost: false
+                }));
+                setPosts(mapped);
+            } catch (error) {
+                console.error('Failed to fetch posts:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPosts();
+    }, []);
 
     const [emojiPop, setEmojiPop] = useState(null);
 
@@ -348,22 +360,32 @@ const CommunityHub = () => {
         triggerEmojiPop(String(emoji));
     };
 
-    const handleNewPost = (content, tags) => {
-        const randomName = ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
-        const randomColor = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
-        const newPost = {
-            id: Date.now(),
-            initials: 'Y',
-            color: randomColor,
-            username: randomName,
-            createdAt: new Date().toISOString(),
-            content,
-            tags,
-            reactions: { heart: 0, hug: 0, sparkle: 0 },
-            replies: 0,
-            isUserPost: true,
-        };
-        setPosts(prev => [newPost, ...prev]);
+    const handleNewPost = async (content, tags) => {
+        try {
+            const payload = {
+                title: content.substring(0, 40) + (content.length > 40 ? "..." : ""),
+                content: content,
+                category: tags.length > 0 ? tags[0] : "General",
+                is_anonymous: true
+            };
+            const response = await axiosInstance.post('/community/', payload);
+            const p = response.data;
+            const newPost = {
+                id: p.id,
+                initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
+                color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+                username: p.author?.name || 'Anonymous',
+                createdAt: p.created_at,
+                content: p.content,
+                tags: p.category && p.category !== "General" ? [p.category] : [],
+                reactions: { heart: p.likes_count || 0, hug: 0, sparkle: 0 },
+                replies: p.replies ? p.replies.length : 0,
+                isUserPost: true
+            };
+            setPosts(prev => [newPost, ...prev]);
+        } catch (error) {
+            console.error('Failed to submit post:', error);
+        }
     };
 
     // Filter logic
@@ -498,7 +520,9 @@ const CommunityHub = () => {
 
                         {/* Posts */}
                         <div className="space-y-5">
-                            {displayedPosts.length === 0 ? (
+                            {isLoading ? (
+                                <div className="text-center py-20 text-gray-400">Loading...</div>
+                            ) : displayedPosts.length === 0 ? (
                                 <div className="empty-state flex flex-col items-center justify-center py-40 text-center">
                                     <div className="text-5xl mb-4">🌸</div>
                                     <h3 className="font-display font-bold text-xl text-[#1D1D2C] mb-2">No posts yet</h3>
