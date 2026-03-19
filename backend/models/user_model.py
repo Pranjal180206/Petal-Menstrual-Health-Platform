@@ -45,3 +45,16 @@ class User(BaseModel):
         arbitrary_types_allowed=True,
         json_encoders={ObjectId: str}
     )
+
+class UserProfileNestedUpdate(BaseModel):
+    avatar: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    language_preference: Optional[str] = None
+
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    gender: Optional[str] = None
+    age: Optional[int] = None
+    is_menstruating: Optional[bool] = None
+    profile: Optional[UserProfileNestedUpdate] = None

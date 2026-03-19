@@ -39,4 +39,33 @@ class UserService:
         created_user = await db["users"].find_one({"_id": result.inserted_id})
         return created_user
 
+    @staticmethod
+    async def update_user_profile(user_id: ObjectId, update_data) -> Optional[dict]:
+        from pymongo import ReturnDocument
+        db = get_db()
+        
+        # Convert Pydantic model to dict if needed, excluding unset/none
+        data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
+        
+        payload = {}
+        for k, v in data_dict.items():
+            if v is not None:
+                if isinstance(v, dict):
+                    # Flatten nested dicts for Mongo $set so we don't overwrite the entire object
+                    for sub_k, sub_v in v.items():
+                        if sub_v is not None:
+                            payload[f"{k}.{sub_k}"] = sub_v
+                else:
+                    payload[k] = v
+                    
+        if not payload:
+            return await db["users"].find_one({"_id": user_id})
+            
+        updated = await db["users"].find_one_and_update(
+            {"_id": user_id},
+            {"$set": payload},
+            return_document=ReturnDocument.AFTER
+        )
+        return updated
+
 user_service = UserService()

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends
 from services.auth_service import get_current_user
+from services.user_service import user_service
+from models.user_model import UserProfileUpdate
 
 router = APIRouter()
 
@@ -9,3 +11,17 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
     user["id"] = str(user.pop("_id"))
     user.pop("password_hash", None)
     return user
+
+@router.patch("/profile")
+async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["_id"]
+    updated_user = await user_service.update_user_profile(user_id, body)
+    
+    if updated_user:
+        user = dict(updated_user)
+        user["id"] = str(user.pop("_id"))
+        user.pop("password_hash", None)
+        return user
+    
+    # Fallback to current if no update happened
+    return await get_user_profile(current_user)
