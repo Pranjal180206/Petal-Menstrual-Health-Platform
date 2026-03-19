@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { FileText, Download, Calendar, Printer, CheckCircle2 } from 'lucide-react';
 import Toast from '../components/Toast';
+import axiosInstance from '../api/axiosInstance';
 
 const SECTION_DEFAULTS = {
     'Cycle Overview': true,
@@ -10,12 +11,6 @@ const SECTION_DEFAULTS = {
     'Hormonal Pattern Analysis': true,
     'Doctor Recommendations': false,
 };
-
-const RECENT_REPORTS = [
-    { name: 'Cycle Report — February 2025', date: 'Mar 1, 2025', pages: 4 },
-    { name: 'Cycle Report — January 2025', date: 'Feb 1, 2025', pages: 5 },
-    { name: 'Q4 2024 Summary Report', date: 'Jan 5, 2025', pages: 12 },
-];
 
 const formatDateStr = (d) => d.toISOString().split('T')[0];
 
@@ -32,9 +27,34 @@ const ReportGenerator = () => {
     const [dateTo, setDateTo] = useState(formatDateStr(today));
     const [toast, setToast] = useState(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [recentReport, setRecentReport] = useState(null);
+    const [isLoadingReport, setIsLoadingReport] = useState(true);
+    const [reportError, setReportError] = useState(null);
 
     const showToast = useCallback((message, type = 'success') => {
         setToast({ message, type });
+    }, []);
+
+    // On mount: fetch risk analysis to populate "recent report" metadata
+    useEffect(() => {
+        const fetchReport = async () => {
+            setIsLoadingReport(true);
+            setReportError(null);
+            try {
+                const res = await axiosInstance.get('/reports/risk-analysis');
+                setRecentReport(res.data);
+            } catch (err) {
+                if (err.response?.status === 401) {
+                    setReportError('sign_in_required');
+                } else {
+                    console.error('Failed to load report data:', err);
+                    setReportError('fetch_failed');
+                }
+            } finally {
+                setIsLoadingReport(false);
+            }
+        };
+        fetchReport();
     }, []);
 
     const toggleSection = (name) =>
@@ -52,19 +72,38 @@ const ReportGenerator = () => {
         setDateTo(formatDateStr(end));
     };
 
-    const handleExport = () => {
+    const handleExport = async () => {
         const enabledSections = Object.entries(sections).filter(([, v]) => v).map(([k]) => k);
         if (enabledSections.length === 0) {
             showToast('Please enable at least one report section.', 'warning');
             return;
         }
+        if (selectedFormat !== 'PDF') {
+            showToast(`${selectedFormat} export is not yet supported. Please select PDF.`, 'info');
+            return;
+        }
         setIsGenerating(true);
-        // Simulate async export — will call real API when backend is ready
-        // TODO: POST /api/reports/generate { format: selectedFormat, sections: enabledSections, from: dateFrom, to: dateTo }
-        setTimeout(() => {
+        try {
+            const res = await axiosInstance.get('/reports/export', { responseType: 'blob' });
+            const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'petal_risk_report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('PDF report downloaded successfully!', 'success');
+        } catch (err) {
+            if (err.response?.status === 401) {
+                showToast('Please sign in to generate a report.', 'error');
+            } else {
+                showToast('Failed to generate report. Please try again.', 'error');
+                console.error('Export failed:', err);
+            }
+        } finally {
             setIsGenerating(false);
-            showToast(`${selectedFormat} report generated! Download will start when backend is connected.`, 'success');
-        }, 1500);
+        }
     };
 
     const enabledCount = Object.values(sections).filter(Boolean).length;
@@ -89,14 +128,13 @@ const ReportGenerator = () => {
                     <button
                         onClick={handleExport}
                         disabled={isGenerating}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all ${
-                            isGenerating
-                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                : 'bg-[#D81B60] hover:bg-[#C2185B] text-white'
-                        }`}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all ${isGenerating
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-[#D81B60] hover:bg-[#C2185B] text-white'
+                            }`}
                     >
                         <Download size={16} />
-                        {isGenerating ? 'Generating…' : `Export ${selectedFormat}`}
+                        {isGenerating ? 'Generating…' : 'Download PDF Report'}
                     </button>
                 </div>
             </header>
@@ -137,11 +175,10 @@ const ReportGenerator = () => {
                                 <button
                                     key={label}
                                     onClick={() => setQuickRange(label)}
-                                    className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${
-                                        selectedRange === label
-                                            ? 'bg-[#D81B60] text-white'
-                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                    }`}
+                                    className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${selectedRange === label
+                                        ? 'bg-[#D81B60] text-white'
+                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                        }`}
                                 >
                                     {label}
                                 </button>
@@ -191,11 +228,10 @@ const ReportGenerator = () => {
                                 <button
                                     key={fmt.label}
                                     onClick={() => setSelectedFormat(fmt.label)}
-                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-bold text-sm transition-colors ${
-                                        selectedFormat === fmt.label
-                                            ? 'border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]'
-                                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                                    }`}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-bold text-sm transition-colors ${selectedFormat === fmt.label
+                                        ? 'border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]'
+                                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                        }`}
                                 >
                                     {fmt.icon}
                                     {fmt.label}
@@ -236,22 +272,51 @@ const ReportGenerator = () => {
                     <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
                         <h2 className="font-heading font-bold text-sm text-[#1D1D2C] mb-4">Recent Reports</h2>
                         <div className="space-y-2">
-                            {RECENT_REPORTS.map(r => (
+                            {isLoadingReport ? (
+                                <p className="text-xs text-gray-400 font-medium text-center py-4">
+                                    Loading...
+                                </p>
+                            ) : reportError === 'sign_in_required' ? (
+                                <p className="text-xs text-amber-600 font-medium text-center py-4">
+                                    Please sign in to view your reports.
+                                </p>
+                            ) : reportError === 'fetch_failed' ? (
+                                <p className="text-xs text-red-500 font-medium text-center py-4">
+                                    Could not load report data.
+                                </p>
+                            ) : recentReport?.data_insufficient ? (
+                                <div className="text-center py-4">
+                                    <p className="text-xs text-[#1D1D2C] font-bold mb-1">
+                                        No reports available yet.
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 font-medium">
+                                        Log at least 3 cycles to generate your first report.
+                                    </p>
+                                </div>
+                            ) : recentReport ? (
                                 <button
-                                    key={r.name}
-                                    onClick={() => showToast(`Opening "${r.name}" — available when backend connects.`, 'info')}
+                                    onClick={handleExport}
                                     className="group w-full flex items-start gap-3 p-3 rounded-xl hover:bg-[#F7F8FA] transition-colors text-left"
+                                    disabled={isGenerating}
                                 >
                                     <div className="w-9 h-9 rounded-lg bg-[#FFF0F4] flex items-center justify-center text-[#D81B60] shrink-0">
                                         <FileText size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-[#1D1D2C] truncate">{r.name}</p>
-                                        <p className="text-[10px] text-gray-400 font-medium">{r.date} · {r.pages} pages</p>
+                                        <p className="text-xs font-bold text-[#1D1D2C] truncate">
+                                            Petal Risk Analysis Report
+                                        </p>
+                                        <p className="text-[10px] text-gray-400 font-medium">
+                                            Risk level: {recentReport.overall_risk || '—'} · Click to download
+                                        </p>
                                     </div>
                                     <Download size={14} className="text-gray-300 group-hover:text-[#D81B60] transition-colors shrink-0 mt-0.5" />
                                 </button>
-                            ))}
+                            ) : (
+                                <p className="text-xs text-gray-400 font-medium text-center py-4">
+                                    No reports generated yet
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
