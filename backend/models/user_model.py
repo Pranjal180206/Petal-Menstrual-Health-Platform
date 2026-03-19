@@ -24,7 +24,10 @@ class User(BaseModel):
 
     name: str
     email: EmailStr
-    password_hash: str
+    password_hash: Optional[str] = None
+    auth_provider: str = "email"
+    google_id: Optional[str] = None
+    avatar_url: Optional[str] = None
 
     gender: str
     age: int

@@ -1,5 +1,13 @@
 import axiosInstance from './axiosInstance';
 
+export const googleAuth = async (code, redirectUri) => {
+  const response = await axiosInstance.post('/auth/google', {
+    code,
+    redirect_uri: redirectUri
+  });
+  return response.data;
+};
+
 export const authApi = {
   login: async (email, password) => {
     // FastAPI OAuth2PasswordRequestForm expects x-www-form-urlencoded

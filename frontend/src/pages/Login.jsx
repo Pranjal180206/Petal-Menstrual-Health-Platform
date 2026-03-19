@@ -19,6 +19,14 @@ const Login = () => {
     });
     const [error, setError] = useState('');
 
+    const handleGoogleLogin = () => {
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        const redirectUri = window.location.origin;
+        const scope = 'openid email profile';
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}&access_type=offline`;
+        window.location.href = authUrl;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -196,6 +204,29 @@ const Login = () => {
                                     {isLogin ? "Let's Go!" : "Sign Up"}
                                 </button>
                             </div>
+
+                            <div className="relative py-4">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-100"></div>
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-white px-2 text-gray-400 font-bold tracking-widest">or</span>
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleGoogleLogin}
+                                className="w-full bg-white border border-gray-200 hover:border-gray-300 text-gray-700 rounded-2xl py-4 font-bold text-base flex items-center justify-center gap-3 transition-all hover:bg-gray-50 active:scale-[0.98]"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M23.49 12.275c0-.846-.076-1.662-.216-2.449H12v4.63h6.443a5.507 5.507 0 01-2.39 3.614v3.004h3.87c2.265-2.084 3.567-5.152 3.567-8.799z" fill="#4285F4"/>
+                                    <path d="M12 24c3.24 0 5.957-1.075 7.942-2.916l-3.87-3.004c-1.072.718-2.443 1.144-4.072 1.144-3.133 0-5.786-2.115-6.733-4.96H1.296v3.103C3.27 21.315 7.377 24 12 24z" fill="#34A853"/>
+                                    <path d="M5.267 14.264a7.204 7.204 0 010-4.528V6.633H1.296a11.99 11.99 0 000 10.734l3.971-3.103z" fill="#FBBC05"/>
+                                    <path d="M12 4.773c1.762 0 3.344.605 4.588 1.792l3.442-3.442C17.953 1.07 15.24 0 12 0 7.377 0 3.27 2.685 1.296 6.633l3.971 3.103C6.214 6.888 8.867 4.773 12 4.773z" fill="#EA4335"/>
+                                </svg>
+                                Continue with Google
+                            </button>
                         </form>
 
                         <div className="mt-8 text-center space-y-4">

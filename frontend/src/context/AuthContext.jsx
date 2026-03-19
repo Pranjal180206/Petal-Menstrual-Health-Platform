@@ -1,11 +1,12 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authApi } from '../api/auth.api';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { authApi, googleAuth } from '../api/auth.api';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const googleCallbackHandled = useRef(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -24,6 +25,27 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
   }, []);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    if (code && !googleCallbackHandled.current) {
+      googleCallbackHandled.current = true;
+      loginWithGoogle(code).then(() => {
+        window.location.replace('/cycle-tracker');
+      }).catch(err => {
+        console.error("Google Auth callback failed", err);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+  }, []);
+
+  const loginWithGoogle = async (code) => {
+    const data = await googleAuth(code, window.location.origin);
+    localStorage.setItem('petal_token', data.access_token);
+    const userData = await authApi.getCurrentUser();
+    setUser(userData);
+  };
 
   const login = async (credentials) => {
     const { access_token } = await authApi.login(credentials.email, credentials.password);
@@ -46,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, loginWithGoogle }}>
       {!loading && children}
     </AuthContext.Provider>
   );

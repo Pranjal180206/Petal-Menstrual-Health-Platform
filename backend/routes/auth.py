@@ -7,6 +7,7 @@ from email_validator import validate_email, EmailNotValidError
 
 from services.auth_service import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 from services.user_service import user_service
+from services.google_auth_service import exchange_code_for_profile, get_or_create_user
 from database import get_db
 from bson import ObjectId
 
@@ -78,6 +79,42 @@ async def register(request: Request, user_in: UserRegister):
         "access_token": access_token, 
         "token_type": "bearer", 
         "user": created_user
+    }
+
+class GoogleAuthRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+@router.post("/google")
+async def google_auth(request: GoogleAuthRequest):
+    print(f"[ROUTE] POST /auth/google called, code length={len(request.code)}, redirect_uri={request.redirect_uri}")
+    try:
+        profile = await exchange_code_for_profile(request.code, request.redirect_uri)
+    except HTTPException:
+        raise  # Let HTTPExceptions pass through with their original status code
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
+    db = get_db()
+    user = await get_or_create_user(db, profile)
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(user["_id"])}, expires_delta=access_token_expires
+    )
+    
+    await db["users"].update_one(
+        {"_id": ObjectId(user["_id"])},
+        {"$set": {"last_login": datetime.utcnow()}}
+    )
+
+    user["id"] = str(user.pop("_id"))
+    user.pop("password_hash", None)
+    
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": user
     }
 
 @router.post("/login")
