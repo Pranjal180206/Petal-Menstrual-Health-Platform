@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, EmailStr, field_validator
+from config import limiter
 from datetime import timedelta, datetime
 from typing import Optional
 from email_validator import validate_email, EmailNotValidError
@@ -40,7 +41,8 @@ class TokenResponse(BaseModel):
     user: dict
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserRegister):
+@limiter.limit("3/minute")
+async def register(request: Request, user_in: UserRegister):
     existing_user = await user_service.get_user_by_email(user_in.email)
     if existing_user:
         raise HTTPException(
@@ -79,7 +81,8 @@ async def register(user_in: UserRegister):
     }
 
 @router.post("/login")
-async def login(user_in: UserLogin):
+@limiter.limit("5/minute")
+async def login(request: Request, user_in: UserLogin):
     user = await user_service.get_user_by_email(user_in.email)
     if not user or not user.get("password_hash") or not verify_password(user_in.password, user.get("password_hash")):
         raise HTTPException(

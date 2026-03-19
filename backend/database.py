@@ -32,6 +32,28 @@ async def ensure_indexes():
     await db["cycle_logs"].create_index("user_id")
     await db["cycle_logs"].create_index("created_at")
 
+    # daily_symptoms
+    await db["daily_symptoms"].create_index([("user_id", 1)])
+    await db["daily_symptoms"].create_index([("user_id", 1), ("date", -1)])
+
+    # health_reports
+    await db["health_reports"].create_index([("user_id", 1)])
+
+    # risk_scores
+    await db["risk_scores"].create_index([("user_id", 1)])
+
+    # notifications
+    await db["notifications"].create_index([("user_id", 1), ("created_at", -1)])
+
+    # myth_facts
+    await db["myth_facts"].create_index([("_id", 1)])
+
+    # education_content
+    await db["education_content"].create_index([("_id", 1)])
+
+    # quizzes
+    await db["quizzes"].create_index([("is_published", 1)])
+
     print("Database indexes ensured.")
 
 async def connect_to_mongo():
