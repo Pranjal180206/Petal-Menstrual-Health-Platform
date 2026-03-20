@@ -30,7 +30,7 @@ class PrivacySettings(BaseModel):
 class CyclePreferences(BaseModel):
     average_cycle_length: int = 28
     average_period_length: int = 5
-    luteal_phase_tracking: bool = False
+    luteal_phase_length: int = 14
 
 class User(BaseModel):
 

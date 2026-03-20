@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Dict, Any
@@ -6,6 +6,10 @@ from typing import List, Dict, Any
 from services.auth_service import get_current_user
 from services.chatbot_service import get_chatbot_response
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 class ChatMessageRequest(BaseModel):
@@ -18,13 +22,15 @@ class ChatMessageResponse(BaseModel):
     timestamp: datetime
 
 @router.post("/chatbot/message", response_model=ChatMessageResponse)
+@limiter.limit("10/minute")
 async def send_chatbot_message(
-    request: ChatMessageRequest,
+    request: Request,
+    body: ChatMessageRequest,
     current_user: dict = Depends(get_current_user)
 ):
     reply = await get_chatbot_response(
-        message=request.message,
-        history=request.conversation_history,
-        language=request.language
+        message=body.message,
+        history=body.conversation_history,
+        language=body.language
     )
     return {"reply": reply, "timestamp": datetime.utcnow()}

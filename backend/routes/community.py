@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from typing import List, Optional
 from models.community_post_model import CommunityPostReq, CommunityReplyReq, CommunityPostResponse
 from services.community_service import community_service
 from services.auth_service import get_current_user
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 # Dependency to optionally get user
@@ -29,8 +33,9 @@ async def list_posts(skip: int = Query(0, ge=0), limit: int = Query(20, le=100))
     return await community_service.get_posts(skip, limit)
 
 @router.post("/", response_model=CommunityPostResponse, status_code=status.HTTP_201_CREATED)
-async def create_post(request: CommunityPostReq, current_user: Optional[dict] = Depends(get_optional_user)):
-    return await community_service.create_post(request, current_user)
+@limiter.limit("20/minute")
+async def create_post(request: Request, body: CommunityPostReq, current_user: Optional[dict] = Depends(get_optional_user)):
+    return await community_service.create_post(body, current_user)
 
 @router.post("/{post_id}/reply", response_model=CommunityPostResponse)
 async def add_reply(post_id: str, request: CommunityReplyReq, current_user: Optional[dict] = Depends(get_optional_user)):

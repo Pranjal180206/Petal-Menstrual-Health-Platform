@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from models.report_model import RiskAnalysisResult
 from services.reports_service import reports_service
 from services.auth_service import get_current_user
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 @router.get("/risk-analysis", response_model=RiskAnalysisResult)
@@ -13,7 +17,8 @@ async def get_risk_analysis(current_user: dict = Depends(get_current_user)):
     return result
 
 @router.get("/export")
-async def export_risk_report(current_user: dict = Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def export_risk_report(request: Request, current_user: dict = Depends(get_current_user)):
     user_id = str(current_user["_id"])
     user_name = current_user.get("name", "User")
     
