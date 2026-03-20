@@ -3,8 +3,19 @@ from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
 from bson import ObjectId
 from bson.errors import InvalidId
-from models.user_model import User
+from models.user_model import User, NotificationPreferences, PrivacySettings
 from database import get_db
+from pydantic import BaseModel, Field
+
+class UserSettingsUpdate(BaseModel):
+    notification_preferences: Optional[NotificationPreferences] = None
+    privacy_settings: Optional[PrivacySettings] = None
+    language_preference: Optional[str] = None
+
+class CyclePreferencesUpdate(BaseModel):
+    average_cycle_length: Optional[int] = Field(None, ge=15, le=60)
+    average_period_length: Optional[int] = Field(None, ge=1, le=15)
+    luteal_phase_tracking: Optional[bool] = None
 
 class UserService:
     @staticmethod
@@ -58,6 +69,57 @@ class UserService:
                 else:
                     payload[k] = v
                     
+        if not payload:
+            return await db["users"].find_one({"_id": user_id})
+            
+        updated = await db["users"].find_one_and_update(
+            {"_id": user_id},
+            {"$set": payload},
+            return_document=ReturnDocument.AFTER
+        )
+        return updated
+
+    @staticmethod
+    async def update_user_settings(user_id, update_data, db=None):
+        if db is None:
+            db = get_db()
+        from pymongo import ReturnDocument
+        
+        data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
+        
+        payload = {}
+        for k, v in data_dict.items():
+            if v is not None:
+                if isinstance(v, dict):
+                    for sub_k, sub_v in v.items():
+                        if sub_v is not None:
+                            payload[f"{k}.{sub_k}"] = sub_v
+                else:
+                    payload[k] = v
+                    
+        if not payload:
+            return await db["users"].find_one({"_id": user_id})
+            
+        updated = await db["users"].find_one_and_update(
+            {"_id": user_id},
+            {"$set": payload},
+            return_document=ReturnDocument.AFTER
+        )
+        return updated
+
+    @staticmethod
+    async def update_cycle_preferences(user_id, update_data: CyclePreferencesUpdate, db=None) -> dict:
+        if db is None:
+            db = get_db()
+        from pymongo import ReturnDocument
+        
+        data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
+        
+        payload = {}
+        for k, v in data_dict.items():
+            if v is not None:
+                payload[f"cycle_preferences.{k}"] = v
+                
         if not payload:
             return await db["users"].find_one({"_id": user_id})
             

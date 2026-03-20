@@ -8,6 +8,7 @@ import {
     Settings,
     ChevronLeft,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import PetalIcon from './PetalIcon';
 
 const navLinks = [
@@ -40,6 +41,7 @@ const navLinks = [
 ];
 
 const CycleTrackerLayout = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     const linkClass = ({ isActive }) =>
@@ -120,17 +122,24 @@ const CycleTrackerLayout = () => {
                     </NavLink>
 
                     <div className="flex items-center gap-3 px-4 mt-4">
-                        <img
-                            src="https://i.pravatar.cc/100?img=5"
+                      {user?.avatar_url 
+                        ? <img 
+                            src={user.avatar_url} 
                             alt="Profile"
                             className="w-10 h-10 rounded-full border-2 border-[#FCE4EC] shadow-sm"
-                        />
-                        <div>
-                            <p className="font-bold text-sm text-[#1D1D2C] leading-none mb-1">
-                                Alex Rivera
-                            </p>
-                            <p className="text-[10px] text-[#D81B60] font-bold">Pro Member</p>
-                        </div>
+                          />
+                        : <div className="w-10 h-10 rounded-full border-2 border-[#FCE4EC] shadow-sm bg-pink-400 flex items-center justify-center text-white font-bold">
+                            {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                          </div>
+                      }
+                      <div>
+                        <p className="font-bold text-sm text-[#1D1D2C] leading-none mb-1">
+                          {user?.name ?? 'Guest'}
+                        </p>
+                        <p className="text-[10px] text-[#D81B60] font-bold">
+                          {user ? 'Member' : ''}
+                        </p>
+                      </div>
                     </div>
                 </div>
             </aside>

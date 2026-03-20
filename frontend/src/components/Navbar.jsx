@@ -1,7 +1,9 @@
 import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PetalIcon from './PetalIcon';
+import { useAuth } from '../context/AuthContext';
 const Navbar = ({ isHome = false }) => {
+    const { user } = useAuth();
     return (
         <nav className="w-full max-w-7xl mx-auto px-6 py-8 md:py-10 flex items-center justify-between relative z-50">
             {/* Logo */}
@@ -34,7 +36,12 @@ const Navbar = ({ isHome = false }) => {
                     Sign In
                 </Link>
                 <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
-                    <span className="text-2xl">👩</span>
+                    {user?.avatar_url 
+                      ? <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
+                      : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold">
+                          {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                        </div>
+                    }
                 </Link>
             </div>
 

@@ -18,6 +18,20 @@ class Consent(BaseModel):
     timestamp: datetime
 
 
+class NotificationPreferences(BaseModel):
+    email: bool = True
+    push: bool = True
+    reminders: bool = True
+
+class PrivacySettings(BaseModel):
+    data_sharing: bool = False
+    anonymous_by_default: bool = True
+
+class CyclePreferences(BaseModel):
+    average_cycle_length: int = 28
+    average_period_length: int = 5
+    luteal_phase_tracking: bool = False
+
 class User(BaseModel):
 
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
@@ -37,6 +51,11 @@ class User(BaseModel):
     is_menstruating: bool
 
     profile: Optional[UserProfile]
+
+    notification_preferences: NotificationPreferences = NotificationPreferences()
+    privacy_settings: PrivacySettings = PrivacySettings()
+    language_preference: str = "en"
+    cycle_preferences: CyclePreferences = CyclePreferences()
 
     consent: Consent
 

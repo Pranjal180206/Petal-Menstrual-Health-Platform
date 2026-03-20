@@ -5,10 +5,12 @@ import {
     BookOpen,
     Settings,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { NavLink } from 'react-router-dom';
 import PetalIcon from './PetalIcon';
 
 const Sidebar = () => {
+    const { user } = useAuth();
     return (
         <aside className="w-64 h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0">
 
@@ -106,10 +108,15 @@ const Sidebar = () => {
                 </NavLink>
 
                 <div className="flex items-center gap-3 px-4">
-                    <img src="https://i.pravatar.cc/100?img=5" alt="Profile" className="w-10 h-10 rounded-full border border-gray-200" />
+                    {user?.avatar_url 
+                      ? <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
+                      : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold">
+                          {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                        </div>
+                    }
                     <div>
-                        <p className="font-bold text-sm text-[#1D1D2C] leading-none mb-1">Alex Rivera</p>
-                        <p className="text-[10px] text-[#D81B60] font-bold">Pro Member</p>
+                        <p className="font-bold text-sm text-[#1D1D2C] leading-none mb-1">{user?.name ?? 'Guest'}</p>
+                        <p className="text-[10px] text-[#D81B60] font-bold">{user ? 'Member' : ''}</p>
                     </div>
                 </div>
             </div>

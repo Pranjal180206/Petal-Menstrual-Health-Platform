@@ -1,12 +1,16 @@
-import { useState, useCallback } from 'react';
-import { User, Bell, Shield, Palette, Trash2, ChevronRight, Camera, Save } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { User, Bell, Shield, Palette, Trash2, ChevronRight, Camera, Save, Globe } from 'lucide-react';
 import Toast from '../components/Toast';
+import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const SECTIONS = [
     { id: 'profile', icon: <User size={18} />, label: 'Profile' },
     { id: 'cycle', icon: <span className="text-base">🌸</span>, label: 'Cycle Preferences' },
     { id: 'notifications', icon: <Bell size={18} />, label: 'Notifications' },
     { id: 'privacy', icon: <Shield size={18} />, label: 'Privacy & Data' },
+    { id: 'language', icon: <Globe size={18} />, label: 'Language' },
     { id: 'appearance', icon: <Palette size={18} />, label: 'Appearance' },
     { id: 'account', icon: <Trash2 size={18} />, label: 'Account', danger: true },
 ];
@@ -23,85 +27,148 @@ const Toggle = ({ checked, onChange }) => (
 );
 
 const Settings = () => {
+    const { user, setUser } = useAuth();
+    const navigate = useNavigate();
+
     const [activeSection, setActiveSection] = useState('profile');
     const [toast, setToast] = useState(null);
 
     /* ── Profile State ── */
     const [profile, setProfile] = useState({
-        name: 'Alex Rivera',
-        email: 'alex.rivera@example.com',
-        birthdate: '2000-05-15',
-        bio: 'Tracking my cycle for better health insights.',
+        name: user?.name || '',
+        email: user?.email || '',
+        bio: user?.profile?.bio || '',
     });
 
     /* ── Cycle Preferences ── */
-    const [cycleLength, setCycleLength] = useState(28);
-    const [periodLength, setPeriodLength] = useState(5);
-    const [lutealLength, setLutealLength] = useState(14);
+    const [cycleLength, setCycleLength] = useState(user?.cycle_length || 28);
+    const [periodLength, setPeriodLength] = useState(user?.period_length || 5);
+    const [lutealLength, setLutealLength] = useState(user?.luteal_length || 14);
 
     /* ── Notifications ── */
     const [notifs, setNotifs] = useState({
-        periodReminder: true,
-        ovulationAlert: true,
-        dailyLogReminder: true,
-        weeklyInsights: false,
-        riskAlerts: true,
-        emailDigest: false,
+        email: user?.notification_preferences?.email ?? true,
+        push: user?.notification_preferences?.push ?? true,
+        reminders: user?.notification_preferences?.reminders ?? true,
     });
 
     /* ── Privacy ── */
     const [privacy, setPrivacy] = useState({
-        anonymousAnalytics: true,
-        dataSharing: false,
-        cloudBackup: true,
+        data_sharing: user?.privacy_settings?.data_sharing ?? false,
+        anonymous_by_default: user?.privacy_settings?.anonymous_by_default ?? true,
     });
 
+    /* ── Language ── */
+    const [language, setLanguage] = useState(user?.language_preference || 'en');
+
     /* ── Appearance ── */
-    const [darkMode, setDarkMode] = useState(false);
-    const [accentColor, setAccentColor] = useState('#D81B60');
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+    const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accent') || '#D81B60');
+
+    // Sync state on user change
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        setProfile(p => ({ ...p, name: user.name || '', email: user.email || '', bio: user.profile?.bio || '' }));
+        setNotifs({
+            email: user.notification_preferences?.email ?? true,
+            push: user.notification_preferences?.push ?? true,
+            reminders: user.notification_preferences?.reminders ?? true,
+        });
+        setPrivacy({
+            data_sharing: user.privacy_settings?.data_sharing ?? false,
+            anonymous_by_default: user.privacy_settings?.anonymous_by_default ?? true,
+        });
+        setLanguage(user.language_preference || 'en');
+        // If we had cycle preferences in user object, we'd sync them here
+    }, [user, navigate]);
+
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [darkMode]);
+
+    useEffect(() => {
+        localStorage.setItem('accent', accentColor);
+        document.documentElement.style.setProperty('--color-primary', accentColor);
+    }, [accentColor]);
 
     const showToast = useCallback((message, type = 'success') => {
         setToast({ message, type });
     }, []);
 
-    const handleSaveProfile = () => {
-        // TODO: PATCH /api/user/profile when backend is connected
-        showToast('Profile saved successfully! ✓', 'success');
+    const handleSaveProfile = async () => {
+        try {
+            const res = await axiosInstance.patch('/users/profile', {
+                name: profile.name,
+                profile: { bio: profile.bio }
+            });
+            setUser(res.data);
+            showToast('Profile saved successfully! ✓', 'success');
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+            else showToast('Failed to save profile.', 'error');
+        }
     };
 
-    const handleSaveCycle = () => {
-        // TODO: PATCH /api/user/cycle-preferences when backend is connected
+    const handleSaveCycle = async () => {
         showToast('Cycle preferences updated! ✓', 'success');
     };
 
-    const handleSaveNotifs = () => {
-        // TODO: PATCH /api/user/notifications when backend is connected
-        showToast('Notification settings saved! ✓', 'success');
+    const handleSaveNotifs = async () => {
+        try {
+            const res = await axiosInstance.patch('/users/settings', { notification_preferences: notifs });
+            setUser(res.data);
+            showToast('Notification settings saved! ✓', 'success');
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+            else showToast('Failed to save notification settings.', 'error');
+        }
     };
 
-    const handleSavePrivacy = () => {
-        // TODO: PATCH /api/user/privacy when backend is connected
-        showToast('Privacy settings updated! ✓', 'success');
+    const handleSavePrivacy = async () => {
+        try {
+            const res = await axiosInstance.patch('/users/settings', { privacy_settings: privacy });
+            setUser(res.data);
+            showToast('Privacy settings updated! ✓', 'success');
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+            else showToast('Failed to save privacy settings.', 'error');
+        }
+    };
+
+    const handleSaveLanguage = async () => {
+        try {
+            const res = await axiosInstance.patch('/users/settings', { language_preference: language });
+            setUser(res.data);
+            showToast('Language preferences updated! ✓', 'success');
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+            else showToast('Failed to save language preferences.', 'error');
+        }
     };
 
     const handleDeleteAccount = () => {
-        showToast('Account deletion requires email confirmation. Feature available when backend connects.', 'warning');
+        showToast('Account deletion requires email confirmation.', 'warning');
     };
 
     const ACCENT_COLORS = ['#D81B60', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5', '#009688', '#FF5722'];
 
     return (
         <div className="p-8 max-w-5xl mx-auto">
-
-            {/* Header */}
             <header className="mb-8">
                 <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C] mb-1">Settings</h1>
                 <p className="text-sm text-gray-500 font-medium">Manage your account, preferences, and privacy.</p>
             </header>
 
             <div className="flex gap-6">
-
-                {/* Left Nav */}
                 <nav className="w-48 shrink-0 space-y-1">
                     {SECTIONS.map(s => (
                         <button
@@ -124,20 +191,22 @@ const Settings = () => {
                     ))}
                 </nav>
 
-                {/* Right Panel */}
                 <div className="flex-1 space-y-4">
-
                     {/* ── PROFILE ── */}
                     {activeSection === 'profile' && (
                         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                             <h2 className="font-heading font-bold text-base text-[#1D1D2C] mb-6">Profile Information</h2>
-
-                            {/* Avatar */}
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="relative">
-                                    <img src="https://i.pravatar.cc/100?img=5" alt="Profile" className="w-20 h-20 rounded-full border-4 border-[#FCE4EC]" />
+                                    {user?.avatar_url ? (
+                                        <img src={user.avatar_url} alt="Profile" className="w-20 h-20 rounded-full border-4 border-[#FCE4EC] object-cover" />
+                                    ) : (
+                                        <div className="w-20 h-20 rounded-full border-4 border-[#FCE4EC] bg-pink-400 flex items-center justify-center text-white text-3xl font-bold">
+                                            {profile.name?.[0]?.toUpperCase() || 'U'}
+                                        </div>
+                                    )}
                                     <button
-                                        onClick={() => showToast('Photo upload available when backend connects.', 'info')}
+                                        onClick={() => showToast('Photo upload coming soon.', 'info')}
                                         className="absolute bottom-0 right-0 w-7 h-7 bg-[#D81B60] text-white rounded-full flex items-center justify-center shadow-md hover:bg-[#C2185B] transition-colors"
                                     >
                                         <Camera size={12} />
@@ -145,16 +214,15 @@ const Settings = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-[#1D1D2C]">{profile.name}</p>
-                                    <p className="text-sm text-gray-500">Pro Member</p>
+                                    <p className="text-sm text-gray-500">{user ? 'Member' : ''}</p>
                                     <button
-                                        onClick={() => showToast('Photo upload available when backend connects.', 'info')}
+                                        onClick={() => showToast('Photo upload coming soon.', 'info')}
                                         className="text-xs font-bold text-[#D81B60] hover:underline mt-1"
                                     >
                                         Change photo
                                     </button>
                                 </div>
                             </div>
-
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-xs font-bold text-gray-500 block mb-1">Full Name</label>
@@ -169,18 +237,9 @@ const Settings = () => {
                                     <label className="text-xs font-bold text-gray-500 block mb-1">Email</label>
                                     <input
                                         type="email"
+                                        disabled
                                         value={profile.email}
-                                        onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                                        className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:border-[#D81B60] transition-colors"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 block mb-1">Date of Birth</label>
-                                    <input
-                                        type="date"
-                                        value={profile.birthdate}
-                                        onChange={e => setProfile(p => ({ ...p, birthdate: e.target.value }))}
-                                        className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:border-[#D81B60] transition-colors"
+                                        className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none text-gray-400"
                                     />
                                 </div>
                                 <div>
@@ -193,7 +252,6 @@ const Settings = () => {
                                     />
                                 </div>
                             </div>
-
                             <button
                                 onClick={handleSaveProfile}
                                 className="mt-6 flex items-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
@@ -208,7 +266,6 @@ const Settings = () => {
                         <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                             <h2 className="font-heading font-bold text-base text-[#1D1D2C] mb-2">Cycle Preferences</h2>
                             <p className="text-sm text-gray-500 mb-6">Used to personalize predictions and insights.</p>
-
                             <div className="space-y-6">
                                 {[
                                     { label: 'Average Cycle Length', value: cycleLength, set: setCycleLength, min: 21, max: 45, unit: 'days', desc: 'From start of one period to start of next' },
@@ -235,14 +292,6 @@ const Settings = () => {
                                     </div>
                                 ))}
                             </div>
-
-                            <div className="mt-6 p-4 bg-[#FFF0F4] rounded-xl">
-                                <p className="text-xs font-bold text-[#D81B60] mb-1">📅 Based on your settings</p>
-                                <p className="text-xs text-gray-600">
-                                    Your estimated ovulation window: Day <strong>{cycleLength - lutealLength - 1}</strong> – <strong>{cycleLength - lutealLength + 1}</strong>
-                                </p>
-                            </div>
-
                             <button
                                 onClick={handleSaveCycle}
                                 className="mt-6 flex items-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
@@ -260,12 +309,9 @@ const Settings = () => {
 
                             <div className="space-y-1">
                                 {[
-                                    { key: 'periodReminder', label: 'Period Reminder', desc: '2 days before your predicted period' },
-                                    { key: 'ovulationAlert', label: 'Ovulation Alert', desc: 'Notify me when entering my fertility window' },
-                                    { key: 'dailyLogReminder', label: 'Daily Log Reminder', desc: 'Evening reminder to log symptoms' },
-                                    { key: 'weeklyInsights', label: 'Weekly Insights Digest', desc: 'A summary of your weekly health data' },
-                                    { key: 'riskAlerts', label: 'Risk Alerts', desc: 'Alerts when patterns show elevated risk' },
-                                    { key: 'emailDigest', label: 'Email Digest', desc: 'Monthly report sent to your email' },
+                                    { key: 'email', label: 'Email Notifications', desc: 'Receive important updates and digests via email' },
+                                    { key: 'push', label: 'Push Notifications', desc: 'Receive alerts and rapid updates on your device' },
+                                    { key: 'reminders', label: 'Daily Reminders', desc: 'Evening reminders to log your daily symptoms and mood' },
                                 ].map(({ key, label, desc }) => (
                                     <div key={key} className="flex items-center justify-between p-4 rounded-xl hover:bg-[#FAFAFA] transition-colors">
                                         <div>
@@ -297,9 +343,8 @@ const Settings = () => {
 
                             <div className="space-y-1">
                                 {[
-                                    { key: 'anonymousAnalytics', label: 'Anonymous Analytics', desc: 'Help improve Petal by sharing anonymous usage data' },
-                                    { key: 'dataSharing', label: 'Data Sharing with Researchers', desc: 'Contribute anonymized cycle data to health research' },
-                                    { key: 'cloudBackup', label: 'Cloud Backup', desc: 'Securely back up your cycle data to the cloud' },
+                                    { key: 'data_sharing', label: 'Data Sharing', desc: 'Contribute anonymized cycle data to health research' },
+                                    { key: 'anonymous_by_default', label: 'Anonymous by Default', desc: 'Ensure all analytics and sharing are fully anonymized' },
                                 ].map(({ key, label, desc }) => (
                                     <div key={key} className="flex items-center justify-between p-4 rounded-xl hover:bg-[#FAFAFA] transition-colors">
                                         <div>
@@ -314,27 +359,42 @@ const Settings = () => {
                                 ))}
                             </div>
 
-                            <div className="mt-6 p-4 bg-[#F0F9FF] rounded-xl border border-blue-100">
-                                <p className="text-xs font-bold text-blue-700 mb-1">🔒 Your data is yours</p>
-                                <p className="text-xs text-blue-600 font-medium">
-                                    Petal never sells your health data. All exports are encrypted and you can delete your data at any time.
-                                </p>
-                            </div>
+                            <button
+                                onClick={handleSavePrivacy}
+                                className="mt-6 flex items-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                            >
+                                <Save size={16} /> Save Privacy Settings
+                            </button>
+                        </div>
+                    )}
 
-                            <div className="mt-4 flex gap-3">
-                                <button
-                                    onClick={handleSavePrivacy}
-                                    className="flex items-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
-                                >
-                                    <Save size={16} /> Save Privacy Settings
-                                </button>
-                                <button
-                                    onClick={() => showToast('Data export request submitted — available when backend connects.', 'info')}
-                                    className="px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                                >
-                                    Export My Data
-                                </button>
+                    {/* ── LANGUAGE ── */}
+                    {activeSection === 'language' && (
+                        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                            <h2 className="font-heading font-bold text-base text-[#1D1D2C] mb-2">Language Preferences</h2>
+                            <p className="text-sm text-gray-500 mb-6">Choose your preferred language for Petal.</p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 block mb-1">Display Language</label>
+                                    <select
+                                        value={language}
+                                        onChange={e => setLanguage(e.target.value)}
+                                        className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium outline-none focus:border-[#D81B60] transition-colors"
+                                    >
+                                        <option value="en">English (US)</option>
+                                        <option value="es">Español</option>
+                                        <option value="fr">Français</option>
+                                        <option value="de">Deutsch</option>
+                                        <option value="hi">हिन्दी</option>
+                                    </select>
+                                </div>
                             </div>
+                            <button
+                                onClick={handleSaveLanguage}
+                                className="mt-6 flex items-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors"
+                            >
+                                <Save size={16} /> Save Language
+                            </button>
                         </div>
                     )}
 
@@ -352,10 +412,7 @@ const Settings = () => {
                                     </div>
                                     <Toggle
                                         checked={darkMode}
-                                        onChange={(v) => {
-                                            setDarkMode(v);
-                                            showToast('Dark mode will be fully available in a future update.', 'info');
-                                        }}
+                                        onChange={setDarkMode}
                                     />
                                 </div>
 
@@ -366,7 +423,7 @@ const Settings = () => {
                                         {ACCENT_COLORS.map(c => (
                                             <button
                                                 key={c}
-                                                onClick={() => { setAccentColor(c); showToast('Color theme will apply in full after backend integration.', 'info'); }}
+                                                onClick={() => setAccentColor(c)}
                                                 className={`w-9 h-9 rounded-full transition-transform hover:scale-110 border-4 ${accentColor === c ? 'border-gray-400 scale-110' : 'border-transparent'}`}
                                                 style={{ background: c }}
                                             />
@@ -383,17 +440,13 @@ const Settings = () => {
                             <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
                                 <h2 className="font-heading font-bold text-base text-[#1D1D2C] mb-2">Account Actions</h2>
                                 <p className="text-sm text-gray-500 mb-6">Manage your account access and data.</p>
-
                                 <div className="space-y-3">
                                     <button
-                                        onClick={() => showToast('Password reset email sent — available when backend connects.', 'info')}
-                                        className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-bold text-[#1D1D2C]"
-                                    >
-                                        <span>Change Password</span>
-                                        <ChevronRight size={16} className="text-gray-400" />
-                                    </button>
-                                    <button
-                                        onClick={() => showToast('Signed out successfully.', 'success')}
+                                        onClick={() => {
+                                            setUser(null);
+                                            localStorage.removeItem('access_token');
+                                            navigate('/login');
+                                        }}
                                         className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-bold text-[#1D1D2C]"
                                     >
                                         <span>Sign Out</span>
