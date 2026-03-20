@@ -3,6 +3,13 @@ from bson import ObjectId
 from models.quiz_model import Quiz, ScoreResponse
 from database import get_db
 import traceback
+from fastapi import HTTPException
+
+def safe_object_id(id_str: str) -> ObjectId:
+    try:
+        return ObjectId(id_str)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
 
 class QuizService:
     @staticmethod
@@ -16,9 +23,12 @@ class QuizService:
     async def get_quiz(quiz_id: str) -> Optional[dict]:
         db = get_db()
         try:
-            return await db["quizzes"].find_one({"_id": ObjectId(quiz_id)})
-        except:
-            return None
+            return await db["quizzes"].find_one({"_id": safe_object_id(quiz_id)})
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"[ERROR] QuizService.get_quiz: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
     @staticmethod
     async def score_quiz(quiz_id: str, submitted_answers: List[dict], user_id: str = None) -> ScoreResponse:
@@ -58,7 +68,7 @@ class QuizService:
             try:
                 db = get_db()
                 await db["users"].update_one(
-                    {"_id": ObjectId(user_id)},
+                    {"_id": safe_object_id(user_id)},
                     {"$push": {
                         "quiz_history": {
                             "quiz_id": quiz_id,
@@ -68,7 +78,8 @@ class QuizService:
                     }}
                 )
             except Exception as e:
-                print("Failed saving quiz history:", traceback.format_exc())
+                print(f"[ERROR] QuizService.score_quiz: {e}")
+                raise HTTPException(status_code=500, detail="Internal server error")
 
         return ScoreResponse(
             score_percentage=score_percentage,

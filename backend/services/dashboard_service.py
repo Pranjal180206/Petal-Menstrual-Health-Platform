@@ -76,7 +76,7 @@ async def get_insights(user_id: str, db) -> dict:
         {"$project": {"cycle_start_date": 1, "cycle_length": 1}}
     ]
     cycle_cursor = db["cycle_logs"].aggregate(cycle_pipeline)
-    logs = await cycle_cursor.to_list(length=None)
+    logs = await cycle_cursor.to_list(length=100)  # Bounded — ML pipeline will replace this
     
     cycle_length_history = []
     for i, log in enumerate(logs):
@@ -95,7 +95,7 @@ async def get_insights(user_id: str, db) -> dict:
         {"$sort": {"count": -1}}
     ]
     freq_cursor = db["cycle_logs"].aggregate(freq_pipeline)
-    freq_res = await freq_cursor.to_list(length=None)
+    freq_res = await freq_cursor.to_list(length=50)  # Bounded — top 50 symptoms is more than enough
     
     symptom_frequency = [{"symptom": s["_id"], "count": s["count"]} for s in freq_res]
     top_symptom = symptom_frequency[0]["symptom"] if symptom_frequency else None
@@ -154,7 +154,7 @@ async def get_insights(user_id: str, db) -> dict:
     ]
     
     mood_cursor = db["cycle_logs"].aggregate(mood_trend_pipeline)
-    mood_res = await mood_cursor.to_list(length=None)
+    mood_res = await mood_cursor.to_list(length=4)  # Bounded — exactly 4 weekly groupings (WK 01–04)
 
     res_map = {doc["_id"]: doc["avg_score"] for doc in mood_res}
     mood_trend = []

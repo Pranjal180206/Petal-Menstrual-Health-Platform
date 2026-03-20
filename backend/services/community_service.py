@@ -3,6 +3,7 @@ from bson import ObjectId
 from datetime import datetime
 from models.community_post_model import CommunityPostReq, CommunityReplyReq, AuthorInfo, CommunityPostResponse, CommunityReplyResponse
 from database import get_db
+from fastapi import HTTPException
 
 def _anonymize_author(author_info: dict, is_anonymous: bool) -> dict:
     if is_anonymous:
@@ -108,8 +109,9 @@ class CommunityService:
         
         try:
             post_oid = ObjectId(post_id)
-        except Exception:
-            return None
+        except Exception as e:
+            print(f"[ERROR] CommunityService.add_reply: {e}")
+            raise HTTPException(status_code=400, detail="Invalid post ID format")
         
         updated = await db["community_posts"].find_one_and_update(
             {"_id": post_oid},
@@ -126,8 +128,9 @@ class CommunityService:
         db = get_db()
         try:
             post_oid = ObjectId(post_id)
-        except Exception:
-            return None
+        except Exception as e:
+            print(f"[ERROR] CommunityService.toggle_like: {e}")
+            raise HTTPException(status_code=400, detail="Invalid post ID format")
             
         post = await db["community_posts"].find_one({"_id": post_oid})
         if not post: return None
@@ -161,8 +164,9 @@ class CommunityService:
         db = get_db()
         try:
             post_oid = ObjectId(post_id)
-        except Exception:
-            return None
+        except Exception as e:
+            print(f"[ERROR] CommunityService.flag_post: {e}")
+            raise HTTPException(status_code=400, detail="Invalid post ID format")
 
         # Use $addToSet for atomicity — if user_id is already present the
         # set won't grow and modified_count will be 0.

@@ -3,6 +3,13 @@ from typing import Optional, List
 from bson import ObjectId
 from models.cycle_model import CycleCreateReq, CycleUpdateReq
 from database import get_db
+from fastapi import HTTPException
+
+def safe_object_id(id_str: str) -> ObjectId:
+    try:
+        return ObjectId(id_str)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
 
 class TrackerService:
     @staticmethod
@@ -69,8 +76,9 @@ class TrackerService:
             
         try:
             cycle_oid = ObjectId(cycle_id)
-        except Exception:
-            return None
+        except Exception as e:
+            print(f"[ERROR] TrackerService.update_cycle: {e}")
+            raise HTTPException(status_code=400, detail="Invalid cycle ID format")
             
         result = await db["cycle_logs"].update_one(
             {"_id": cycle_oid, "user_id": user_id},
@@ -79,7 +87,7 @@ class TrackerService:
         if result.modified_count == 0:
             return None
             
-        updated = await db["cycle_logs"].find_one({"_id": ObjectId(cycle_id)})
+        updated = await db["cycle_logs"].find_one({"_id": safe_object_id(cycle_id)})
         updated["id"] = str(updated.pop("_id", ""))
         return updated
 
