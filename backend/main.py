@@ -65,6 +65,11 @@ from routes.users import router as users_router
 from routes.education import router as education_router
 from routes.reports import router as reports_router
 from routes.dashboard import router as dashboard_router
+from routes.admin_articles import router as admin_articles_router
+from routes.admin_myths import router as admin_myths_router
+from routes.admin_quizzes import router as admin_quizzes_router
+from routes.admin_community import router as admin_community_router
+from routes.admin_users import router as admin_users_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
@@ -75,4 +80,9 @@ app.include_router(community_router, prefix="/api/community", tags=["Community"]
 app.include_router(education_router, prefix="/api/education", tags=["Education"])
 app.include_router(reports_router, prefix="/api/reports", tags=["Reports"])
 app.include_router(dashboard_router, prefix="/api", tags=["Dashboard"])
+app.include_router(admin_articles_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_myths_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_quizzes_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_community_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin"])
 

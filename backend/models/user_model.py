@@ -47,6 +47,8 @@ class User(BaseModel):
     age: int
 
     role: str = "user"
+    is_admin: bool = False
+    is_active: bool = True
 
     is_menstruating: bool
 

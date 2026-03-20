@@ -70,3 +70,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
         
     return user
 
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    if not current_user.get("is_admin", False):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+    return current_user
