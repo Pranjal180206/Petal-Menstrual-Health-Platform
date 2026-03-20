@@ -5,6 +5,8 @@ from slowapi.util import get_remote_address
 from models.cycle_model import CycleCreateReq, CycleUpdateReq, TrackerSummary
 from services.tracker_service import tracker_service
 from services.auth_service import get_current_user
+from database import get_db
+from pydantic import BaseModel
 
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
@@ -31,3 +33,19 @@ async def update_cycle(request: Request, cycle_id: str, body: CycleUpdateReq, cu
     if not updated:
         raise HTTPException(status_code=404, detail="Cycle not found or update failed")
     return updated
+
+class MoodLogRequest(BaseModel):
+    mood: str
+
+@router.post("/mood-today")
+@limiter.limit("10/minute")
+async def log_mood_today(
+    request: Request,
+    body: MoodLogRequest,
+    db=Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await tracker_service.log_mood_today(
+        str(current_user["_id"]), body.mood, db
+    )
+    return result

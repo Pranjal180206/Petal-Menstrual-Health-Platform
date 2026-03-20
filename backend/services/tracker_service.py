@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 from typing import Optional, List
 from bson import ObjectId
 from models.cycle_model import CycleCreateReq, CycleUpdateReq
@@ -82,5 +82,50 @@ class TrackerService:
         updated = await db["cycle_logs"].find_one({"_id": ObjectId(cycle_id)})
         updated["id"] = str(updated.pop("_id", ""))
         return updated
+
+    @staticmethod
+    async def log_mood_today(user_id: str, mood: str, db=None) -> dict:
+        if db is None:
+            db = get_db()
+        from pymongo import ReturnDocument
+        
+        # Get start and end of today in UTC
+        now = datetime.utcnow()
+        today_start = datetime.combine(now.date(), time.min)
+        today_end = today_start + timedelta(days=1)
+        
+        # Find today's cycle log for this user
+        existing = await db["cycle_logs"].find_one({
+            "user_id": user_id,
+            "cycle_start_date": {
+                "$gte": today_start,
+                "$lt": today_end
+            }
+        })
+        
+        if existing:
+            # Update existing log with mood
+            updated = await db["cycle_logs"].find_one_and_update(
+                {"_id": existing["_id"]},
+                {"$set": {"mood": mood}},
+                return_document=ReturnDocument.AFTER
+            )
+            updated["id"] = str(updated.pop("_id", ""))
+            return updated
+        else:
+            # Create minimal log with just mood for today
+            new_log = {
+                "user_id": user_id,
+                "cycle_start_date": now,
+                "mood": mood,
+                "symptoms": [],
+                "flow_intensity": None,
+                "notes": None,
+                "created_at": now
+            }
+            result = await db["cycle_logs"].insert_one(new_log)
+            new_log["id"] = str(result.inserted_id)
+            new_log.pop("_id", None)
+            return new_log
 
 tracker_service = TrackerService()

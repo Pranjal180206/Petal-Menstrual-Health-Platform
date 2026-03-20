@@ -29,8 +29,8 @@ async def get_optional_user(token: Optional[str] = Depends(oauth2_scheme_optiona
     return None
 
 @router.get("/", response_model=List[CommunityPostResponse])
-async def list_posts(skip: int = Query(0, ge=0), limit: int = Query(20, le=100)):
-    return await community_service.get_posts(skip, limit)
+async def list_posts(skip: int = Query(0, ge=0), limit: int = Query(20, le=100), user_id: Optional[str] = None):
+    return await community_service.get_posts(skip, limit, user_id)
 
 @router.post("/", response_model=CommunityPostResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("20/minute")

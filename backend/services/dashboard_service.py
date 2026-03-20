@@ -31,28 +31,28 @@ async def get_dashboard_summary(user_id: str, db) -> dict:
 
     # mood_this_week
     mood_pipeline = [
-        {"$match": {"user_id": {"$in": [user_id, user_id_obj]}, "date": {"$gte": seven_days_ago}, "mood": {"$nin": [None, ""]}}},
+        {"$match": {"user_id": {"$in": [user_id, user_id_obj]}, "cycle_start_date": {"$gte": seven_days_ago}, "mood": {"$nin": [None, ""]}}},
         {"$group": {"_id": "$mood", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 1}
     ]
-    mood_cursor = db["daily_symptoms"].aggregate(mood_pipeline)
+    mood_cursor = db["cycle_logs"].aggregate(mood_pipeline)
     mood_res = await mood_cursor.to_list(length=1)
     mood_this_week = mood_res[0]["_id"] if mood_res else "unknown"
         
     # top_symptoms_this_week
     symp_pipeline = [
-        {"$match": {"user_id": {"$in": [user_id, user_id_obj]}, "date": {"$gte": seven_days_ago}}},
+        {"$match": {"user_id": {"$in": [user_id, user_id_obj]}, "cycle_start_date": {"$gte": seven_days_ago}}},
         {"$unwind": "$symptoms"},
         {"$group": {"_id": "$symptoms", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 3}
     ]
-    symp_cursor = db["daily_symptoms"].aggregate(symp_pipeline)
+    symp_cursor = db["cycle_logs"].aggregate(symp_pipeline)
     symp_res = await symp_cursor.to_list(length=3)
     top_symptoms_this_week = [s["_id"] for s in symp_res]
         
-    community_posts_count = await db["community_posts"].count_documents({"author_id": {"$in": [user_id, user_id_obj]}})
+    community_posts_count = await db["community_posts"].count_documents({"author.user_id": {"$in": [user_id, str(user_id_obj)]}})
     
     return {
         "last_period_date": last_period_date.isoformat() if last_period_date else None,
@@ -94,7 +94,7 @@ async def get_insights(user_id: str, db) -> dict:
         {"$group": {"_id": "$symptoms", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}}
     ]
-    freq_cursor = db["daily_symptoms"].aggregate(freq_pipeline)
+    freq_cursor = db["cycle_logs"].aggregate(freq_pipeline)
     freq_res = await freq_cursor.to_list(length=None)
     
     symptom_frequency = [{"symptom": s["_id"], "count": s["count"]} for s in freq_res]
@@ -118,7 +118,7 @@ async def get_insights(user_id: str, db) -> dict:
     mood_trend_pipeline = [
         {"$match": {
             "user_id": {"$in": [user_id, user_id_obj]},
-            "date": {"$gte": four_weeks_ago},
+            "cycle_start_date": {"$gte": four_weeks_ago},
             "mood": {"$nin": [None, ""]}
         }},
         {"$addFields": {
@@ -126,7 +126,7 @@ async def get_insights(user_id: str, db) -> dict:
             "days_ago": {
                 "$floor": {
                     "$divide": [
-                        {"$subtract": [datetime.now(timezone.utc), "$date"]},
+                        {"$subtract": [datetime.now(timezone.utc), "$cycle_start_date"]},
                         1000 * 60 * 60 * 24
                     ]
                 }
@@ -153,7 +153,7 @@ async def get_insights(user_id: str, db) -> dict:
         {"$sort": {"_id": 1}}
     ]
     
-    mood_cursor = db["daily_symptoms"].aggregate(mood_trend_pipeline)
+    mood_cursor = db["cycle_logs"].aggregate(mood_trend_pipeline)
     mood_res = await mood_cursor.to_list(length=None)
 
     res_map = {doc["_id"]: doc["avg_score"] for doc in mood_res}

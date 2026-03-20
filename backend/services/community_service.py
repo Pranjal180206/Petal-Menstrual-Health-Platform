@@ -44,9 +44,12 @@ def _format_post(post: dict) -> dict:
 
 class CommunityService:
     @staticmethod
-    async def get_posts(skip: int = 0, limit: int = 20) -> List[dict]:
+    async def get_posts(skip: int = 0, limit: int = 20, user_id: Optional[str] = None) -> List[dict]:
         db = get_db()
-        cursor = db["community_posts"].find({"is_flagged": {"$ne": True}}).sort("created_at", -1).skip(skip).limit(limit)
+        query = {"is_flagged": {"$ne": True}}
+        if user_id:
+            query["author.user_id"] = user_id
+        cursor = db["community_posts"].find(query).sort("created_at", -1).skip(skip).limit(limit)
         posts = await cursor.to_list(length=limit)
         return [_format_post(p) for p in posts]
 
