@@ -12,8 +12,17 @@ print(f"[STARTUP] google_auth_service loading .env from: {_env_path}")
 print(f"[STARTUP] GOOGLE_CLIENT_ID loaded: {bool(os.getenv('GOOGLE_CLIENT_ID'))}")
 print(f"[STARTUP] GOOGLE_CLIENT_SECRET loaded: {bool(os.getenv('GOOGLE_CLIENT_SECRET'))}")
 
+ALLOWED_REDIRECT_URIS = [
+    os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:5173"),
+    "http://localhost:5174",
+    # add production URL here when deploying
+]
+
 async def exchange_code_for_profile(code: str, redirect_uri: str) -> dict:
     print(f"[DEBUG-FUNC] exchange_code_for_profile called with redirect_uri={redirect_uri}")
+    
+    if redirect_uri not in ALLOWED_REDIRECT_URIS:
+        raise HTTPException(status_code=400, detail="Invalid redirect URI")
     # Re-load dotenv here in case module-level load didn't propagate
     load_dotenv(dotenv_path=_env_path, override=True)
     client_id = os.getenv("GOOGLE_CLIENT_ID")

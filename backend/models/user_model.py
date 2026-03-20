@@ -6,9 +6,9 @@ from database import PyObjectId
 
 
 class UserProfile(BaseModel):
-    avatar: Optional[str]
-    bio: Optional[str]
-    location: Optional[str]
+    avatar: Optional[str] = None
+    bio: Optional[str] = Field(None, max_length=500)
+    location: Optional[str] = None
     language_preference: Optional[str] = "en"
 
 
@@ -63,6 +63,8 @@ class User(BaseModel):
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: Optional[datetime] = None
+    deactivated_at: Optional[datetime] = None
+    deletion_scheduled_at: Optional[datetime] = None
 
     model_config = ConfigDict(
         populate_by_name=True,

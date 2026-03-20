@@ -7,17 +7,41 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 
-from database import connect_to_mongo, close_mongo_connection
+from database import connect_to_mongo, close_mongo_connection, get_db
 from config import limiter
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 load_dotenv()
 
 # Lifecycle events for MongoDB connection
+scheduler = AsyncIOScheduler()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup actions
+    # Startup
     await connect_to_mongo()
+    
+    # Wire purge job after DB is connected so get_db() is ready
+    from services.user_service import purge_scheduled_deletions
+    async def run_purge():
+        db = get_db()
+        await purge_scheduled_deletions(db)
+    
+    scheduler.add_job(
+        run_purge,
+        CronTrigger(hour=2, minute=0),
+        id="purge_scheduled_deletions",
+        replace_existing=True
+    )
+    scheduler.start()
+    print("[SCHEDULER] Deletion purge job scheduled — runs daily at 02:00 UTC")
+    
     yield
+    
+    # Shutdown
+    scheduler.shutdown()
+    print("[SCHEDULER] Scheduler stopped")
     await close_mongo_connection()
 
 app = FastAPI(

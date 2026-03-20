@@ -10,7 +10,7 @@ class AuthorInfo(BaseModel):
     avatar: Optional[str] = None
 
 class CommunityReplyReq(BaseModel):
-    content: str
+    content: str = Field(..., min_length=1, max_length=1000)
     is_anonymous: bool = False
 
 class CommunityReplyResponse(BaseModel):
@@ -22,9 +22,9 @@ class CommunityReplyResponse(BaseModel):
     is_flagged: bool
 
 class CommunityPostReq(BaseModel):
-    title: str
-    content: str
-    category: str
+    title: str = Field(..., min_length=1, max_length=200)
+    content: str = Field(..., min_length=1, max_length=2000)
+    category: str = Field(..., min_length=1, max_length=100)
     is_anonymous: bool = False
 
 class CommunityPostResponse(BaseModel):

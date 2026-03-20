@@ -58,6 +58,21 @@ class TrackerService:
     @staticmethod
     async def log_cycle(user_id: str, data: CycleCreateReq) -> dict:
         db = get_db()
+        
+        # Prevent duplicate log for same day
+        today = datetime.utcnow().date()
+        today_start = datetime(today.year, today.month, today.day)
+        today_end = today_start + timedelta(days=1)
+        existing = await db["cycle_logs"].find_one({
+            "user_id": user_id,
+            "cycle_start_date": {"$gte": today_start, "$lt": today_end}
+        })
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="A cycle log already exists for today. Use PATCH to update it."
+            )
+        
         log_data = data.model_dump(exclude_unset=True)
         log_data["user_id"] = user_id
         log_data["created_at"] = datetime.utcnow()

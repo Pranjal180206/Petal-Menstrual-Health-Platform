@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Dict, Any
 
@@ -13,7 +13,7 @@ limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
 class ChatMessageRequest(BaseModel):
-    message: str
+    message: str = Field(..., min_length=1, max_length=2000)
     conversation_history: List[Dict[str, Any]] = []  # previous messages for context
     language: str = "en"
 

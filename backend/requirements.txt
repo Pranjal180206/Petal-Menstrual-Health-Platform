@@ -16,4 +16,5 @@ fpdf2>=2.7.9
 google-auth
 google-auth-oauthlib
 httpx
+apscheduler>=3.10.0
 
