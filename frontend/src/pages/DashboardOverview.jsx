@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Bell, Info, Lightbulb, TrendingDown, Activity, CalendarDays, MessageSquare, Zap } from 'lucide-react';
+import { Bell, Info, Lightbulb, TrendingDown, Activity, CalendarDays, MessageSquare, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
@@ -16,7 +16,6 @@ const MOODS = [
 const DashboardOverview = () => {
     const navigate = useNavigate();
     const [selectedMoods, setSelectedMoods] = useState([]);
-    const [searchQuery, setSearchQuery] = useState('');
     const [toast, setToast] = useState(null);
 
     const [summary, setSummary] = useState(null);
@@ -33,12 +32,24 @@ const DashboardOverview = () => {
         );
     };
 
-    const handleSaveMood = () => {
+    const handleSaveMood = async () => {
         if (selectedMoods.length === 0) {
             showToast('Please select at least one mood first.', 'warning');
             return;
         }
-        showToast(`Mood logged: ${selectedMoods.join(', ')} ✓`, 'success');
+        try {
+            await axiosInstance.post('/period-tracker/mood-today', {
+                mood: selectedMoods[0].toLowerCase(),
+            });
+            setSelectedMoods([]);
+            showToast(`Mood logged: ${selectedMoods.join(', ')} ✓`, 'success');
+            // Refresh summary stats
+            const res = await axiosInstance.get('/dashboard/summary');
+            setSummary(res.data);
+        } catch (err) {
+            console.error('Failed to save mood:', err);
+            showToast('Failed to log mood. Please try again.', 'error');
+        }
     };
 
     useEffect(() => {
@@ -83,18 +94,6 @@ const DashboardOverview = () => {
                     <p className="text-gray-500 font-medium text-sm">
                         {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} — Your daily health summary
                     </p>
-                </div>
-                <div className="flex items-center gap-6">
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Search analytics..."
-                            className="bg-white border border-gray-100 rounded-full pl-10 pr-4 py-2.5 text-sm font-medium w-64 outline-none focus:border-[#D81B60] transition-colors shadow-sm"
-                        />
-                    </div>
                 </div>
             </header>
 

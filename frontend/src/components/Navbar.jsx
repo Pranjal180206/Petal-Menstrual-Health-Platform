@@ -26,20 +26,23 @@ const Navbar = ({ isHome = false }) => {
 
             {/* Actions */}
             <div className="hidden md:flex items-center gap-4">
-                <Link
-                    to="/login"
-                    className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
-                >
-                    Sign In
-                </Link>
-                <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
-                    {user?.avatar_url 
-                      ? <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
-                      : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold">
-                          {user?.name?.[0]?.toUpperCase() ?? 'G'}
-                        </div>
-                    }
-                </Link>
+                {user ? (
+                    <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
+                        {user?.avatar_url
+                          ? <img src={user.avatar_url} alt="avatar" className="w-full h-full rounded-2xl object-cover" />
+                          : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold text-sm">
+                              {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                            </div>
+                        }
+                    </Link>
+                ) : (
+                    <Link
+                        to="/login"
+                        className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
+                    >
+                        Sign In
+                    </Link>
+                )}
             </div>
 
             {/* Mobile Menu */}

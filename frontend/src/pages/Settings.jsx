@@ -27,7 +27,7 @@ const Toggle = ({ checked, onChange }) => (
 );
 
 const Settings = () => {
-    const { user, setUser } = useAuth();
+    const { user, setUser, logout } = useAuth();
     const navigate = useNavigate();
 
     const [activeSection, setActiveSection] = useState('profile');
@@ -41,9 +41,9 @@ const Settings = () => {
     });
 
     /* ── Cycle Preferences ── */
-    const [cycleLength, setCycleLength] = useState(user?.cycle_length || 28);
-    const [periodLength, setPeriodLength] = useState(user?.period_length || 5);
-    const [lutealLength, setLutealLength] = useState(user?.luteal_length || 14);
+    const [cycleLength, setCycleLength] = useState(user?.cycle_preferences?.average_cycle_length || 28);
+    const [periodLength, setPeriodLength] = useState(user?.cycle_preferences?.average_period_length || 5);
+    const [lutealLength, setLutealLength] = useState(user?.cycle_preferences?.luteal_phase_length || 14);
 
     /* ── Notifications ── */
     const [notifs, setNotifs] = useState({
@@ -119,7 +119,18 @@ const Settings = () => {
     };
 
     const handleSaveCycle = async () => {
-        showToast('Cycle preferences updated! ✓', 'success');
+        try {
+            const res = await axiosInstance.patch('/users/cycle-preferences', {
+                average_cycle_length: cycleLength,
+                average_period_length: periodLength,
+                luteal_phase_length: lutealLength,
+            });
+            setUser(res.data);
+            showToast('Cycle preferences updated! ✓', 'success');
+        } catch (error) {
+            if (error.response?.status === 401) navigate('/login');
+            else showToast('Failed to save cycle preferences.', 'error');
+        }
     };
 
     const handleSaveNotifs = async () => {
@@ -443,9 +454,8 @@ const Settings = () => {
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => {
-                                            setUser(null);
-                                            localStorage.removeItem('access_token');
-                                            navigate('/login');
+                                            logout();
+                                            navigate('/');
                                         }}
                                         className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-bold text-[#1D1D2C]"
                                     >

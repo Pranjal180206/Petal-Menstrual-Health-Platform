@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PetalIcon from './PetalIcon';
+import ChatWidget from './ChatWidget';
 
 const navLinks = [
     {
@@ -151,6 +152,9 @@ const CycleTrackerLayout = () => {
                     <Outlet />
                 </main>
             </div>
+
+            {/* ── Floating AI Chat Widget ── */}
+            <ChatWidget />
         </div>
     );
 };

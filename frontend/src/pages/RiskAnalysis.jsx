@@ -35,18 +35,28 @@ const RiskAnalysis = () => {
         setToast({ message, type });
     }, []);
 
+    const PERIOD_TO_DAYS = {
+        'Last Month': 30,
+        'Last 3 Months': 90,
+        'Last 6 Months': 180,
+        'This Year': 365,
+    };
+
+    const fetchAnalysis = async (period) => {
+        setIsLoading(true);
+        try {
+            const days = PERIOD_TO_DAYS[period] || 180;
+            const res = await axiosInstance.get('/reports/risk-analysis', { params: { days } });
+            setAnalysisResult(res.data);
+        } catch (err) {
+            console.error("Failed to load risk analysis:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchAnalysis = async () => {
-            try {
-                const res = await axiosInstance.get('/reports/risk-analysis');
-                setAnalysisResult(res.data);
-            } catch (err) {
-                console.error("Failed to load risk analysis:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchAnalysis();
+        fetchAnalysis(activePeriod);
     }, []);
 
     const handleExportPDF = async () => {
@@ -155,7 +165,10 @@ const RiskAnalysis = () => {
                     {DATE_FILTERS.map(f => (
                         <button
                             key={f}
-                            onClick={() => setActivePeriod(f)}
+                            onClick={() => {
+                                setActivePeriod(f);
+                                fetchAnalysis(f);
+                            }}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
                                 activePeriod === f
                                     ? 'bg-[#D81B60] text-white shadow-sm'
@@ -204,7 +217,6 @@ const RiskAnalysis = () => {
                             <p className="text-xs font-bold text-gray-500 mb-1">Cycle Consistency</p>
                             <div className="flex justify-between items-end mb-3">
                                 <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{cycle_consistency ?? '—'}%</h3>
-                                <span className="text-xs font-bold text-[#FF0055]">↓5% this cycle</span>
                             </div>
                             <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div className="h-full bg-[#FF0055] rounded-full" style={{ width: `${cycle_consistency ?? 0}%` }} />
@@ -215,9 +227,8 @@ const RiskAnalysis = () => {
                             <p className="text-xs font-bold text-gray-500 mb-1">Symptom Intensity</p>
                             <div className="flex justify-between items-end mb-1">
                                 <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C] capitalize">{symptom_intensity ?? '—'}</h3>
-                                <span className="text-xs font-bold text-green-500">↗12%</span>
                             </div>
-                            <p className="text-[10px] italic text-gray-400 font-medium">Higher intensity logged this month</p>
+                            <p className="text-[10px] italic text-gray-400 font-medium">Based on logged data</p>
                         </div>
 
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">

@@ -45,6 +45,33 @@ const Insights = () => {
 
     const { cycle_length_history = [], symptom_frequency = [], mood_trend = [], top_symptom } = insights || {};
 
+    const hasData = cycle_length_history.length > 0 || symptom_frequency.length > 0 || mood_trend.length > 0 || top_symptom;
+
+    if (!hasData) {
+        return (
+            <div className="p-8 max-w-6xl mx-auto">
+                <header className="mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#FFF0F4] flex items-center justify-center text-[#D81B60]">
+                            <Lightbulb size={20} />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">Data Insights</h1>
+                            <p className="text-sm text-gray-500 font-medium">Your health analytics based on logged data</p>
+                        </div>
+                    </div>
+                </header>
+                <div className="bg-white rounded-[2rem] p-16 shadow-card border border-gray-100 flex flex-col items-center justify-center text-center">
+                    <div className="text-6xl mb-4">🌱</div>
+                    <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-2">No insights yet</h2>
+                    <p className="text-sm text-gray-500 font-medium max-w-sm">
+                        Start logging your cycle dates, symptoms, and moods in the Cycle Tracker. Insights appear after a few logs!
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-8">
             <header className="mb-8">
