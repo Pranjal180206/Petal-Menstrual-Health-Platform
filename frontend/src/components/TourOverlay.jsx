@@ -114,7 +114,7 @@ const TourOverlay = () => {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={endTour}
-                                className="flex-1 py-3 px-4 rounded-xl border-2 border-gray-100 text-gray-400 font-bold text-sm hover:bg-gray-50 transition-colors"
+                                className="flex-1 py-3 px-4 rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-800 font-bold text-sm hover:bg-gray-200 transition-colors shadow-sm"
                             >
                                 Skip Tour
                             </button>

@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
 import { TourProvider } from './context/TourContext';
 import TourOverlay from './components/TourOverlay';
 import TourPrompt from './components/TourPrompt';
@@ -23,6 +24,51 @@ import RiskAnalysis from './pages/RiskAnalysis';
 import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
 import Settings from './pages/Settings';
+
+const PageWrapper = ({ children }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="w-full flex-1 flex flex-col outline-none"
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Public Pages */}
+        <Route path="/" element={<PageWrapper><LandingPage /></PageWrapper>} />
+        <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+        <Route path="/community" element={<PageWrapper><CommunityHub /></PageWrapper>} />
+        <Route path="/education" element={<PageWrapper><Education /></PageWrapper>} />
+        <Route path="/profile" element={<PageWrapper><UserProfile /></PageWrapper>} />
+
+        {/* Cycle Tracker — Parent Layout with Sidebar */}
+        <Route path="/cycle-tracker" element={<PageWrapper><CycleTrackerLayout /></PageWrapper>}>
+          <Route index element={<DashboardOverview />} />
+          <Route path="tracker" element={<CycleTracker />} />
+          <Route path="risk" element={<RiskAnalysis />} />
+          <Route path="report" element={<ReportGenerator />} />
+          <Route path="insights" element={<Insights />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* Legacy redirects — keep old URLs working */}
+        <Route path="/dashboard" element={<Navigate to="/cycle-tracker" replace />} />
+        <Route path="/dashboard/tracker" element={<Navigate to="/cycle-tracker/tracker" replace />} />
+        <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 const LandingPage = () => {
   return (
@@ -53,29 +99,7 @@ function App() {
           <div className="w-full min-h-screen bg-white font-sans text-brand-dark overflow-x-hidden">
             <TourOverlay />
             <TourPrompt />
-            <Routes>
-            {/* Public Pages */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/community" element={<CommunityHub />} />
-            <Route path="/education" element={<Education />} />
-            <Route path="/profile" element={<UserProfile />} />
-
-            {/* Cycle Tracker — Parent Layout with Sidebar */}
-            <Route path="/cycle-tracker" element={<CycleTrackerLayout />}>
-              <Route index element={<DashboardOverview />} />
-              <Route path="tracker" element={<CycleTracker />} />
-              <Route path="risk" element={<RiskAnalysis />} />
-              <Route path="report" element={<ReportGenerator />} />
-              <Route path="insights" element={<Insights />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-
-            {/* Legacy redirects — keep old URLs working */}
-            <Route path="/dashboard" element={<Navigate to="/cycle-tracker" replace />} />
-            <Route path="/dashboard/tracker" element={<Navigate to="/cycle-tracker/tracker" replace />} />
-            <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
-          </Routes>
+            <AnimatedRoutes />
         </div>
         </TourProvider>
       </Router>
