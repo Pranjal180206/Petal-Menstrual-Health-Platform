@@ -27,6 +27,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440
 import hashlib
 import base64
 import bcrypt
+import logging
+
+logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -95,3 +98,76 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict
             detail="Admin access required"
         )
     return current_user
+
+
+async def create_password_reset_token(email: str, db) -> Optional[str]:
+    """
+    Finds user by email, generates a secure token,
+    stores hashed token + expiry (1 hour) in DB.
+    Returns the plain token to be sent via email.
+    Returns None silently if email not found (prevents enumeration).
+    """
+    import secrets
+
+    user = await db["users"].find_one({"email": email})
+    if not user:
+        # Don't reveal if email exists — return silently
+        return None
+
+    if user.get("auth_provider") == "google":
+        raise HTTPException(
+            status_code=400,
+            detail="This account uses Google sign-in. Please use Google to log in."
+        )
+
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+
+    await db["users"].update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "reset_token": token_hash,
+            "reset_token_expiry": expiry
+        }}
+    )
+    return token
+
+
+async def reset_password(token: str, new_password: str, db) -> bool:
+    """
+    Validates token, updates password using the existing hashing pipeline, clears token.
+    """
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    user = await db["users"].find_one({
+        "reset_token": token_hash,
+        "reset_token_expiry": {"$gt": datetime.now(timezone.utc)}
+    })
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    # Use the same SHA-256 pre-hash pipeline as registration/login
+    hashed_password = get_password_hash(new_password)
+
+    await db["users"].update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"password_hash": hashed_password},
+            "$unset": {"reset_token": "", "reset_token_expiry": ""}
+        }
+    )
+    return True
+
+
+async def send_reset_email(email: str, token: str, reset_base_url: str):
+    """
+    EMAIL_PLACEHOLDER: Replace with real email provider
+    (SendGrid, Resend, AWS SES, etc.) when ready.
+    For now, logs the magic link to the server log for testing.
+    """
+    reset_link = f"{reset_base_url}/reset-password?token={token}"
+    logger.info(f"[PASSWORD RESET] Magic link for {email}: {reset_link}")
+    # TODO: implement actual email sending
+    # await sendgrid_client.send(to=email, subject="Reset your Petal password", body=reset_link)

@@ -16,3 +16,4 @@ fpdf2>=2.7.9
 httpx
 apscheduler>=3.10.0
 pytz
+python-dateutil

@@ -1,29 +1,63 @@
 from datetime import datetime, timedelta, timezone
 
+async def calculate_cycle_streak(user_id: str, db) -> int:
+    """
+    Returns the number of consecutive months the user has
+    logged at least one cycle. Checks backwards from current
+    month — stops at first month with no log.
+    """
+    from dateutil.relativedelta import relativedelta
+    from bson import ObjectId
+    user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
+    
+    streak = 0
+    check_date = datetime.utcnow()
+    
+    for _ in range(12):  # check up to 12 months back
+        month_start = datetime(check_date.year, check_date.month, 1)
+        month_end = month_start + relativedelta(months=1)
+        
+        count = await db["cycle_logs"].count_documents({
+            "user_id": {"$in": [user_id, user_id_obj]},
+            "cycle_start_date": {
+                "$gte": month_start,
+                "$lt": month_end
+            }
+        })
+        
+        if count > 0:
+            streak += 1
+            check_date = check_date - relativedelta(months=1)
+        else:
+            break
+            
+    return streak
+
 async def get_dashboard_summary(user_id: str, db) -> dict:
     from bson import ObjectId
     user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
     
-    # last_period_date
-    cycle_cursor = db["cycle_logs"].find({"user_id": {"$in": [user_id, user_id_obj]}}).sort("cycle_start_date", -1).limit(1)
-    cycle_logs = await cycle_cursor.to_list(length=1)
+    # Get all cycle logs sorted by date
+    logs = await db["cycle_logs"].find(
+        {"user_id": {"$in": [user_id, user_id_obj]}}
+    ).sort("cycle_start_date", -1).limit(6).to_list(6)
+
+    if len(logs) >= 2:
+        # Calculate actual average from logged cycles
+        gaps = []
+        for i in range(len(logs) - 1):
+            gap = (logs[i]["cycle_start_date"].replace(tzinfo=None) - logs[i+1]["cycle_start_date"].replace(tzinfo=None)).days
+            if 15 <= gap <= 60:  # only valid cycle lengths
+                gaps.append(gap)
+        avg = round(sum(gaps) / len(gaps)) if gaps else 28
+    else:
+        avg = 28  # ML_PLACEHOLDER: replace with ml_service when ready
+
+    last_period_date = logs[0]["cycle_start_date"] if logs else None
+    next_period_prediction = last_period_date + timedelta(days=avg) if last_period_date else None
+    average_cycle_length = avg
     
-    last_period_date = None
-    next_period_prediction = None
-    if cycle_logs:
-        last_period_date = cycle_logs[0].get("cycle_start_date")
-        if last_period_date:
-            # ML_PLACEHOLDER: replace with ml_service call when ready
-            next_period_prediction = last_period_date + timedelta(days=28)
-            
-    # ML_PLACEHOLDER: replace with ml_service call when ready
-    average_cycle_length = 28
-    
-    ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
-    cycle_streak = await db["cycle_logs"].count_documents({
-        "user_id": {"$in": [user_id, user_id_obj]}, 
-        "cycle_start_date": {"$gte": ninety_days_ago}
-    })
+    cycle_streak = await calculate_cycle_streak(user_id, db)
     
     cycles_logged = await db["cycle_logs"].count_documents({"user_id": {"$in": [user_id, user_id_obj]}})
     
