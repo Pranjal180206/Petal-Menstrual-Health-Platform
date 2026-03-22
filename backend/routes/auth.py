@@ -1,6 +1,6 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from config import limiter
 from datetime import timedelta, datetime
 from typing import Optional
