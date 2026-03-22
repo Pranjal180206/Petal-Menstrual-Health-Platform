@@ -10,8 +10,27 @@ from services.user_service import user_service
 from services.google_auth_service import exchange_code_for_profile, get_or_create_user
 from database import get_db
 from bson import ObjectId
+from routes.users import sanitize_user
 
 router = APIRouter()
+
+def inject_user_defaults(user: dict) -> dict:
+    user.setdefault("cycle_preferences", {
+        "average_cycle_length": 28,
+        "average_period_length": 5,
+        "luteal_phase_length": 14
+    })
+    user.setdefault("notification_preferences", {
+        "email": True,
+        "push": True,
+        "reminders": True
+    })
+    user.setdefault("privacy_settings", {
+        "data_sharing": False,
+        "anonymous_by_default": True
+    })
+    user.setdefault("language_preference", "en")
+    return user
 
 class UserRegister(BaseModel):
     name: str
@@ -62,6 +81,21 @@ async def register(request: Request, user_in: UserRegister):
         "community_guidelines": True,
         "timestamp": datetime.utcnow()
     }
+    user_dict["cycle_preferences"] = {
+        "average_cycle_length": 28,
+        "average_period_length": 5,
+        "luteal_phase_length": 14
+    }
+    user_dict["notification_preferences"] = {
+        "email": True,
+        "push": True,
+        "reminders": True
+    }
+    user_dict["privacy_settings"] = {
+        "data_sharing": False,
+        "anonymous_by_default": True
+    }
+    user_dict["language_preference"] = "en"
 
     created_user = await user_service.create_user(user_dict)
     
@@ -73,7 +107,8 @@ async def register(request: Request, user_in: UserRegister):
     
     # Strip sensitive info
     created_user["id"] = str(created_user.pop("_id"))
-    created_user.pop("password_hash", None)
+    created_user = inject_user_defaults(created_user)
+    created_user = sanitize_user(created_user)
     
     return {
         "access_token": access_token, 
@@ -109,7 +144,8 @@ async def google_auth(request: GoogleAuthRequest):
     )
 
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
     
     return {
         "access_token": access_token, 
@@ -141,7 +177,8 @@ async def login(request: Request, user_in: UserLogin):
     )
 
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
     
     return {
         "access_token": access_token, 
@@ -153,5 +190,6 @@ async def login(request: Request, user_in: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     user = dict(current_user)
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
     return user

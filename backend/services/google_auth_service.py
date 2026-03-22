@@ -113,7 +113,22 @@ async def get_or_create_user(db, profile: dict) -> dict:
             "data_collection": True,
             "community_guidelines": True,
             "timestamp": datetime.utcnow()
-        }
+        },
+        "cycle_preferences": {
+            "average_cycle_length": 28,
+            "average_period_length": 5,
+            "luteal_phase_length": 14
+        },
+        "notification_preferences": {
+            "email": True,
+            "push": True,
+            "reminders": True
+        },
+        "privacy_settings": {
+            "data_sharing": False,
+            "anonymous_by_default": True
+        },
+        "language_preference": "en"
     }
     
     result = await users_collection.insert_one(new_user)
