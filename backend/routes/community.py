@@ -4,10 +4,7 @@ from models.community_post_model import CommunityPostReq, CommunityReplyReq, Com
 from services.community_service import community_service
 from services.auth_service import get_current_user
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address)
+from config import limiter
 router = APIRouter()
 
 # Dependency to optionally get user

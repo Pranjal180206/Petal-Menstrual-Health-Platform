@@ -7,6 +7,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+
 from database import connect_to_mongo, close_mongo_connection, get_db
 from config import limiter
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -28,20 +36,21 @@ async def lifespan(app: FastAPI):
         db = get_db()
         await purge_scheduled_deletions(db)
     
+    import pytz
     scheduler.add_job(
         run_purge,
-        CronTrigger(hour=2, minute=0),
+        CronTrigger(hour=2, minute=0, timezone=pytz.utc),
         id="purge_scheduled_deletions",
         replace_existing=True
     )
     scheduler.start()
-    print("[SCHEDULER] Deletion purge job scheduled — runs daily at 02:00 UTC")
+    logger.info("[SCHEDULER] Deletion purge job scheduled — runs daily at 02:00 UTC")
     
     yield
     
     # Shutdown
     scheduler.shutdown()
-    print("[SCHEDULER] Scheduler stopped")
+    logger.info("[SCHEDULER] Scheduler stopped")
     await close_mongo_connection()
 
 app = FastAPI(

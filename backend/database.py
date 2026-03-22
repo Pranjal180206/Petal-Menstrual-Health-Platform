@@ -54,6 +54,11 @@ async def ensure_indexes():
     # quizzes
     await db["quizzes"].create_index([("is_published", 1)])
 
+    # quiz_scores collection
+    await db["quiz_scores"].create_index([("user_id", 1)])
+    await db["quiz_scores"].create_index([("quiz_id", 1)])
+    await db["quiz_scores"].create_index([("user_id", 1), ("quiz_id", 1)])
+
     print("Database indexes ensured.")
 
 async def connect_to_mongo():

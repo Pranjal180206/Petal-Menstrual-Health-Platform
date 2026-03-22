@@ -1,9 +1,12 @@
+import logging
 from typing import List, Optional
 from bson import ObjectId
 from models.quiz_model import Quiz, ScoreResponse
 from database import get_db
 import traceback
 from fastapi import HTTPException
+
+logger = logging.getLogger(__name__)
 
 def safe_object_id(id_str: str) -> ObjectId:
     try:
@@ -27,7 +30,7 @@ class QuizService:
         except HTTPException:
             raise
         except Exception as e:
-            print(f"[ERROR] QuizService.get_quiz: {e}")
+            logger.error(f"[ERROR] QuizService.get_quiz: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Internal server error")
 
     @staticmethod
@@ -78,7 +81,7 @@ class QuizService:
                     }}
                 )
             except Exception as e:
-                print(f"[ERROR] QuizService.score_quiz: {e}")
+                logger.error(f"[ERROR] QuizService.score_quiz: {e}", exc_info=True)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         return ScoreResponse(

@@ -121,10 +121,11 @@ class GoogleAuthRequest(BaseModel):
     redirect_uri: str
 
 @router.post("/google")
-async def google_auth(request: GoogleAuthRequest):
-    print(f"[ROUTE] POST /auth/google called, code length={len(request.code)}, redirect_uri={request.redirect_uri}")
+@limiter.limit("10/minute")
+async def google_auth(request: Request, body: GoogleAuthRequest):
+    print(f"[ROUTE] POST /auth/google called, code length={len(body.code)}, redirect_uri={body.redirect_uri}")
     try:
-        profile = await exchange_code_for_profile(request.code, request.redirect_uri)
+        profile = await exchange_code_for_profile(body.code, body.redirect_uri)
     except HTTPException:
         raise  # Let HTTPExceptions pass through with their original status code
     except Exception as e:

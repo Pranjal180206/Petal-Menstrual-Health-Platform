@@ -7,6 +7,9 @@ from models.user_model import User, NotificationPreferences, PrivacySettings
 from database import get_db
 from datetime import datetime
 from pydantic import BaseModel, Field
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserSettingsUpdate(BaseModel):
     notification_preferences: Optional[NotificationPreferences] = None
@@ -238,9 +241,9 @@ async def purge_scheduled_deletions(db) -> int:
             await delete_user_account(user_id, db)
             count += 1
         except Exception as e:
-            print(f"[PURGE JOB] Failed to delete user {user_id}: {e}")
+            logger.error(f"[PURGE JOB] Failed to delete user {user_id}: {e}", exc_info=True)
     
     if count > 0:
-        print(f"[PURGE JOB] Deleted {count} scheduled account(s)")
+        logger.info(f"[PURGE JOB] Deleted {count} scheduled account(s)")
     
     return count
