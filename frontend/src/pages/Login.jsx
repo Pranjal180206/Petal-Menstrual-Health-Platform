@@ -72,7 +72,7 @@ const Login = () => {
             } else {
                 await register(formData);
             }
-            navigate('/dashboard'); // route from existing original UI
+            navigate('/'); // land on home page after login/signup
         } catch (err) {
             setError(err.response?.data?.detail || 'Authentication failed');
         }

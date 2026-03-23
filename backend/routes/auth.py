@@ -192,8 +192,10 @@ async def login(request: Request, user_in: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     user = dict(current_user)
     user["id"] = str(user.pop("_id"))
+    is_admin = user.get("is_admin", False)
     user = inject_user_defaults(user)
     user = sanitize_user(user)
+    user["is_admin"] = is_admin  # frontend needs this for admin panel access
     return user
 
 

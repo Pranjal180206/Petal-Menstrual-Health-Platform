@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     if (code && !googleCallbackHandled.current) {
       googleCallbackHandled.current = true;
       loginWithGoogle(code).then(() => {
-        window.location.replace('/cycle-tracker');
+        window.location.replace('/');
       }).catch(err => {
         console.error("Google Auth callback failed", err);
         window.history.replaceState({}, document.title, window.location.pathname);

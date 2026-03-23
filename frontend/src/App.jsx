@@ -15,6 +15,7 @@ import CommunityHub from './pages/CommunityHub';
 import Education from './pages/Education';
 import UserProfile from './pages/UserProfile';
 import FloatingBackground from './components/FloatingBackground';
+import AdminPanel from './pages/AdminPanel';
 
 // Cycle Tracker parent layout + all sub-pages
 import CycleTrackerLayout from './components/CycleTrackerLayout';
@@ -114,6 +115,9 @@ const AnimatedRoutes = () => {
         <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
         <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
         <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
+
+        {/* Admin Panel */}
+        <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
 
         {/* Protected Pages */}
         <Route path="/profile" element={<ProtectedRoute><PageWrapper><UserProfile /></PageWrapper></ProtectedRoute>} />
