@@ -103,6 +103,9 @@ from routes.admin_myths import router as admin_myths_router
 from routes.admin_quizzes import router as admin_quizzes_router
 from routes.admin_community import router as admin_community_router
 from routes.admin_users import router as admin_users_router
+from routes.admin_videos import router as admin_videos_router
+from routes.admin_blogs import router as admin_blogs_router
+from routes.admin_stats import router as admin_stats_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
@@ -118,4 +121,7 @@ app.include_router(admin_myths_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_quizzes_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_community_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_videos_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_blogs_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_stats_router, prefix="/api/admin", tags=["Admin"])
 

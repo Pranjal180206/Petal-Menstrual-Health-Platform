@@ -314,6 +314,7 @@ const quizToForm = (q) => ({
 
 const QuizFormModal = ({ initial, onSave, onClose }) => {
   const [quiz, setQuiz] = useState(initial);
+  const [error, setError] = useState('');
   const set = (k, v) => setQuiz(prev => ({ ...prev, [k]: v }));
 
   const updateQuestion = (idx, field, value) => {
@@ -355,8 +356,15 @@ const QuizFormModal = ({ initial, onSave, onClose }) => {
   };
 
   const handleSave = () => {
-    if (!quiz.title?.en?.trim()) return;
-    if (quiz.questions.some(q => !q.text?.en?.trim() || q.options.some(o => !o.text?.en?.trim()))) return;
+    if (!quiz.title?.en?.trim()) {
+      setError('Quiz title is required.');
+      return;
+    }
+    if (quiz.questions.some(q => !q.text?.en?.trim() || q.options.some(o => !o.text?.en?.trim()))) {
+      setError('All questions and options must have text filled in.');
+      return;
+    }
+    setError('');
     onSave(quiz);
   };
 
@@ -422,6 +430,7 @@ const QuizFormModal = ({ initial, onSave, onClose }) => {
         <button onClick={addQuestion} className="mt-4 w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-bold text-gray-400 hover:border-[#D81B60] hover:text-[#D81B60] flex items-center justify-center gap-2 transition-colors"><Plus size={16} /> Add Question</button>
 
         <div className="flex gap-3 mt-6 justify-end">
+          {error && <p className="text-sm font-bold text-red-500 mr-auto self-center">{error}</p>}
           <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100">Cancel</button>
           <button onClick={handleSave} className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#D81B60] text-white hover:bg-[#C2185B]">Save Quiz</button>
         </div>
@@ -452,11 +461,25 @@ const QuizzesSection = ({ show }) => {
 
   const saveQuiz = async (data) => {
     try {
-      const payload = { title: data.title, description: data.description, questions: data.questions, is_published: data.is_published };
+      const flattenText = (v) => (typeof v === 'object' && v !== null ? v.en || '' : v || '');
+      const payload = {
+        title: flattenText(data.title),
+        description: flattenText(data.description),
+        is_published: data.is_published,
+        questions: (data.questions || []).map(q => ({
+          id: q.id,
+          text: flattenText(q.text),
+          correct_option_id: q.correct_option_id,
+          explanation: flattenText(q.explanation),
+          options: (q.options || []).map(o => ({ id: o.id, text: flattenText(o.text) })),
+        })),
+      };
       if (data.id) { await axiosInstance.patch(`/admin/quizzes/${data.id}`, payload); show('Quiz updated'); }
       else { await axiosInstance.post('/admin/quizzes', payload); show('Quiz created'); }
       setQuizForm(null); load();
-    } catch { show('Failed to save quiz', 'error'); }
+    } catch (err) {
+      show(err?.response?.data?.detail || 'Failed to save quiz', 'error');
+    }
   };
 
   return (
