@@ -109,4 +109,4 @@ app.include_router(admin_myths_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_quizzes_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_community_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin"])
-
+app.include_router(risk_analysis_router, prefix="/api/risk-analysis", tags=["Risk Analysis"])
