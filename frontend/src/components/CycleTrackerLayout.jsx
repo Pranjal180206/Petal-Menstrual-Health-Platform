@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PetalIcon from './PetalIcon';
+import ChatWidget from './ChatWidget';
 
 const navLinks = [
     {
@@ -79,9 +80,9 @@ const CycleTrackerLayout = () => {
                     {/* Back to Home */}
                     <button
                         onClick={() => navigate('/')}
-                        className="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-[#D81B60] transition-colors group w-full px-1"
+                        className="flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-[#D81B60] transition-colors group w-full px-1"
                     >
-                        <span className="w-6 h-6 rounded-lg bg-gray-100 group-hover:bg-[#FFF0F4] flex items-center justify-center transition-colors">
+                        <span className="w-6 h-6 rounded-lg bg-gray-200 group-hover:bg-[#FFF0F4] text-gray-700 group-hover:text-[#D81B60] flex items-center justify-center transition-colors">
                             <ChevronLeft size={14} />
                         </span>
                         Back to Home
@@ -151,6 +152,9 @@ const CycleTrackerLayout = () => {
                     <Outlet />
                 </main>
             </div>
+
+            {/* ── Floating AI Chat Widget ── */}
+            <ChatWidget />
         </div>
     );
 };

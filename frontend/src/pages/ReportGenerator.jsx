@@ -221,20 +221,29 @@ const ReportGenerator = () => {
                         <h2 className="font-heading font-bold text-base text-[#1D1D2C] mb-4">Output Format</h2>
                         <div className="grid grid-cols-3 gap-3">
                             {[
-                                { icon: <Download size={18} />, label: 'PDF' },
-                                { icon: <Printer size={18} />, label: 'Print' },
-                                { icon: <FileText size={18} />, label: 'CSV' },
+                                { icon: <Download size={18} />, label: 'PDF', available: true },
+                                { icon: <Printer size={18} />, label: 'Print', available: false },
+                                { icon: <FileText size={18} />, label: 'CSV', available: false },
                             ].map(fmt => (
                                 <button
                                     key={fmt.label}
                                     onClick={() => setSelectedFormat(fmt.label)}
-                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-bold text-sm transition-colors ${selectedFormat === fmt.label
-                                        ? 'border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]'
-                                        : 'border-gray-200 text-gray-500 hover:border-gray-300'
-                                        }`}
+                                    disabled={!fmt.available}
+                                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 font-bold text-sm transition-colors relative ${
+                                        !fmt.available
+                                            ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                                            : selectedFormat === fmt.label
+                                                ? 'border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]'
+                                                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                                    }`}
                                 >
                                     {fmt.icon}
                                     {fmt.label}
+                                    {!fmt.available && (
+                                        <span className="absolute -top-1.5 -right-1.5 text-[9px] font-bold bg-gray-200 text-gray-400 px-1.5 py-0.5 rounded-full">
+                                            Soon
+                                        </span>
+                                    )}
                                 </button>
                             ))}
                         </div>

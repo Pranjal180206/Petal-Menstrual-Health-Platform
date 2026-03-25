@@ -3,6 +3,9 @@ from typing import List, Any, Optional
 from models.quiz_model import ScoreRequest, ScoreResponse
 from services.quiz_service import quiz_service
 from services.auth_service import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 from fastapi.security import OAuth2PasswordBearer
 from services.auth_service import decode_access_token
@@ -20,8 +23,9 @@ async def get_optional_user(token: Optional[str] = Depends(oauth2_scheme_optiona
         user_id = payload.get("sub")
         if user_id:
             return await user_service.get_user_by_id(user_id)
-    except:
-        pass
+    except Exception as e:
+        logger.warning(f"Optional auth failed in quiz route: {e}")
+        current_user = None
     return None
 
 def clean_quiz_for_public(quiz: dict) -> dict:

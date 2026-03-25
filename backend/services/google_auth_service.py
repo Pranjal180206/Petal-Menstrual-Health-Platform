@@ -1,16 +1,19 @@
 import httpx
 import os
+import logging
 from pathlib import Path
 from fastapi import HTTPException
 from datetime import datetime
 from dotenv import load_dotenv
 
+logger = logging.getLogger(__name__)
+
 # Use path relative to this file so it works regardless of uvicorn's cwd
 _env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=_env_path, override=True)
-print(f"[STARTUP] google_auth_service loading .env from: {_env_path}")
-print(f"[STARTUP] GOOGLE_CLIENT_ID loaded: {bool(os.getenv('GOOGLE_CLIENT_ID'))}")
-print(f"[STARTUP] GOOGLE_CLIENT_SECRET loaded: {bool(os.getenv('GOOGLE_CLIENT_SECRET'))}")
+logger.info(f"[STARTUP] google_auth_service loading .env from: {_env_path}")
+logger.info(f"[STARTUP] GOOGLE_CLIENT_ID loaded: {bool(os.getenv('GOOGLE_CLIENT_ID'))}")
+logger.info(f"[STARTUP] GOOGLE_CLIENT_SECRET loaded: {bool(os.getenv('GOOGLE_CLIENT_SECRET'))}")
 
 ALLOWED_REDIRECT_URIS = [
     os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:5173"),
@@ -19,7 +22,7 @@ ALLOWED_REDIRECT_URIS = [
 ]
 
 async def exchange_code_for_profile(code: str, redirect_uri: str) -> dict:
-    print(f"[DEBUG-FUNC] exchange_code_for_profile called with redirect_uri={redirect_uri}")
+    logger.info(f"[DEBUG-FUNC] exchange_code_for_profile called with redirect_uri={redirect_uri}")
     
     if redirect_uri not in ALLOWED_REDIRECT_URIS:
         raise HTTPException(status_code=400, detail="Invalid redirect URI")
@@ -27,7 +30,7 @@ async def exchange_code_for_profile(code: str, redirect_uri: str) -> dict:
     load_dotenv(dotenv_path=_env_path, override=True)
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-    print(f"[DEBUG-FUNC] client_id present: {bool(client_id)}, secret present: {bool(client_secret)}")
+    logger.info(f"[DEBUG-FUNC] client_id present: {bool(client_id)}, secret present: {bool(client_secret)}")
     
     if not client_id or not client_secret:
         raise HTTPException(status_code=500, detail="Google Auth is not configured on the server")
@@ -42,10 +45,10 @@ async def exchange_code_for_profile(code: str, redirect_uri: str) -> dict:
     }
     
     async with httpx.AsyncClient() as client:
-        print(f"[DEBUG] Exchanging code with redirect_uri={redirect_uri}, client_id={client_id[:20]}...")
+        logger.info(f"[DEBUG] Exchanging code with redirect_uri={redirect_uri}, client_id={client_id[:20]}...")
         token_res = await client.post(token_url, data=data)
-        print(f"[DEBUG] Google token exchange status: {token_res.status_code}")
-        print(f"[DEBUG] Google response: {token_res.text[:500]}")
+        logger.info(f"[DEBUG] Google token exchange status: {token_res.status_code}")
+        logger.info(f"[DEBUG] Google response: {token_res.text[:500]}")
         if token_res.status_code != 200:
             raise HTTPException(status_code=400, detail=f"Failed to exchange code: {token_res.text}")
             
@@ -113,7 +116,22 @@ async def get_or_create_user(db, profile: dict) -> dict:
             "data_collection": True,
             "community_guidelines": True,
             "timestamp": datetime.utcnow()
-        }
+        },
+        "cycle_preferences": {
+            "average_cycle_length": 28,
+            "average_period_length": 5,
+            "luteal_phase_length": 14
+        },
+        "notification_preferences": {
+            "email": True,
+            "push": True,
+            "reminders": True
+        },
+        "privacy_settings": {
+            "data_sharing": False,
+            "anonymous_by_default": True
+        },
+        "language_preference": "en"
     }
     
     result = await users_collection.insert_one(new_user)

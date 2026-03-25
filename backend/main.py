@@ -7,6 +7,14 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
+
 from database import connect_to_mongo, close_mongo_connection, get_db
 from config import limiter
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -28,20 +36,21 @@ async def lifespan(app: FastAPI):
         db = get_db()
         await purge_scheduled_deletions(db)
     
+    import pytz
     scheduler.add_job(
         run_purge,
-        CronTrigger(hour=2, minute=0),
+        CronTrigger(hour=2, minute=0, timezone=pytz.utc),
         id="purge_scheduled_deletions",
         replace_existing=True
     )
     scheduler.start()
-    print("[SCHEDULER] Deletion purge job scheduled — runs daily at 02:00 UTC")
+    logger.info("[SCHEDULER] Deletion purge job scheduled — runs daily at 02:00 UTC")
     
     yield
     
     # Shutdown
     scheduler.shutdown()
-    print("[SCHEDULER] Scheduler stopped")
+    logger.info("[SCHEDULER] Scheduler stopped")
     await close_mongo_connection()
 
 app = FastAPI(
@@ -94,6 +103,9 @@ from routes.admin_myths import router as admin_myths_router
 from routes.admin_quizzes import router as admin_quizzes_router
 from routes.admin_community import router as admin_community_router
 from routes.admin_users import router as admin_users_router
+from routes.admin_videos import router as admin_videos_router
+from routes.admin_blogs import router as admin_blogs_router
+from routes.admin_stats import router as admin_stats_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
@@ -109,4 +121,7 @@ app.include_router(admin_myths_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_quizzes_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_community_router, prefix="/api/admin", tags=["Admin"])
 app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin"])
-app.include_router(risk_analysis_router, prefix="/api/risk-analysis", tags=["Risk Analysis"])
+app.include_router(admin_videos_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_blogs_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(admin_stats_router, prefix="/api/admin", tags=["Admin"])
+

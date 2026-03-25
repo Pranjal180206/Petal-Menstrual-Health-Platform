@@ -1,17 +1,37 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from config import limiter
 from datetime import timedelta, datetime
 from typing import Optional
 from email_validator import validate_email, EmailNotValidError
 
-from services.auth_service import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
+from services.auth_service import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_password_reset_token, reset_password, send_reset_email
 from services.user_service import user_service
 from services.google_auth_service import exchange_code_for_profile, get_or_create_user
 from database import get_db
 from bson import ObjectId
+from routes.users import sanitize_user
 
 router = APIRouter()
+
+def inject_user_defaults(user: dict) -> dict:
+    user.setdefault("cycle_preferences", {
+        "average_cycle_length": 28,
+        "average_period_length": 5,
+        "luteal_phase_length": 14
+    })
+    user.setdefault("notification_preferences", {
+        "email": True,
+        "push": True,
+        "reminders": True
+    })
+    user.setdefault("privacy_settings", {
+        "data_sharing": False,
+        "anonymous_by_default": True
+    })
+    user.setdefault("language_preference", "en")
+    return user
 
 class UserRegister(BaseModel):
     name: str
@@ -62,6 +82,21 @@ async def register(request: Request, user_in: UserRegister):
         "community_guidelines": True,
         "timestamp": datetime.utcnow()
     }
+    user_dict["cycle_preferences"] = {
+        "average_cycle_length": 28,
+        "average_period_length": 5,
+        "luteal_phase_length": 14
+    }
+    user_dict["notification_preferences"] = {
+        "email": True,
+        "push": True,
+        "reminders": True
+    }
+    user_dict["privacy_settings"] = {
+        "data_sharing": False,
+        "anonymous_by_default": True
+    }
+    user_dict["language_preference"] = "en"
 
     created_user = await user_service.create_user(user_dict)
     
@@ -73,7 +108,8 @@ async def register(request: Request, user_in: UserRegister):
     
     # Strip sensitive info
     created_user["id"] = str(created_user.pop("_id"))
-    created_user.pop("password_hash", None)
+    created_user = inject_user_defaults(created_user)
+    created_user = sanitize_user(created_user)
     
     return {
         "access_token": access_token, 
@@ -86,10 +122,11 @@ class GoogleAuthRequest(BaseModel):
     redirect_uri: str
 
 @router.post("/google")
-async def google_auth(request: GoogleAuthRequest):
-    print(f"[ROUTE] POST /auth/google called, code length={len(request.code)}, redirect_uri={request.redirect_uri}")
+@limiter.limit("10/minute")
+async def google_auth(request: Request, body: GoogleAuthRequest):
+    print(f"[ROUTE] POST /auth/google called, code length={len(body.code)}, redirect_uri={body.redirect_uri}")
     try:
-        profile = await exchange_code_for_profile(request.code, request.redirect_uri)
+        profile = await exchange_code_for_profile(body.code, body.redirect_uri)
     except HTTPException:
         raise  # Let HTTPExceptions pass through with their original status code
     except Exception as e:
@@ -109,7 +146,8 @@ async def google_auth(request: GoogleAuthRequest):
     )
 
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
     
     return {
         "access_token": access_token, 
@@ -141,7 +179,8 @@ async def login(request: Request, user_in: UserLogin):
     )
 
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
     
     return {
         "access_token": access_token, 
@@ -153,5 +192,41 @@ async def login(request: Request, user_in: UserLogin):
 async def get_me(current_user: dict = Depends(get_current_user)):
     user = dict(current_user)
     user["id"] = str(user.pop("_id"))
-    user.pop("password_hash", None)
+    is_admin = user.get("is_admin", False)
+    user = inject_user_defaults(user)
+    user = sanitize_user(user)
+    user["is_admin"] = is_admin  # frontend needs this for admin panel access
     return user
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=100)
+
+
+@router.post("/forgot-password")
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest, db=Depends(get_db)):
+    """Request a password reset link. Always returns the same message to prevent email enumeration."""
+    reset_base_url = os.getenv("RESET_PASSWORD_BASE_URL", "http://localhost:5173")
+    try:
+        token = await create_password_reset_token(body.email, db)
+        if token:
+            await send_reset_email(body.email, token, reset_base_url)
+    except HTTPException as e:
+        # Re-raise Google account error — it has a clear, non-enumerating message
+        if e.status_code == 400:
+            raise
+    return {"message": "If this email exists, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+@limiter.limit("5/minute")
+async def reset_password_route(request: Request, body: ResetPasswordRequest, db=Depends(get_db)):
+    """Reset password using the token from the reset email."""
+    await reset_password(body.token, body.new_password, db)
+    return {"message": "Password reset successfully."}

@@ -13,8 +13,7 @@ python-multipart>=0.0.20
 bleach>=6.0.0
 fpdf2>=2.7.9
 
-google-auth
-google-auth-oauthlib
 httpx
 apscheduler>=3.10.0
-
+pytz
+python-dateutil

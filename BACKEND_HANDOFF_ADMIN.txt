@@ -1,0 +1,351 @@
+============================================================
+  PETAL — BACKEND ENGINEER HANDOFF (Admin Panel)
+  Date: 2026-03-24
+  From: Frontend Team
+============================================================
+
+SUMMARY
+-------
+The admin panel frontend is LIVE at /admin.
+It already works with the 5 existing admin endpoint groups
+(articles, myths, quizzes, flagged posts, users).
+
+The frontend also includes 2 NEW sections — Videos and Blogs —
+that need backend support. These sections gracefully show a
+"Backend Not Ready" message until the endpoints below are built.
+
+There is also a new admin stats endpoint needed for the
+admin dashboard (future enhancement, lower priority).
+
+
+============================================================
+PART 1 — NEW MONGODB COLLECTIONS
+============================================================
+
+COLLECTION: education_videos
+-----------------------------
+Purpose: Admin-managed YouTube educational videos displayed
+         on the public Education page.
+
+Document schema:
+{
+  "_id":              ObjectId,
+  "title":            string  (required, max 300 chars),
+  "description":      string  (optional, max 2000 chars),
+  "youtube_url":      string  (required, must be a valid YouTube URL),
+  "thumbnail_url":    string  (auto-generated from youtube_url),
+  "category":         string  (one of: basics, hygiene, nutrition,
+                               mental-health, myths, wellness, general),
+  "tags":             [string],
+  "duration_minutes": int     (optional),
+  "is_published":     bool    (default: true),
+  "display_order":    int     (optional, for manual sort),
+  "created_at":       datetime,
+  "updated_at":       datetime
+}
+
+Indexes to add in database.py → ensure_indexes():
+  await db["education_videos"].create_index(
+      [("is_published", 1), ("display_order", 1)]
+  )
+  await db["education_videos"].create_index("category")
+
+Thumbnail auto-generation:
+  When admin sends a youtube_url, extract the video ID:
+    import re
+    match = re.search(r'(?:youtu\.be/|v=)([a-zA-Z0-9_-]{11})', youtube_url)
+    video_id = match.group(1) if match else None
+  Then set thumbnail_url to:
+    f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg"
+
+
+COLLECTION: blogs
+------------------
+Purpose: Longer-form blog posts managed by admin, shown on
+         the public Education page.
+
+Document schema:
+{
+  "_id":              ObjectId,
+  "title":            string  (required, max 300 chars),
+  "slug":             string  (auto-generated from title, unique),
+  "summary":          string  (required, max 500 chars,
+                               used for card previews),
+  "content":          string  (required, max 50000 chars,
+                               full blog body),
+  "cover_image_url":  string  (optional),
+  "category":         string  (same options as videos),
+  "tags":             [string],
+  "author_name":      string  (default: "Petal Team"),
+  "read_time_minutes":int     (optional, estimated read time),
+  "is_published":     bool    (default: true),
+  "is_featured":      bool    (default: false, pin to top),
+  "created_at":       datetime,
+  "updated_at":       datetime
+}
+
+Indexes to add in database.py → ensure_indexes():
+  await db["blogs"].create_index(
+      [("is_published", 1), ("created_at", -1)]
+  )
+  await db["blogs"].create_index("slug", unique=True)
+  await db["blogs"].create_index("category")
+
+Slug generation:
+  import re
+  slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+  # Check for uniqueness, append -2, -3 etc if duplicate
+
+
+============================================================
+PART 2 — NEW PYDANTIC MODELS
+============================================================
+
+FILE: backend/models/video_model.py
+-------------------------------------
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+class VideoCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=300)
+    youtube_url: str = Field(..., min_length=10, max_length=500)
+    description: Optional[str] = Field(None, max_length=2000)
+    category: str = "general"
+    tags: List[str] = []
+    duration_minutes: Optional[int] = None
+    display_order: Optional[int] = None
+
+class VideoUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=300)
+    youtube_url: Optional[str] = Field(None, max_length=500)
+    description: Optional[str] = Field(None, max_length=2000)
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    duration_minutes: Optional[int] = None
+    display_order: Optional[int] = None
+    is_published: Optional[bool] = None
+
+
+FILE: backend/models/blog_model.py
+------------------------------------
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+
+class BlogCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=300)
+    summary: str = Field(..., min_length=1, max_length=500)
+    content: str = Field(..., min_length=1, max_length=50000)
+    category: str = "general"
+    author_name: str = "Petal Team"
+    tags: List[str] = []
+    cover_image_url: Optional[str] = None
+
+class BlogUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=300)
+    summary: Optional[str] = Field(None, max_length=500)
+    content: Optional[str] = Field(None, max_length=50000)
+    category: Optional[str] = None
+    author_name: Optional[str] = None
+    tags: Optional[List[str]] = None
+    cover_image_url: Optional[str] = None
+    is_published: Optional[bool] = None
+    is_featured: Optional[bool] = None
+
+
+============================================================
+PART 3 — NEW ADMIN ROUTES
+============================================================
+
+All new admin routes MUST follow the existing pattern:
+  - JWT + is_admin guard via Depends(get_admin_user)
+  - Rate limited at 30/minute via @limiter.limit("30/minute")
+  - Registered under prefix /api/admin
+
+FILE: backend/routes/admin_videos.py
+--------------------------------------
+Endpoints:
+  GET    /api/admin/videos              → list all videos (incl unpublished)
+  POST   /api/admin/videos              → create video (201)
+  PATCH  /api/admin/videos/{video_id}   → update video
+  DELETE /api/admin/videos/{video_id}   → delete video
+
+Follow exact same pattern as admin_articles.py.
+Use VideoCreate / VideoUpdate models for request bodies.
+
+
+FILE: backend/routes/admin_blogs.py
+-------------------------------------
+Endpoints:
+  GET    /api/admin/blogs               → list all blogs (incl drafts)
+  POST   /api/admin/blogs               → create blog (201)
+  PATCH  /api/admin/blogs/{blog_id}     → update blog
+  DELETE /api/admin/blogs/{blog_id}     → delete blog
+
+Follow exact same pattern as admin_articles.py.
+Use BlogCreate / BlogUpdate models for request bodies.
+
+
+============================================================
+PART 4 — NEW SERVICE FUNCTIONS (admin_service.py)
+============================================================
+
+Add to backend/services/admin_service.py:
+
+# ─── VIDEOS ─────────────────────────────────────────────
+async def get_videos(db) -> list:
+    cursor = db["education_videos"].find({}).sort("display_order", 1)
+    docs = await cursor.to_list(length=200)
+    for d in docs: d["id"] = str(d.pop("_id", ""))
+    return docs
+
+async def create_video(db, data: dict) -> dict:
+    # Auto-generate thumbnail_url from youtube_url
+    # Set created_at, updated_at, is_published defaults
+    ...
+
+async def update_video(db, video_id: str, update_data: dict) -> dict:
+    # Same pattern as update_article
+    ...
+
+async def delete_video(db, video_id: str) -> bool:
+    # Same pattern as delete_article
+    ...
+
+
+# ─── BLOGS ───────────────────────────────────────────────
+async def get_blogs(db) -> list:
+    cursor = db["blogs"].find({}).sort("created_at", -1)
+    docs = await cursor.to_list(length=200)
+    for d in docs: d["id"] = str(d.pop("_id", ""))
+    return docs
+
+async def create_blog(db, data: dict) -> dict:
+    # Auto-generate slug from title
+    # Set created_at, updated_at, is_published, is_featured defaults
+    ...
+
+async def update_blog(db, blog_id: str, update_data: dict) -> dict:
+    # Same pattern as update_article
+    ...
+
+async def delete_blog(db, blog_id: str) -> bool:
+    # Same pattern as delete_article
+    ...
+
+
+============================================================
+PART 5 — NEW PUBLIC ROUTES (Education page)
+============================================================
+
+Add to backend/routes/education.py:
+
+  GET /api/education/videos
+    → Return only published videos, sorted by display_order
+    → Filter: {"is_published": True}
+    → No auth required (public)
+
+  GET /api/education/blogs
+    → Return only published blogs, sorted by created_at desc
+    → Filter: {"is_published": True}
+    → No auth required (public)
+
+  GET /api/education/blogs/{slug}
+    → Return single published blog by slug
+    → No auth required (public)
+
+
+============================================================
+PART 6 — REGISTER ROUTERS (main.py)
+============================================================
+
+Add these lines to backend/main.py:
+
+  from routes.admin_videos import router as admin_videos_router
+  from routes.admin_blogs import router as admin_blogs_router
+
+  app.include_router(admin_videos_router,
+                     prefix="/api/admin", tags=["Admin"])
+  app.include_router(admin_blogs_router,
+                     prefix="/api/admin", tags=["Admin"])
+
+
+============================================================
+PART 7 — ADMIN STATS ENDPOINT (Lower Priority)
+============================================================
+
+FILE: backend/routes/admin_stats.py
+--------------------------------------
+  GET /api/admin/stats → aggregate dashboard stats
+
+Response shape the frontend expects:
+{
+  "users": {
+    "total": int,
+    "active": int,
+    "deactivated": int
+  },
+  "community": {
+    "total_posts": int,
+    "flagged_count": int
+  },
+  "education": {
+    "articles": int,
+    "myths": int,
+    "videos": int,
+    "blogs": int
+  },
+  "quizzes": {
+    "total": int,
+    "published": int
+  }
+}
+
+Implementation: Use countDocuments() on each collection.
+DO NOT return individual user data — aggregates only.
+
+
+============================================================
+PART 8 — FRONTEND CONTRACT SUMMARY
+============================================================
+
+The admin panel frontend sends these requests:
+
+VIDEOS:
+  GET    /api/admin/videos               → expects: [{id, title, youtube_url, description, category, tags, is_published, ...}]
+  POST   /api/admin/videos               → sends: {title, youtube_url, description, category, tags}
+  PATCH  /api/admin/videos/{id}          → sends: partial {title, youtube_url, ...}
+  DELETE /api/admin/videos/{id}          → expects: {deleted: true}
+
+BLOGS:
+  GET    /api/admin/blogs                → expects: [{id, title, summary, content, category, author_name, tags, is_published, is_featured, ...}]
+  POST   /api/admin/blogs                → sends: {title, summary, content, category, author_name, tags}
+  PATCH  /api/admin/blogs/{id}           → sends: partial {title, summary, ...}
+  DELETE /api/admin/blogs/{id}           → expects: {deleted: true}
+
+STATS:
+  GET    /api/admin/stats                → expects shape from Part 7 above
+
+All requests include Authorization: Bearer <JWT> header
+automatically (via axiosInstance interceptor).
+
+
+============================================================
+CHECKLIST
+============================================================
+
+[ ] 1. Add indexes to database.py → ensure_indexes()
+[ ] 2. Create backend/models/video_model.py
+[ ] 3. Create backend/models/blog_model.py
+[ ] 4. Add video CRUD functions to admin_service.py
+[ ] 5. Add blog CRUD functions to admin_service.py
+[ ] 6. Create backend/routes/admin_videos.py
+[ ] 7. Create backend/routes/admin_blogs.py
+[ ] 8. Add public video/blog routes to education.py
+[ ] 9. Register new routers in main.py
+[ ] 10. (Optional) Create admin_stats.py + route
+
+============================================================
+END OF HANDOFF
+============================================================

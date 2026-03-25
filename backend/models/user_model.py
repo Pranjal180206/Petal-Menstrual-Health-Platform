@@ -65,6 +65,8 @@ class User(BaseModel):
     last_login: Optional[datetime] = None
     deactivated_at: Optional[datetime] = None
     deletion_scheduled_at: Optional[datetime] = None
+    reset_token: Optional[str] = None
+    reset_token_expiry: Optional[datetime] = None
 
     model_config = ConfigDict(
         populate_by_name=True,

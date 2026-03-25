@@ -4,6 +4,9 @@ from bson import ObjectId
 from models.cycle_model import CycleCreateReq, CycleUpdateReq
 from database import get_db
 from fastapi import HTTPException
+import logging
+
+logger = logging.getLogger(__name__)
 
 def safe_object_id(id_str: str) -> ObjectId:
     try:
@@ -92,7 +95,7 @@ class TrackerService:
         try:
             cycle_oid = ObjectId(cycle_id)
         except Exception as e:
-            print(f"[ERROR] TrackerService.update_cycle: {e}")
+            logger.error(f"[ERROR] TrackerService.update_cycle: {e}", exc_info=True)
             raise HTTPException(status_code=400, detail="Invalid cycle ID format")
             
         result = await db["cycle_logs"].update_one(

@@ -1,5 +1,6 @@
+import re
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import HTTPException
 
 
@@ -201,3 +202,110 @@ async def toggle_user_active(db, user_id: str) -> dict:
     updated.pop("password_hash", None)
     updated["id"] = str(updated.pop("_id", ""))
     return updated
+
+
+# DEBT: No category enum validation — any string is accepted.
+# DEBT: display_order collisions are not prevented on create.
+# DEBT: Blog slug regeneration is not triggered on title update.
+
+# ─── VIDEOS ──────────────────────────────────────────────────────────
+
+def _extract_thumbnail(youtube_url: str) -> str | None:
+    match = re.search(r'(?:youtu\.be/|v=)([a-zA-Z0-9_-]{11})', youtube_url)
+    if match:
+        return f"https://img.youtube.com/vi/{match.group(1)}/hqdefault.jpg"
+    return None
+
+async def get_videos(db) -> list:
+    cursor = db["education_videos"].find({}).sort("display_order", 1)
+    docs = await cursor.to_list(length=200)
+    for d in docs:
+        d["id"] = str(d.pop("_id", ""))
+    return docs
+
+async def create_video(db, data: dict) -> dict:
+    now = datetime.now(timezone.utc)
+    doc = {
+        **data,
+        "thumbnail_url": _extract_thumbnail(data.get("youtube_url", "")),
+        "is_published": True,
+        "created_at": now,
+        "updated_at": now,
+    }
+    result = await db["education_videos"].insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    doc.pop("_id", None)
+    return doc
+
+async def update_video(db, video_id: str, update_data: dict) -> dict | None:
+    from bson import ObjectId
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    if "youtube_url" in update_data:
+        update_data["thumbnail_url"] = _extract_thumbnail(
+            update_data["youtube_url"]
+        )
+    result = await db["education_videos"].find_one_and_update(
+        {"_id": ObjectId(video_id)},
+        {"$set": update_data},
+        return_document=True,
+    )
+    if result:
+        result["id"] = str(result.pop("_id"))
+    return result
+
+async def delete_video(db, video_id: str) -> bool:
+    from bson import ObjectId
+    result = await db["education_videos"].delete_one(
+        {"_id": ObjectId(video_id)}
+    )
+    return result.deleted_count == 1
+
+
+# ─── BLOGS ───────────────────────────────────────────────────────────
+
+async def _generate_slug(db, title: str) -> str:
+    base = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
+    slug, suffix = base, 2
+    while await db["blogs"].find_one({"slug": slug}):
+        slug = f"{base}-{suffix}"
+        suffix += 1
+    return slug
+
+async def get_blogs(db) -> list:
+    cursor = db["blogs"].find({}).sort("created_at", -1)
+    docs = await cursor.to_list(length=200)
+    for d in docs:
+        d["id"] = str(d.pop("_id", ""))
+    return docs
+
+async def create_blog(db, data: dict) -> dict:
+    now = datetime.now(timezone.utc)
+    doc = {
+        **data,
+        "slug": await _generate_slug(db, data["title"]),
+        "is_published": True,
+        "is_featured": False,
+        "created_at": now,
+        "updated_at": now,
+    }
+    result = await db["blogs"].insert_one(doc)
+    doc["id"] = str(result.inserted_id)
+    doc.pop("_id", None)
+    return doc
+
+async def update_blog(db, blog_id: str, update_data: dict) -> dict | None:
+    from bson import ObjectId
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    result = await db["blogs"].find_one_and_update(
+        {"_id": ObjectId(blog_id)},
+        {"$set": update_data},
+        return_document=True,
+    )
+    if result:
+        result["id"] = str(result.pop("_id"))
+    return result
+
+async def delete_blog(db, blog_id: str) -> bool:
+    from bson import ObjectId
+    result = await db["blogs"].delete_one({"_id": ObjectId(blog_id)})
+    return result.deleted_count == 1

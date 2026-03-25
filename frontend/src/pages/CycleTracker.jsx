@@ -139,6 +139,11 @@ const CycleTracker = () => {
             showToast('Daily log saved successfully! ✓', 'success');
         } catch (err) {
             console.error("Failed to save log", err);
+            if (err.response?.status === 401) {
+                showToast('Please sign in to save your log.', 'error');
+            } else {
+                showToast('Failed to save log. Please try again.', 'error');
+            }
         }
     };
 
@@ -264,7 +269,7 @@ const CycleTracker = () => {
                     </div>
                 </div>
 
-                {/* Stats Cards */}
+                    {/* Stats Cards */}
                 <div className="flex gap-6">
                     <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 flex-1 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-[#FFF0F4] text-[#D81B60] flex items-center justify-center">
@@ -273,7 +278,13 @@ const CycleTracker = () => {
                         <div>
                             <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">Cycle Day</p>
                             <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
-                                {today.getDate()} of 28
+                                {(() => {
+                                    if (cycleLogs.length === 0) return '— of —';
+                                    const sorted = [...cycleLogs].sort((a, b) => new Date(b.cycle_start_date) - new Date(a.cycle_start_date));
+                                    const lastStart = new Date(sorted[0].cycle_start_date);
+                                    const diffDays = Math.floor((today - lastStart) / 86400000) + 1;
+                                    return `Day ${Math.max(1, diffDays)} of ${averageCycleLength}`;
+                                })()}
                             </h3>
                         </div>
                     </div>

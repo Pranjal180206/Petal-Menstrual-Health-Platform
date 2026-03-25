@@ -10,6 +10,13 @@ import { useAuth } from '../context/AuthContext';
 const AVATAR_COLORS = ['#FF6B9A', '#A78BFA', '#34D399', '#60A5FA', '#FBBF24', '#F87171'];
 const ANONYMOUS_NAMES = ['MoonPetal', 'SilverWave', 'CosmicBloom', 'StarDust', 'NightBlossom', 'CrystalDew'];
 
+// Deterministic color from a string (post id or username)
+const getAvatarColor = (str = '') => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
 const AFFIRMATIONS = [
     "Your body is doing something incredible. Be kind to yourself today. 💗",
     "You are allowed to take up space. Your feelings are valid. 🌸",
@@ -341,7 +348,7 @@ const CommunityHub = () => {
     const mapPost = (p, overrides = {}) => ({
         id: p.id,
         initials: p.author?.name ? p.author.name.charAt(0).toUpperCase() : 'A',
-        color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+        color: getAvatarColor(String(p.id || p.author?.name || 'anon')),
         username: p.author?.name || 'Anonymous',
         createdAt: p.created_at,
         content: p.content,
@@ -350,7 +357,7 @@ const CommunityHub = () => {
         liked: currentUserId ? (p.likes || []).includes(currentUserId) : false,
         replies: p.replies || [],
         replyCount: p.replies ? p.replies.length : 0,
-        isUserPost: false,
+        isUserPost: currentUserId && (p.user_id === currentUserId || p.author?.id === currentUserId),
         ...overrides,
     });
 
@@ -414,10 +421,10 @@ const CommunityHub = () => {
     const handleFlag = async (postId) => {
         try {
             await axiosInstance.patch(`/community/${postId}/flag`);
-            // No state update needed — post stays visible for current user
+            showToast('Post flagged for review. Thank you! 🧡', 'success');
         } catch (err) {
             if (err.response?.status === 409) {
-                // Already flagged — silently ignore
+                showToast('You already flagged this post.', 'info');
                 return;
             }
             console.error('Flag failed:', err);
@@ -494,16 +501,30 @@ const CommunityHub = () => {
         }
     };
 
-    // Filter logic
+    // Filter logic — My Posts fetches from API using user_id
+    const [myPosts, setMyPosts] = useState([]);
+    const [myPostsLoading, setMyPostsLoading] = useState(false);
+
+    const handleFilterChange = async (f) => {
+        setActiveFilter(f);
+        if (f === 'My Posts' && currentUserId) {
+            setMyPostsLoading(true);
+            try {
+                const res = await axiosInstance.get(`/community/?user_id=${currentUserId}`);
+                setMyPosts(res.data.map(p => mapPost(p, { isUserPost: true })));
+            } catch (err) {
+                console.error('Failed to fetch my posts:', err);
+            } finally {
+                setMyPostsLoading(false);
+            }
+        }
+    };
+
     const displayedPosts = (() => {
-        if (activeFilter === 'My Posts') return posts.filter(p => p.isUserPost);
+        if (activeFilter === 'My Posts') return myPosts;
         if (activeFilter === 'New') return [...posts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        if (activeFilter === 'Trending') return [...posts].sort((a, b) => {
-            const totalA = a.likesCount || 0;
-            const totalB = b.likesCount || 0;
-            return totalB - totalA;
-        });
-        return posts; // All
+        if (activeFilter === 'Trending') return [...posts].sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+        return posts;
     })();
 
     // Real stats
@@ -606,7 +627,7 @@ const CommunityHub = () => {
                                 {filters.map(f => (
                                     <button
                                         key={f}
-                                        onClick={() => setActiveFilter(f)}
+                                        onClick={() => handleFilterChange(f)}
                                         className={`filter-pill px-4 py-2 rounded-full text-xs font-bold border transition-all ${activeFilter === f ? 'active border-transparent' : 'border-gray-200 text-gray-500 bg-white hover:border-[#1D1D2C] hover:text-[#1D1D2C]'}`}
                                     >
                                         {f}
@@ -626,7 +647,7 @@ const CommunityHub = () => {
 
                         {/* Posts */}
                         <div className="space-y-5">
-                            {isLoading ? (
+                            {isLoading || myPostsLoading ? (
                                 <div className="text-center py-20 text-gray-400">Loading...</div>
                             ) : displayedPosts.length === 0 ? (
                                 <div className="empty-state flex flex-col items-center justify-center py-40 text-center">

@@ -17,32 +17,32 @@ const Navbar = ({ isHome = false }) => {
             {/* Desktop Links */}
             <div 
                 data-tour-id="navbar-main"
-                className={`hidden md:flex items-center ${isHome ? 'gap-2 lg:gap-4 text-xs lg:text-sm px-4 lg:px-8' : 'gap-10 text-sm px-8'} bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md`}
+                className="hidden md:flex items-center gap-6 lg:gap-10 text-sm px-6 lg:px-8 bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md"
             >
                 <Link to="/education" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Education</Link>
                 <Link to="/community" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Community</Link>
-                <Link to="/cycle-tracker/risk" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Risks</Link>
-                {isHome && (
-                    <Link to="/cycle-tracker/tracker" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Mood Tracker</Link>
-                )}
+                <Link to="/cycle-tracker/tracker" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">Mood Tracker</Link>
             </div>
 
             {/* Actions */}
             <div className="hidden md:flex items-center gap-4">
-                <Link
-                    to="/login"
-                    className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
-                >
-                    Sign In
-                </Link>
-                <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
-                    {user?.avatar_url 
-                      ? <img src={user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full" />
-                      : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold">
-                          {user?.name?.[0]?.toUpperCase() ?? 'G'}
-                        </div>
-                    }
-                </Link>
+                {user ? (
+                    <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
+                        {user?.avatar_url
+                          ? <img src={user.avatar_url} alt="avatar" className="w-full h-full rounded-2xl object-cover" />
+                          : <div className="w-8 h-8 rounded-full bg-pink-400 flex items-center justify-center text-white font-bold text-sm">
+                              {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                            </div>
+                        }
+                    </Link>
+                ) : (
+                    <Link
+                        to="/login"
+                        className="bg-gradient-pink hover:opacity-90 text-white px-8 py-3 rounded-full font-bold text-sm transition-all shadow-lg shadow-pink-100 hover:-translate-y-0.5"
+                    >
+                        Sign In
+                    </Link>
+                )}
             </div>
 
             {/* Mobile Menu */}
