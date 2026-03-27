@@ -10,7 +10,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('petal_token');
+      const token = sessionStorage.getItem('tab_token') || localStorage.getItem('petal_token');
+      if (token && !sessionStorage.getItem('tab_token')) {
+        sessionStorage.setItem('tab_token', token);
+      }
       if (token) {
         try {
           const userData = await authApi.getCurrentUser();
@@ -18,6 +21,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
           console.error("Token invalid or expired", error);
           localStorage.removeItem('petal_token');
+          sessionStorage.removeItem('tab_token');
         }
       }
       setLoading(false);
@@ -43,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const loginWithGoogle = async (code) => {
     const data = await googleAuth(code, window.location.origin);
     localStorage.setItem('petal_token', data.access_token);
+    sessionStorage.setItem('tab_token', data.access_token);
     const userData = await authApi.getCurrentUser();
     setUser(userData);
   };
@@ -50,6 +55,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     const { access_token } = await authApi.login(credentials.email, credentials.password);
     localStorage.setItem('petal_token', access_token);
+    sessionStorage.setItem('tab_token', access_token);
     const userData = await authApi.getCurrentUser();
     setUser(userData);
   };
@@ -58,12 +64,14 @@ export const AuthProvider = ({ children }) => {
     // The backend register endpoint returns the token directly
     const { access_token } = await authApi.register(userData);
     localStorage.setItem('petal_token', access_token);
+    sessionStorage.setItem('tab_token', access_token);
     const updatedUser = await authApi.getCurrentUser();
     setUser(updatedUser);
   };
 
   const logout = () => {
     localStorage.removeItem('petal_token');
+    sessionStorage.removeItem('tab_token');
     setUser(null);
   };
 

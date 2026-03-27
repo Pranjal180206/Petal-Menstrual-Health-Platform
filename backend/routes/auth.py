@@ -159,7 +159,21 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
 @limiter.limit("5/minute")
 async def login(request: Request, user_in: UserLogin):
     user = await user_service.get_user_by_email(user_in.email)
-    if not user or not user.get("password_hash") or not verify_password(user_in.password, user.get("password_hash")):
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
+    if not user.get("is_active", True):
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been deactivated. Please contact support."
+        )
+
+    if not user.get("password_hash") or not verify_password(user_in.password, user.get("password_hash")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

@@ -82,11 +82,21 @@ async def get_or_create_user(db, profile: dict) -> dict:
     # 1. Check if user exists with this google_id
     user = await users_collection.find_one({"google_id": google_id})
     if user:
+        if not user.get("is_active", True):
+            raise HTTPException(
+                status_code=403,
+                detail="Your account has been deactivated. Please contact support."
+            )
         return user
         
     # 2. Check if user exists with this email (any provider)
     user = await users_collection.find_one({"email": email})
     if user:
+        if not user.get("is_active", True):
+            raise HTTPException(
+                status_code=403,
+                detail="Your account has been deactivated. Please contact support."
+            )
         await users_collection.update_one(
             {"_id": user["_id"]},
             {"$set": {

@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
 // Request Interceptor: Attach JWT Token & Language
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('petal_token');
+    const token = sessionStorage.getItem('tab_token') || localStorage.getItem('petal_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
