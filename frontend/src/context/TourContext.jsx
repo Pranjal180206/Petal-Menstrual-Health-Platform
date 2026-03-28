@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const TourContext = createContext(null);
 
+// Tour step definitions — title/content/nextLabel will be translated at render time in TourOverlay
 export const TOUR_STEPS = [
     {
         id: 'welcome',
@@ -73,7 +74,6 @@ export const TourProvider = ({ children }) => {
     useEffect(() => {
         const hasSeenTour = localStorage.getItem('petal_tour_completed');
         if (!hasSeenTour) {
-            // Delay a bit for the landing page to load
             const timer = setTimeout(() => {
                 // Actually we won't auto-start, we will show a prompt in the UI
             }, 2000);

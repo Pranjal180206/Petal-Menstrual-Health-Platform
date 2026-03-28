@@ -1,25 +1,42 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
-const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+// API values stay English for backend compatibility
+const FLOW_API = ['Spotting', 'Light', 'Medium', 'Heavy', 'None'];
+const SYMPTOM_API = ['Cramps', 'Headache', 'Bloating', 'Breast Tenderness', 'Backache', 'Acne', 'Nausea'];
+const MOOD_API = [
+    { emoji: '🙂', apiLabel: 'Calm',     tKey: 'cycleTracker.moods.calm' },
+    { emoji: '😫', apiLabel: 'Tired',    tKey: 'cycleTracker.moods.tired' },
+    { emoji: '😠', apiLabel: 'Irritable',tKey: 'cycleTracker.moods.irritable' },
+    { emoji: '😟', apiLabel: 'Anxious',  tKey: 'cycleTracker.moods.anxious' },
+    { emoji: '😊', apiLabel: 'Happy',    tKey: 'cycleTracker.moods.happy' },
+    { emoji: '😢', apiLabel: 'Sad',      tKey: 'cycleTracker.moods.sad' },
 ];
-
-const FLOW_OPTIONS = ['Spotting', 'Light', 'Medium', 'Heavy', 'None'];
-const PHYSICAL_SYMPTOMS = ['Cramps', 'Headache', 'Bloating', 'Breast Tenderness', 'Backache', 'Acne', 'Nausea'];
-const MOOD_OPTIONS = [
-    { emoji: '🙂', label: 'Calm' },
-    { emoji: '😫', label: 'Tired' },
-    { emoji: '😠', label: 'Irritable' },
-    { emoji: '😟', label: 'Anxious' },
-    { emoji: '😊', label: 'Happy' },
-    { emoji: '😢', label: 'Sad' },
-];
+// Map symptom API label → translation key suffix
+const SYMPTOM_TKEY = {
+    'Cramps':            'cycleTracker.symptoms.cramps',
+    'Headache':          'cycleTracker.symptoms.headache',
+    'Bloating':          'cycleTracker.symptoms.bloating',
+    'Breast Tenderness': 'cycleTracker.symptoms.breastTenderness',
+    'Backache':          'cycleTracker.symptoms.backache',
+    'Acne':              'cycleTracker.symptoms.acne',
+    'Nausea':            'cycleTracker.symptoms.nausea',
+};
+const FLOW_TKEY = {
+    'Spotting': 'cycleTracker.flow.spotting',
+    'Light':    'cycleTracker.flow.light',
+    'Medium':   'cycleTracker.flow.medium',
+    'Heavy':    'cycleTracker.flow.heavy',
+    'None':     'cycleTracker.flow.none',
+};
+const MONTH_KEYS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const DAY_KEYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const CycleTracker = () => {
+    const { t } = useTranslation();
     const today = new Date();
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -147,45 +164,43 @@ const CycleTracker = () => {
         }
     };
 
-    /* ── Mocks replaced with real logic ── */
     const isPeriodDay = (day) => {
         const log = getLogForDay(day);
         return log && log.flow_intensity && log.flow_intensity !== 'None';
     };
-
     const isPredictedDay = (day) => {
         if (!nextPeriodPrediction) return false;
         const date = new Date(currentYear, currentMonth, day);
         const diff = (date - nextPeriodPrediction) / 86400000;
         return diff >= 0 && diff < 5;
     };
-
     const hasSymptoms = (day) => {
         const log = getLogForDay(day);
         return log && ((log.symptoms && log.symptoms.length > 0) || log.mood);
     };
 
-    /* ── Calendar cell style ── */
     const cellClass = (day) => {
         const base = 'w-9 h-9 rounded-full flex items-center justify-center mx-auto text-sm font-bold transition-all cursor-pointer select-none';
-        if (isToday(day))
-            return `${base} border-2 border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]`;
-        if (isPeriodDay(day))
-            return `${base} bg-[#D81B60] text-white shadow-md`;
-        if (isPredictedDay(day))
-            return `${base} border-2 border-dashed border-[#F48FB1] text-[#F48FB1]`;
-        if (selectedDay === day)
-            return `${base} bg-[#FFF0F4] text-[#D81B60]`;
+        if (isToday(day))        return `${base} border-2 border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]`;
+        if (isPeriodDay(day))    return `${base} bg-[#D81B60] text-white shadow-md`;
+        if (isPredictedDay(day)) return `${base} border-2 border-dashed border-[#F48FB1] text-[#F48FB1]`;
+        if (selectedDay === day) return `${base} bg-[#FFF0F4] text-[#D81B60]`;
         return `${base} hover:bg-gray-100 text-[#1D1D2C]`;
     };
 
-    /* ── Days until next period ── */
     const nextPeriodDay = nextPeriodPrediction ? Math.max(0, Math.ceil((nextPeriodPrediction - today) / 86400000)) : '--';
+
+    // Localized month and day labels
+    const MONTH_NAMES = MONTH_KEYS.map(k => t(`cycleTracker.months.${k}`));
+    const DAY_LABELS  = DAY_KEYS.map((_, i) => {
+        const arr = t('cycleTracker.days_short', { returnObjects: true });
+        return arr[i] ?? DAY_KEYS[i];
+    });
 
     if (isLoading) {
         return (
             <div className="p-8 max-w-7xl mx-auto h-full flex items-center justify-center">
-                <p className="text-gray-400 font-medium">Loading cycle tracking data...</p>
+                <p className="text-gray-400 font-medium">{t('cycleTracker.loading')}</p>
             </div>
         );
     }
@@ -196,7 +211,7 @@ const CycleTracker = () => {
             {/* Left Column */}
             <div className="flex-1 space-y-6">
                 <header className="flex justify-between items-center mb-2">
-                    <h1 className="text-2xl font-heading font-extrabold">Cycle &amp; Symptom Tracker</h1>
+                    <h1 className="text-2xl font-heading font-extrabold">{t('cycleTracker.title')}</h1>
                 </header>
 
                 {/* Calendar Card */}
@@ -207,16 +222,10 @@ const CycleTracker = () => {
                             {MONTH_NAMES[currentMonth]} {currentYear}
                         </h2>
                         <div className="flex gap-2">
-                            <button
-                                onClick={prevMonth}
-                                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors"
-                            >
+                            <button onClick={prevMonth} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors">
                                 <ChevronLeft size={16} />
                             </button>
-                            <button
-                                onClick={nextMonth}
-                                className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors"
-                            >
+                            <button onClick={nextMonth} className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-[#D81B60] hover:text-[#D81B60] transition-colors">
                                 <ChevronRight size={16} />
                             </button>
                         </div>
@@ -224,7 +233,7 @@ const CycleTracker = () => {
 
                     {/* Day Headers */}
                     <div className="grid grid-cols-7 gap-2 mb-4 text-center text-[10px] font-bold text-[#D81B60] tracking-widest uppercase">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+                        {DAY_LABELS.map(d => <div key={d}>{d}</div>)}
                     </div>
 
                     {/* Calendar Grid */}
@@ -233,10 +242,7 @@ const CycleTracker = () => {
                             <div key={idx} className="flex flex-col items-center">
                                 {day !== null && (
                                     <>
-                                        <button
-                                            onClick={() => setSelectedDay(day)}
-                                            className={cellClass(day)}
-                                        >
+                                        <button onClick={() => setSelectedDay(day)} className={cellClass(day)}>
                                             {day}
                                         </button>
                                         {hasSymptoms(day) && (
@@ -249,34 +255,34 @@ const CycleTracker = () => {
                     </div>
 
                     <p className="text-[10px] font-bold italic text-[#F48FB1] mt-6 mb-4">
-                        Predicted period: based on your last 3 cycles
+                        {t('cycleTracker.predictedPeriod')}
                     </p>
 
                     {/* Legend */}
                     <div className="flex items-center gap-6 border-t border-gray-100 pt-4">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-[#D81B60]" />
-                            <span className="text-xs font-bold text-[#1D1D2C]">Period</span>
+                            <span className="text-xs font-bold text-[#1D1D2C]">{t('cycleTracker.period')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full border-2 border-dashed border-[#F48FB1]" />
-                            <span className="text-xs font-bold text-[#1D1D2C]">Predicted</span>
+                            <span className="text-xs font-bold text-[#1D1D2C]">{t('cycleTracker.predicted')}</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-1" />
-                            <span className="text-xs font-bold text-[#1D1D2C]">Logged</span>
+                            <span className="text-xs font-bold text-[#1D1D2C]">{t('cycleTracker.logged')}</span>
                         </div>
                     </div>
                 </div>
 
-                    {/* Stats Cards */}
+                {/* Stats Cards */}
                 <div className="flex gap-6">
                     <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 flex-1 flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-[#FFF0F4] text-[#D81B60] flex items-center justify-center">
                             <CalendarIcon size={20} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">Cycle Day</p>
+                            <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">{t('cycleTracker.cycleDay')}</p>
                             <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
                                 {(() => {
                                     if (cycleLogs.length === 0) return '— of —';
@@ -294,9 +300,9 @@ const CycleTracker = () => {
                             <Hourglass size={20} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">Next Period</p>
+                            <p className="text-xs font-bold text-[#D81B60] tracking-wider mb-0.5">{t('cycleTracker.nextPeriod')}</p>
                             <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
-                                {nextPeriodDay} days
+                                {nextPeriodDay} {t('cycleTracker.days')}
                             </h3>
                         </div>
                     </div>
@@ -307,7 +313,7 @@ const CycleTracker = () => {
             <div className="w-full lg:w-[420px] bg-white rounded-[2rem] shadow-card border border-gray-100 p-8 flex flex-col">
 
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-heading font-extrabold">Daily Log</h2>
+                    <h2 className="text-xl font-heading font-extrabold">{t('cycleTracker.dailyLog')}</h2>
                     <span className="bg-gray-100 text-[#1D1D2C] text-xs font-bold px-3 py-1.5 rounded-md">
                         {MONTH_NAMES[currentMonth].slice(0, 3)} {selectedDay}, {currentYear}
                     </span>
@@ -317,9 +323,9 @@ const CycleTracker = () => {
 
                     {/* Flow Intensity */}
                     <div>
-                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Flow Intensity</h4>
+                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">{t('cycleTracker.flowIntensity')}</h4>
                         <div className="grid grid-cols-2 gap-3">
-                            {FLOW_OPTIONS.map(opt => (
+                            {FLOW_API.map(opt => (
                                 <button
                                     key={opt}
                                     onClick={() => setSelectedFlow(opt)}
@@ -331,7 +337,7 @@ const CycleTracker = () => {
                                             : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                     }`}
                                 >
-                                    {opt}
+                                    {t(FLOW_TKEY[opt])}
                                 </button>
                             ))}
                         </div>
@@ -339,9 +345,9 @@ const CycleTracker = () => {
 
                     {/* Physical Symptoms */}
                     <div>
-                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Physical</h4>
+                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">{t('cycleTracker.physical')}</h4>
                         <div className="flex flex-wrap gap-3">
-                            {PHYSICAL_SYMPTOMS.map(s => {
+                            {SYMPTOM_API.map(s => {
                                 const active = selectedSymptoms.includes(s);
                                 return (
                                     <button
@@ -353,7 +359,7 @@ const CycleTracker = () => {
                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
                                         }`}
                                     >
-                                        {s}
+                                        {t(SYMPTOM_TKEY[s])}
                                     </button>
                                 );
                             })}
@@ -362,21 +368,21 @@ const CycleTracker = () => {
 
                     {/* Mood */}
                     <div>
-                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">Mood</h4>
+                        <h4 className="text-xs font-bold text-[#D81B60] tracking-widest uppercase mb-4">{t('cycleTracker.mood')}</h4>
                         <div className="flex flex-wrap gap-3">
-                            {MOOD_OPTIONS.map(({ emoji, label }) => {
-                                const active = selectedMoods.includes(label);
+                            {MOOD_API.map(({ emoji, apiLabel, tKey }) => {
+                                const active = selectedMoods.includes(apiLabel);
                                 return (
                                     <button
-                                        key={label}
-                                        onClick={() => toggleMood(label)}
+                                        key={apiLabel}
+                                        onClick={() => toggleMood(apiLabel)}
                                         className={`rounded-full px-4 py-2 text-sm font-bold transition-all border-2 flex items-center gap-2 ${
                                             active
                                                 ? 'border-[#D81B60] text-[#D81B60] bg-[#FFF0F4] shadow-sm'
                                                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
                                         }`}
                                     >
-                                        <span>{emoji}</span> {label}
+                                        <span>{emoji}</span> {t(tKey)}
                                     </button>
                                 );
                             })}
@@ -385,11 +391,11 @@ const CycleTracker = () => {
 
                     {/* Notes */}
                     <div>
-                        <h4 className="text-xs font-bold text-[#8C8C8C] tracking-widest uppercase mb-4">Notes</h4>
+                        <h4 className="text-xs font-bold text-[#8C8C8C] tracking-widest uppercase mb-4">{t('cycleTracker.notes')}</h4>
                         <textarea
                             value={notes}
                             onChange={e => setNotes(e.target.value)}
-                            placeholder="How are you feeling today?"
+                            placeholder={t('cycleTracker.notesPlaceholder')}
                             className="w-full bg-[#FAFAFA] border border-transparent focus:border-gray-200 rounded-2xl p-5 text-sm font-medium resize-none h-28 outline-none placeholder:text-gray-400 transition-colors"
                         />
                     </div>
@@ -406,10 +412,10 @@ const CycleTracker = () => {
                         }`}
                     >
                         <CalendarIcon size={20} />
-                        {saved ? 'Log Saved! Update Again?' : 'Save Daily Log'}
+                        {saved ? t('cycleTracker.logSaved') : t('cycleTracker.saveLog')}
                     </button>
                     <p className="text-[9px] text-gray-400 font-bold text-center leading-tight mx-4">
-                        Information logged is used for personalized health risk insights. Connected to backend when available.
+                        {t('cycleTracker.logInfo')}
                     </p>
                 </div>
             </div>

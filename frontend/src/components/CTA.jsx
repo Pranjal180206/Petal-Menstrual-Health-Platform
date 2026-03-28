@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CTA = () => {
+    const { t } = useTranslation();
     return (
         <section className="w-full px-6 py-12 bg-white pb-24">
             <motion.div
@@ -15,13 +17,13 @@ const CTA = () => {
 
                 <div className="relative z-10 max-w-2xl mx-auto">
                     <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6">
-                        Ready to bloom into <br /> your best self?
+                        {t('cta.title')}
                     </h2>
                     <p className="text-lg md:text-xl text-white/90 mb-10">
-                        Download the app and start your journey today. <br /> It's free, fun, and totally private.
+                        {t('cta.subtitle')}
                     </p>
                     <Link to="/login" className="inline-block bg-white text-[#FF6B9A] px-10 py-4 rounded-full font-bold text-lg hover:shadow-lg transition-all hover:scale-105">
-                        Join Petal Now
+                        {t('cta.button')}
                     </Link>
                 </div>
             </motion.div>

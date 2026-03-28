@@ -1,31 +1,34 @@
 import { motion } from 'framer-motion';
 import { Sun, Users, Smile } from 'lucide-react';
-
-const statsData = [
-    {
-        icon: <Sun size={24} className="text-orange-400" />,
-        label: "HAPPINESS BOOST",
-        value: "85%",
-        description: "Feel more confident about their health",
-        bgColor: "bg-orange-50"
-    },
-    {
-        icon: <Users size={24} className="text-yellow-500" />,
-        label: "COMMUNITY",
-        value: "50K+",
-        description: "Students and teens sharing insights",
-        bgColor: "bg-yellow-50"
-    },
-    {
-        icon: <Smile size={24} className="text-[#8B5E3C]" />,
-        label: "SUPPORT",
-        value: "24/7",
-        description: "Expert advice whenever you need it",
-        bgColor: "bg-[#F5EBE1]"
-    }
-];
+import { useTranslation } from 'react-i18next';
 
 const Stats = () => {
+    const { t } = useTranslation();
+
+    const statsData = [
+        {
+            icon: <Sun size={24} className="text-orange-400" />,
+            label: t('stats.label1'),
+            value: "85%",
+            description: t('stats.desc1'),
+            bgColor: "bg-orange-50"
+        },
+        {
+            icon: <Users size={24} className="text-yellow-500" />,
+            label: t('stats.label2'),
+            value: "50K+",
+            description: t('stats.desc2'),
+            bgColor: "bg-yellow-50"
+        },
+        {
+            icon: <Smile size={24} className="text-[#8B5E3C]" />,
+            label: t('stats.label3'),
+            value: "24/7",
+            description: t('stats.desc3'),
+            bgColor: "bg-[#F5EBE1]"
+        }
+    ];
+
     return (
         <section className="w-full bg-[#FFF5F7] py-20 px-6">
             <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">

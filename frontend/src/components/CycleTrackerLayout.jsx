@@ -9,41 +9,22 @@ import {
     ChevronLeft,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import PetalIcon from './PetalIcon';
 import ChatWidget from './ChatWidget';
 
-const navLinks = [
-    {
-        to: '/cycle-tracker',
-        end: true,
-        icon: <LayoutDashboard size={18} />,
-        label: 'Dashboard',
-    },
-    {
-        to: '/cycle-tracker/tracker',
-        icon: <CalendarDays size={18} />,
-        label: 'Cycle & Mood',
-    },
-    {
-        to: '/cycle-tracker/risk',
-        icon: <TrendingUp size={18} />,
-        label: 'Risk Analysis',
-    },
-    {
-        to: '/cycle-tracker/report',
-        icon: <FileText size={18} />,
-        label: 'Report Generator',
-    },
-    {
-        to: '/cycle-tracker/insights',
-        icon: <Lightbulb size={18} />,
-        label: 'Insights',
-    },
-];
-
 const CycleTrackerLayout = () => {
     const { user } = useAuth();
+    const { t } = useTranslation();
     const navigate = useNavigate();
+
+    const navLinks = [
+        { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: 'sidebar.dashboard' },
+        { to: '/cycle-tracker/tracker', icon: <CalendarDays size={18} />, labelKey: 'sidebar.cycleAndMood' },
+        { to: '/cycle-tracker/risk', icon: <TrendingUp size={18} />, labelKey: 'sidebar.riskAnalysis' },
+        { to: '/cycle-tracker/report', icon: <FileText size={18} />, labelKey: 'sidebar.reportGenerator' },
+        { to: '/cycle-tracker/insights', icon: <Lightbulb size={18} />, labelKey: 'sidebar.insights', tourId: 'nav-item-insights' },
+    ];
 
     const linkClass = ({ isActive }) =>
         `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
@@ -72,7 +53,7 @@ const CycleTrackerLayout = () => {
                                 Petal
                             </span>
                             <span className="text-[10px] text-[#D81B60] font-bold tracking-wide uppercase">
-                                Cycle Tracker
+                                {t('sidebar.tagline')}
                             </span>
                         </div>
                     </div>
@@ -85,14 +66,14 @@ const CycleTrackerLayout = () => {
                         <span className="w-6 h-6 rounded-lg bg-gray-200 group-hover:bg-[#FFF0F4] text-gray-700 group-hover:text-[#D81B60] flex items-center justify-center transition-colors">
                             <ChevronLeft size={14} />
                         </span>
-                        Back to Home
+                        {t('sidebar.backToHome')}
                     </button>
                 </div>
 
                 {/* Section Label */}
                 <div className="px-5 pt-4 pb-2">
                     <p className="text-[10px] font-extrabold tracking-widest text-gray-400 uppercase">
-                        Navigation
+                        {t('sidebar.navigation')}
                     </p>
                 </div>
 
@@ -104,10 +85,10 @@ const CycleTrackerLayout = () => {
                             to={link.to}
                             end={link.end}
                             className={linkClass}
-                            {...(link.label === 'Insights' ? { 'data-tour-id': 'nav-item-insights' } : {})}
+                            {...(link.tourId ? { 'data-tour-id': link.tourId } : {})}
                         >
                             {link.icon}
-                            {link.label}
+                            {t(link.labelKey)}
                         </NavLink>
                     ))}
                 </nav>
@@ -119,7 +100,7 @@ const CycleTrackerLayout = () => {
                         className={linkClass}
                     >
                         <Settings size={18} />
-                        Settings
+                        {t('sidebar.settings')}
                     </NavLink>
 
                     <div className="flex items-center gap-3 px-4 mt-4">
@@ -138,7 +119,7 @@ const CycleTrackerLayout = () => {
                           {user?.name ?? 'Guest'}
                         </p>
                         <p className="text-[10px] text-[#D81B60] font-bold">
-                          {user ? 'Member' : ''}
+                          {user ? t('sidebar.member') : ''}
                         </p>
                       </div>
                     </div>
@@ -147,7 +128,6 @@ const CycleTrackerLayout = () => {
 
             {/* ── Main Content ── */}
             <div className="flex-1 ml-64 flex flex-col min-h-screen">
-                {/* Page Content */}
                 <main className="flex-1 overflow-y-auto">
                     <Outlet />
                 </main>

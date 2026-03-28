@@ -1,16 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
-const DATE_FILTERS = ['Last Month', 'Last 3 Months', 'Last 6 Months', 'This Year'];
-
+// Colors only — labels/messages come from i18n
 const RISK_CONFIG = {
-  low:     { label: "Low Risk",              color: "green",  message: "Your cycle data looks healthy. Keep tracking to maintain accurate insights." },
-  moderate:{ label: "Moderate Risk Detected",color: "yellow", message: "Some irregularities detected in your cycle data. Review the factors below." },
-  high:    { label: "Elevated Risk Detected",color: "red",    message: "Based on your recent cycles, irregularities in intensity and duration were detected. Please review the factors below or consult a specialist." },
-  unknown: { label: "Analysis Unavailable",  color: "gray",   message: "Not enough data to determine risk level." }
+  low:     { color: 'green'  },
+  moderate:{ color: 'yellow' },
+  high:    { color: 'red'    },
+  unknown: { color: 'gray'   },
 };
 
 const getIcon = (type, color) => {
@@ -25,6 +25,15 @@ const getIcon = (type, color) => {
 
 const RiskAnalysis = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
+
+    const DATE_FILTERS = [
+        { label: t('riskAnalysis.dateFilters.lastMonth'),   value: 'Last Month' },
+        { label: t('riskAnalysis.dateFilters.last3Months'), value: 'Last 3 Months' },
+        { label: t('riskAnalysis.dateFilters.last6Months'), value: 'Last 6 Months' },
+        { label: t('riskAnalysis.dateFilters.thisYear'),    value: 'This Year' },
+    ];
+
     const [activePeriod, setActivePeriod] = useState('Last 6 Months');
     const [showAllFactors, setShowAllFactors] = useState(false);
     const [toast, setToast] = useState(null);
@@ -90,7 +99,7 @@ const RiskAnalysis = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-screen border-t">
-                <p className="text-gray-400 font-bold">Analyzing health risks...</p>
+                <p className="text-gray-400 font-bold">{t('riskAnalysis.analyzingRisks')}</p>
             </div>
         );
     }
@@ -104,22 +113,22 @@ const RiskAnalysis = () => {
                         <AlertCircle size={28} fill="currentColor" className="text-gray-600" strokeWidth={1} />
                     </div>
                     <div className="flex-1 z-10">
-                        <h2 className="text-xl font-heading font-extrabold mb-1">Analysis Unavailable</h2>
+                        <h2 className="text-xl font-heading font-extrabold mb-1">{t('riskAnalysis.analysisUnavailable')}</h2>
                         <p className="text-white/90 text-sm font-medium leading-relaxed max-w-2xl">
-                            Not enough data to determine risk level.
+                            {t('riskAnalysis.notEnoughData')}
                         </p>
                     </div>
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-[1.5rem] p-10 shadow-sm flex flex-col items-center justify-center text-center py-16 w-full">
                     <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-2">
-                        You've logged {analysisResult?.cycles_logged || 0} cycle(s). Log at least 3 to unlock your analysis.
+                        {t('riskAnalysis.logMore')}
                     </h2>
                     <button
                         onClick={() => navigate('/cycle-tracker/tracker')}
                         className="mt-6 bg-[#FF0055] hover:bg-[#D80048] text-white px-6 py-3 rounded-lg font-bold shadow-sm transition-colors cursor-pointer"
                     >
-                        Go to Cycle Tracker
+                        {t('riskAnalysis.goToTracker')}
                     </button>
                 </div>
             </div>
@@ -129,7 +138,12 @@ const RiskAnalysis = () => {
     const { factors = [], cycle_consistency, symptom_intensity, average_cycle_length, cycles_logged, overall_risk, symptom_trend = [], cycle_comparison = [] } = analysisResult;
     const visibleFactors = showAllFactors ? factors : factors.slice(0, 3);
 
-    const activeRisk = RISK_CONFIG[overall_risk] || RISK_CONFIG.unknown;
+    const riskKey = overall_risk || 'unknown';
+    const activeRisk = {
+        ...( RISK_CONFIG[riskKey] || RISK_CONFIG.unknown ),
+        label:   t(`riskAnalysis.risk.${riskKey}`),
+        message: t(`riskAnalysis.risk.${riskKey}Msg`),
+    };
     const getBannerStyles = (color) => {
         switch (color) {
             case 'green': return { bg: 'from-emerald-500 to-emerald-400', iconText: 'text-emerald-600', btnText: 'text-emerald-600' };
@@ -158,25 +172,25 @@ const RiskAnalysis = () => {
             {/* Header Row */}
             <header className="flex justify-between items-end mb-8 relative z-10">
                 <div>
-                    <h1 className="text-2xl font-heading font-extrabold mb-1 text-[#1D1D2C]">Risk Analysis Overview</h1>
-                    <p className="text-gray-500 font-medium text-sm">Showing data for: <strong>{activePeriod}</strong></p>
+                    <h1 className="text-2xl font-heading font-extrabold mb-1 text-[#1D1D2C]">{t('riskAnalysis.title')}</h1>
+                    <p className="text-gray-500 font-medium text-sm">{t('riskAnalysis.showingData')} <strong>{DATE_FILTERS.find(f => f.value === activePeriod)?.label}</strong></p>
                 </div>
                 <div className="flex gap-3 flex-wrap justify-end">
                     {DATE_FILTERS.map(f => (
                         <button
-                            key={f}
+                            key={f.value}
                             onClick={() => {
-                                setActivePeriod(f);
-                                fetchAnalysis(f);
+                                setActivePeriod(f.value);
+                                fetchAnalysis(f.value);
                             }}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-                                activePeriod === f
+                                activePeriod === f.value
                                     ? 'bg-[#D81B60] text-white shadow-sm'
                                     : 'bg-white border border-gray-200 text-[#1D1D2C] hover:bg-gray-50'
                             }`}
                         >
-                            {f === activePeriod && <Calendar size={14} />}
-                            {f}
+                            {activePeriod === f.value && <Calendar size={14} />}
+                            {f.label}
                         </button>
                     ))}
                     <button
@@ -184,7 +198,7 @@ const RiskAnalysis = () => {
                         className="flex items-center gap-2 bg-[#FF0055] hover:bg-[#D80048] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-colors"
                     >
                         <Download size={14} />
-                        Download PDF Report
+                        {t('riskAnalysis.downloadPDF')}
                     </button>
                 </div>
             </header>
@@ -208,13 +222,13 @@ const RiskAnalysis = () => {
                     onClick={handleConsultSpecialist}
                     className={`hidden md:block bg-white ${bannerStyle.btnText} hover:bg-pink-50 px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors z-10 whitespace-nowrap`}
                 >
-                    Consult a Specialist →
+                    {t('riskAnalysis.consultSpecialist')}
                 </button>
             </div>
                     {/* KPI Cards Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">Cycle Consistency</p>
+                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.cycleConsistency')}</p>
                             <div className="flex justify-between items-end mb-3">
                                 <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{cycle_consistency ?? '—'}%</h3>
                             </div>
@@ -224,18 +238,18 @@ const RiskAnalysis = () => {
                         </div>
 
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">Symptom Intensity</p>
+                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.symptomIntensity')}</p>
                             <div className="flex justify-between items-end mb-1">
                                 <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C] capitalize">{symptom_intensity ?? '—'}</h3>
                             </div>
-                            <p className="text-[10px] italic text-gray-400 font-medium">Based on logged data</p>
+                            <p className="text-[10px] italic text-gray-400 font-medium">{t('riskAnalysis.basedOnData')}</p>
                         </div>
 
                         <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">Avg. Cycle Length</p>
+                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.avgCycleLength')}</p>
                             <div className="flex justify-between items-end mb-3">
-                                <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{average_cycle_length ?? '—'} Days</h3>
-                                <span className="text-xs font-bold text-gray-400">– Stable</span>
+                                <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{average_cycle_length ?? '—'} {t('cycleTracker.days')}</h3>
+                                <span className="text-xs font-bold text-gray-400">{t('riskAnalysis.stable')}</span>
                             </div>
                             <div className="flex gap-1 h-1.5 items-end">
                                 {[100, 80, 80, 100, 60].map((h, i) => (
@@ -329,7 +343,7 @@ const RiskAnalysis = () => {
 
             {/* Risk Factors List */}
             <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm">
-                <h3 className="font-heading font-bold text-lg text-[#1D1D2C] mb-6">Specific Risk Factors</h3>
+                <h3 className="font-heading font-bold text-lg text-[#1D1D2C] mb-6">{t('riskAnalysis.specificRiskFactors')}</h3>
 
                 <div className="space-y-0 text-sm font-medium">
                     {visibleFactors.map((factor, i) => (
@@ -361,9 +375,9 @@ const RiskAnalysis = () => {
                     className="w-full mt-2 py-3 text-xs font-bold text-[#FF0055] hover:bg-pink-50 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                     {showAllFactors ? (
-                        <><ChevronUp size={14} /> Show Less</>
+                        <><ChevronUp size={14} /> {t('riskAnalysis.showLess')}</>
                     ) : (
-                        <><ChevronDown size={14} /> View All Risk Factors ({factors?.length ?? 0})</>
+                        <><ChevronDown size={14} /> {t('riskAnalysis.viewAllFactors')} ({factors?.length ?? 0})</>
                     )}
                 </button>
             </div>

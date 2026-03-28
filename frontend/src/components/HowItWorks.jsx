@@ -1,28 +1,31 @@
 import { motion } from 'framer-motion';
 import { FileEdit, Search, Award } from 'lucide-react';
-
-const stepsData = [
-    {
-        icon: <FileEdit size={28} className="text-blue-500" />,
-        iconBg: "bg-blue-50",
-        title: "Log Your Mood",
-        description: "Quickly tap how you're feeling and any symptoms. It's like a digital diary, but smarter."
-    },
-    {
-        icon: <Search size={28} className="text-slate-600" />,
-        iconBg: "bg-slate-100",
-        title: "See The Magic",
-        description: "We find the patterns in your cycle so you can plan for big tests, games, or just lazy Sundays."
-    },
-    {
-        icon: <Award size={28} className="text-yellow-500" />,
-        iconBg: "bg-yellow-50",
-        title: "Get Tips",
-        description: "Receive personalized advice on nutrition, sleep, and self-care tailored just for your phase."
-    }
-];
+import { useTranslation } from 'react-i18next';
 
 const HowItWorks = () => {
+    const { t } = useTranslation();
+
+    const stepsData = [
+        {
+            icon: <FileEdit size={28} className="text-blue-500" />,
+            iconBg: "bg-blue-50",
+            title: t('howItWorks.step1Title'),
+            description: t('howItWorks.step1Desc'),
+        },
+        {
+            icon: <Search size={28} className="text-slate-600" />,
+            iconBg: "bg-slate-100",
+            title: t('howItWorks.step2Title'),
+            description: t('howItWorks.step2Desc'),
+        },
+        {
+            icon: <Award size={28} className="text-yellow-500" />,
+            iconBg: "bg-yellow-50",
+            title: t('howItWorks.step3Title'),
+            description: t('howItWorks.step3Desc'),
+        }
+    ];
+
     return (
         <section className="w-full py-24 px-6 bg-white">
             <div className="max-w-7xl mx-auto flex flex-col items-center">
@@ -35,7 +38,7 @@ const HowItWorks = () => {
                         viewport={{ once: true }}
                         className="text-4xl md:text-5xl font-heading font-bold text-brand-dark mb-6"
                     >
-                        How Petal Works
+                        {t('howItWorks.heading')}
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -44,7 +47,7 @@ const HowItWorks = () => {
                         transition={{ delay: 0.1 }}
                         className="text-brand-gray text-lg"
                     >
-                        Three simple steps to becoming an expert on you! No clinical talk, just helpful vibes.
+                        {t('howItWorks.subheading')}
                     </motion.p>
                 </div>
 

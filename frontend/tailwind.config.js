@@ -24,8 +24,8 @@ export default {
         "background-light": "#fff9fb",
       },
       fontFamily: {
-        heading: ['Fredoka', 'sans-serif'],
-        sans: ['Nunito', 'sans-serif'],
+        heading: ['Fredoka', 'Noto Sans Devanagari', 'sans-serif'],
+        sans: ['Nunito', 'Noto Sans Devanagari', 'sans-serif'],
         display: ['Lexend', 'sans-serif'],
       },
       boxShadow: {

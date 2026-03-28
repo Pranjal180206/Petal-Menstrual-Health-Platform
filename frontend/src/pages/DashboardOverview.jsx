@@ -1,23 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, Info, Lightbulb, TrendingDown, Activity, CalendarDays, MessageSquare, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
-const MOODS = [
-    { emoji: '🙂', label: 'Fine' },
-    { emoji: '💧', label: 'Bloated' },
-    { emoji: '⚡', label: 'Cramps' },
-    { emoji: '🛏️', label: 'Fatigue' },
-    { emoji: '😞', label: 'Sad' },
-    { emoji: '🤕', label: 'Headache' },
-];
-
 const DashboardOverview = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
+
+    const MOODS = [
+        { emoji: '🙂', labelKey: 'dashboard.moods.fine',     apiLabel: 'Fine' },
+        { emoji: '💧', labelKey: 'dashboard.moods.bloated',  apiLabel: 'Bloated' },
+        { emoji: '⚡', labelKey: 'dashboard.moods.cramps',   apiLabel: 'Cramps' },
+        { emoji: '🛏️', labelKey: 'dashboard.moods.fatigue',  apiLabel: 'Fatigue' },
+        { emoji: '😞', labelKey: 'dashboard.moods.sad',      apiLabel: 'Sad' },
+        { emoji: '🤕', labelKey: 'dashboard.moods.headache', apiLabel: 'Headache' },
+    ];
+
     const [selectedMoods, setSelectedMoods] = useState([]);
     const [toast, setToast] = useState(null);
-
     const [summary, setSummary] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [authError, setAuthError] = useState(false);
@@ -26,9 +28,9 @@ const DashboardOverview = () => {
         setToast({ message, type });
     }, []);
 
-    const toggleMood = (label) => {
+    const toggleMood = (apiLabel) => {
         setSelectedMoods(prev =>
-            prev.includes(label) ? prev.filter(m => m !== label) : [...prev, label]
+            prev.includes(apiLabel) ? prev.filter(m => m !== apiLabel) : [...prev, apiLabel]
         );
     };
 
@@ -43,7 +45,6 @@ const DashboardOverview = () => {
             });
             setSelectedMoods([]);
             showToast(`Mood logged: ${selectedMoods.join(', ')} ✓`, 'success');
-            // Refresh summary stats
             const res = await axiosInstance.get('/dashboard/summary');
             setSummary(res.data);
         } catch (err) {
@@ -79,7 +80,7 @@ const DashboardOverview = () => {
             <div className="flex items-center justify-center h-full p-8">
                 <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl font-bold flex flex-col gap-2 items-center shadow-sm">
                     <span className="text-xl">🔒</span>
-                    <p>Please sign in to view your dashboard</p>
+                    <p>{t('dashboard.signInNeeded')}</p>
                 </div>
             </div>
         );
@@ -90,9 +91,9 @@ const DashboardOverview = () => {
             {/* Top Header Row */}
             <header className="flex justify-between items-center mb-10">
                 <div>
-                    <h1 className="text-3xl font-heading font-extrabold mb-1">Overview Dashboard</h1>
+                    <h1 className="text-3xl font-heading font-extrabold mb-1">{t('dashboard.title')}</h1>
                     <p className="text-gray-500 font-medium text-sm">
-                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} — Your daily health summary
+                        {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} — {t('dashboard.dailySummary')}
                     </p>
                 </div>
             </header>
@@ -106,20 +107,20 @@ const DashboardOverview = () => {
                     {/* Status Overview Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Cycle Streak</h4>
-                            <p className="text-3xl font-black text-[#D81B60]">{summary?.cycle_streak ?? '—'} <span className="text-sm text-gray-500 font-medium">logs</span></p>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.cycleStreak')}</h4>
+                            <p className="text-3xl font-black text-[#D81B60]">{summary?.cycle_streak ?? '—'} <span className="text-sm text-gray-500 font-medium">{t('dashboard.logs')}</span></p>
                         </div>
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Last Period</h4>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.lastPeriod')}</h4>
                             <p className="text-xl font-black text-gray-800 mt-2">{formatDate(summary?.last_period_date)}</p>
                         </div>
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Next Prediction</h4>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.nextPrediction')}</h4>
                             <p className="text-xl font-black text-[#D81B60] mt-2">{formatDate(summary?.next_period_prediction)}</p>
                         </div>
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Length</h4>
-                            <p className="text-3xl font-black text-gray-800">{summary?.average_cycle_length ?? '—'} <span className="text-sm text-gray-500 font-medium">days</span></p>
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.avgLength')}</h4>
+                            <p className="text-3xl font-black text-gray-800">{summary?.average_cycle_length ?? '—'} <span className="text-sm text-gray-500 font-medium">{t('dashboard.days')}</span></p>
                         </div>
                     </div>
 
@@ -127,14 +128,14 @@ const DashboardOverview = () => {
                         {/* Advanced Stats */}
                         <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col justify-center gap-4">
                             <div>
-                                <h4 className="text-xs font-bold text-[#D81B60] uppercase tracking-widest mb-1">Top Symptoms & Mood</h4>
-                                <h3 className="font-heading font-bold text-lg mb-4">This Week</h3>
+                                <h4 className="text-xs font-bold text-[#D81B60] uppercase tracking-widest mb-1">{t('dashboard.topSymptoms')}</h4>
+                                <h3 className="font-heading font-bold text-lg mb-4">{t('dashboard.thisWeek')}</h3>
                             </div>
                             
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">🎭</span>
                                 <div>
-                                    <p className="text-sm text-gray-500 font-bold">Primary Mood</p>
+                                    <p className="text-sm text-gray-500 font-bold">{t('dashboard.primaryMood')}</p>
                                     <p className="font-black text-gray-900 capitalize">{summary?.mood_this_week ?? '—'}</p>
                                 </div>
                             </div>
@@ -150,13 +151,13 @@ const DashboardOverview = () => {
 
                         <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col justify-center items-center text-center">
                             <Activity className="text-[#D81B60] mb-4" size={32} />
-                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Total Cycles Logged</h4>
+                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.totalCycles')}</h4>
                             <p className="text-4xl font-black text-gray-900">{summary?.cycles_logged ?? '—'}</p>
                         </div>
 
                         <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col justify-center items-center text-center">
                             <MessageSquare className="text-pink-400 mb-4" size={32} />
-                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Community Posts</h4>
+                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{t('dashboard.communityPosts')}</h4>
                             <p className="text-4xl font-black text-gray-900">{summary?.community_posts_count ?? '—'}</p>
                         </div>
                     </div>
@@ -164,21 +165,21 @@ const DashboardOverview = () => {
                     {/* How are you feeling today (Mood logger) */}
                     <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100">
                         <div className="flex justify-between items-center mb-8">
-                            <h3 className="font-heading font-bold text-lg">How are you feeling today?</h3>
+                            <h3 className="font-heading font-bold text-lg">{t('dashboard.howFeeling')}</h3>
                             {selectedMoods.length > 0 && (
                                 <span className="text-xs text-gray-400 font-medium">
-                                    {selectedMoods.length} selected
+                                    {selectedMoods.length} {t('dashboard.selected')}
                                 </span>
                             )}
                         </div>
 
                         <div className="flex flex-wrap gap-4 mb-6">
-                            {MOODS.map(({ emoji, label }) => {
-                                const active = selectedMoods.includes(label);
+                            {MOODS.map(({ emoji, labelKey, apiLabel }) => {
+                                const active = selectedMoods.includes(apiLabel);
                                 return (
-                                    <div key={label} className="flex flex-col items-center gap-2">
+                                    <div key={apiLabel} className="flex flex-col items-center gap-2">
                                         <button
-                                            onClick={() => toggleMood(label)}
+                                            onClick={() => toggleMood(apiLabel)}
                                             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all border-2 ${
                                                 active
                                                     ? 'bg-[#FFF0F4] border-[#D81B60] scale-110 shadow-md'
@@ -188,7 +189,7 @@ const DashboardOverview = () => {
                                             <span className="text-xl">{emoji}</span>
                                         </button>
                                         <span className={`text-xs font-bold ${active ? 'text-[#D81B60]' : 'text-gray-500'}`}>
-                                            {label}
+                                            {t(labelKey)}
                                         </span>
                                     </div>
                                 );
@@ -198,7 +199,7 @@ const DashboardOverview = () => {
                             onClick={handleSaveMood}
                             className="w-full py-2.5 bg-[#D81B60] hover:bg-[#C2185B] text-white text-sm font-bold rounded-xl transition-colors"
                         >
-                            Save Today's Mood
+                            {t('dashboard.saveMood')}
                         </button>
                     </div>
                 </>

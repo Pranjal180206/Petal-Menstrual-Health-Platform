@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X } from 'lucide-react';
 import { useTour } from '../context/TourContext';
+import { useTranslation } from 'react-i18next';
 
 const TourPrompt = () => {
     const { startTour, isTourActive } = useTour();
+    const { t } = useTranslation();
     const [showPrompt, setShowPrompt] = useState(false);
 
     useEffect(() => {
@@ -47,10 +49,10 @@ const TourPrompt = () => {
                     </div>
 
                     <h4 className="font-heading font-extrabold text-[#1D1D2C] text-lg mb-1">
-                        New here? ✨
+                        {t('tour.promptTitle')}
                     </h4>
                     <p className="text-sm font-medium text-gray-500 leading-relaxed mb-6">
-                        Want a quick 1-minute tour to see how Petal works? It's super fast, promise! 
+                        {t('tour.promptDesc')}
                     </p>
 
                     <div className="flex gap-2">
@@ -61,7 +63,7 @@ const TourPrompt = () => {
                             }}
                             className="flex-1 bg-[#D81B60] hover:bg-[#C2185B] text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md active:scale-95"
                         >
-                            Take a Tour
+                            {t('tour.takeTour')}
                         </button>
                         <button
                             onClick={() => {
@@ -70,7 +72,7 @@ const TourPrompt = () => {
                             }}
                             className="px-4 py-3 rounded-xl border border-gray-100 text-gray-400 font-bold text-sm hover:bg-gray-50 transition-colors"
                         >
-                            Maybe Later
+                            {t('tour.maybeLater')}
                         </button>
                     </div>
                 </div>

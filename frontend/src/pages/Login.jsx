@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Droplet, Sparkles, Lock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import PetalIcon from '../components/PetalIcon';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
     const { login, register } = useAuth();
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
@@ -22,7 +24,6 @@ const Login = () => {
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
 
-    // Apply a spring configuration to smooth out the snappy movement
     const springConfig = { damping: 25, stiffness: 150 };
     const smoothX = useSpring(mouseX, springConfig);
     const smoothY = useSpring(mouseY, springConfig);
@@ -32,13 +33,10 @@ const Login = () => {
 
     const x1 = useTransform(smoothX, v => v * 0.1);
     const y1 = useTransform(smoothY, v => v * 0.1);
-
     const x2 = useTransform(smoothX, v => v * 0.2);
     const y2 = useTransform(smoothY, v => v * 0.2);
-
     const x3 = useTransform(smoothX, v => v * 0.15);
     const y3 = useTransform(smoothY, v => v * 0.15);
-
     const x4 = useTransform(smoothX, v => v * -0.2);
     const y4 = useTransform(smoothY, v => v * -0.2);
 
@@ -72,7 +70,7 @@ const Login = () => {
             } else {
                 await register(formData);
             }
-            navigate('/'); // land on home page after login/signup
+            navigate('/');
         } catch (err) {
             setError(err.response?.data?.detail || 'Authentication failed');
         }
@@ -81,6 +79,7 @@ const Login = () => {
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
     return (
         <div className="h-screen overflow-hidden bg-white flex flex-col font-sans text-[#1D1D2C]">
             {/* Background Pattern */}
@@ -99,7 +98,7 @@ const Login = () => {
                     <span className="font-heading font-extrabold text-2xl tracking-tight">Petal</span>
                 </Link>
                 <div className="text-sm font-semibold text-gray-500">
-                    Need help? <Link to="/contact" className="text-[#FF6B9A] hover:underline">Ask an adult</Link>
+                    {t('login.needHelp')} <Link to="/contact" className="text-[#FF6B9A] hover:underline">{t('login.askAdult')}</Link>
                 </div>
             </header>
 
@@ -114,7 +113,7 @@ const Login = () => {
                         className="inline-flex items-center gap-2 bg-[#FFF5F7] px-3 py-1.5 rounded-full text-[#FF6B9A] font-bold text-xs"
                     >
                         <Sparkles size={14} />
-                        For Teens, By Experts
+                        {t('login.badge')}
                     </motion.div>
 
                     <motion.h1
@@ -123,9 +122,8 @@ const Login = () => {
                         transition={{ delay: 0.1 }}
                         className="text-4xl md:text-5xl font-heading font-extrabold leading-[1.1] tracking-tight"
                     >
-                        Your body is <br />
-                        <span className="text-[#FF6B9A]">amazing.</span> Let's <br />
-                        track its rhythms.
+                        {t('login.headline1')} <br />
+                        <span className="text-[#FF6B9A]">{t('login.headline2')}</span> {t('login.headline3')}
                     </motion.h1>
 
                     <motion.p
@@ -134,7 +132,7 @@ const Login = () => {
                         transition={{ delay: 0.2 }}
                         className="text-lg text-[#4A4A5C] leading-relaxed max-w-md font-medium"
                     >
-                        Join a community of 50,000+ others learning about their cycle health in a safe, private space.
+                        {t('login.subtext')}
                     </motion.p>
 
                     {/* Animated Vector */}
@@ -175,25 +173,29 @@ const Login = () => {
                 >
                     <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-gray-100/50">
                         <div className="text-center mb-6">
-                            <h2 className="text-2xl font-heading font-extrabold mb-2">{isLogin ? 'Welcome back! 👋' : 'Create Account ✨'}</h2>
-                            <p className="text-gray-500 text-sm font-medium">{isLogin ? 'We missed you! Log in to see your updates.' : 'Join our safe community today.'}</p>
+                            <h2 className="text-2xl font-heading font-extrabold mb-2">
+                                {isLogin ? t('login.welcomeBack') : t('login.createAccount')}
+                            </h2>
+                            <p className="text-gray-500 text-sm font-medium">
+                                {isLogin ? t('login.missedYou') : t('login.joinCommunity')}
+                            </p>
                             {error && <p className="text-[#FF6B9A] font-bold text-sm mt-2">{error}</p>}
                         </div>
 
                         <form className="space-y-4" onSubmit={handleSubmit}>
                             {!isLogin && (
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-[#1D1D2C] ml-1">Name</label>
+                                    <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.nameLabel')}</label>
                                     <input
                                         type="text" name="name" required
                                         value={formData.name} onChange={handleChange}
-                                        placeholder="How should we call you?"
+                                        placeholder={t('login.namePlaceholder')}
                                         className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 font-medium text-[#1D1D2C]"
                                     />
                                 </div>
                             )}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-bold text-[#1D1D2C] ml-1">Email</label>
+                                <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.emailLabel')}</label>
                                 <input
                                     type="email" name="email" required
                                     value={formData.email} onChange={handleChange}
@@ -204,8 +206,8 @@ const Login = () => {
 
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center ml-1">
-                                    <label className="text-xs font-bold text-[#1D1D2C]">Password</label>
-                                    {isLogin && <Link to="/contact" className="text-[10px] font-bold text-[#FF6B9A] hover:underline">Forgot?</Link>}
+                                    <label className="text-xs font-bold text-[#1D1D2C]">{t('login.passwordLabel')}</label>
+                                    {isLogin && <Link to="/contact" className="text-[10px] font-bold text-[#FF6B9A] hover:underline">{t('login.forgotPassword')}</Link>}
                                 </div>
                                 <input
                                     type="password" name="password" required
@@ -218,7 +220,7 @@ const Login = () => {
                             {!isLogin && (
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">Age</label>
+                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.ageLabel')}</label>
                                         <input
                                             type="number" name="age" required min="10" max="100"
                                             value={formData.age} onChange={handleChange}
@@ -226,15 +228,15 @@ const Login = () => {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">Gender</label>
+                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.genderLabel')}</label>
                                         <select
                                             name="gender" value={formData.gender} onChange={handleChange}
                                             className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium text-[#1D1D2C]"
                                         >
-                                            <option value="female">Female</option>
-                                            <option value="male">Male</option>
-                                            <option value="non-binary">Non-binary</option>
-                                            <option value="other">Other</option>
+                                            <option value="female">{t('login.genderFemale')}</option>
+                                            <option value="male">{t('login.genderMale')}</option>
+                                            <option value="non-binary">{t('login.genderNonBinary')}</option>
+                                            <option value="other">{t('login.genderOther')}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -244,12 +246,12 @@ const Login = () => {
                                 <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#FF6B9A]">
                                     {/* Custom checkbox empty state */}
                                 </div>
-                                <span className="text-sm font-semibold text-[#4A4A5C]">Keep me logged in</span>
+                                <span className="text-sm font-semibold text-[#4A4A5C]">{t('login.keepLoggedIn')}</span>
                             </div>
 
                             <div className="pt-2">
                                 <button type="submit" className="w-full bg-[#FF6B9A] hover:bg-[#FF8A8A] text-white rounded-xl py-3 font-bold text-base transition-all shadow-[0_4px_14px_-4px_rgba(255,107,154,0.4)] hover:-translate-y-0.5">
-                                    {isLogin ? "Let's Go!" : "Sign Up"}
+                                    {isLogin ? t('login.submit') : t('login.signUp')}
                                 </button>
                             </div>
 
@@ -258,7 +260,7 @@ const Login = () => {
                                     <div className="w-full border-t border-gray-100"></div>
                                 </div>
                                 <div className="relative flex justify-center text-[10px] uppercase">
-                                    <span className="bg-white px-2 text-gray-400 font-bold tracking-widest">or</span>
+                                    <span className="bg-white px-2 text-gray-400 font-bold tracking-widest">{t('login.orDivider')}</span>
                                 </div>
                             </div>
 
@@ -273,29 +275,34 @@ const Login = () => {
                                     <path d="M5.267 14.264a7.204 7.204 0 010-4.528V6.633H1.296a11.99 11.99 0 000 10.734l3.971-3.103z" fill="#FBBC05"/>
                                     <path d="M12 4.773c1.762 0 3.344.605 4.588 1.792l3.442-3.442C17.953 1.07 15.24 0 12 0 7.377 0 3.27 2.685 1.296 6.633l3.971 3.103C6.214 6.888 8.867 4.773 12 4.773z" fill="#EA4335"/>
                                 </svg>
-                                Continue with Google
+                                {t('login.continueGoogle')}
                             </button>
                         </form>
 
                         <div className="mt-6 text-center space-y-3">
-                            <p className="text-xs font-semibold text-gray-500">{isLogin ? 'First time here?' : 'Already have an account?'}</p>
-                            <button 
-                                type="button" 
+                            <p className="text-xs font-semibold text-gray-500">
+                                {isLogin ? t('login.firstTime') : t('login.alreadyHave')}
+                            </p>
+                            <button
+                                type="button"
                                 onClick={() => setIsLogin(!isLogin)}
                                 className="w-full bg-white border-2 border-[#FF6B9A] text-[#FF6B9A] hover:bg-[#FFF5F7] rounded-xl py-2.5 text-sm font-bold transition-all"
                             >
-                                {isLogin ? 'Create an Account' : 'Log In Instead'}
+                                {isLogin ? t('login.createLink') : t('login.loginInstead')}
                             </button>
                         </div>
 
                         <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-bold tracking-widest text-[#8C8C9A] uppercase">
                             <Lock size={10} />
-                            <span>Encrypted & Private</span>
+                            <span>{t('login.encrypted')}</span>
                         </div>
                     </div>
 
                     <p className="text-center text-[10px] text-gray-400 font-medium mt-4 max-w-xs mx-auto leading-relaxed">
-                        By logging in, you agree to our <Link to="/privacy" className="underline">Teen Privacy Policy</Link> and <Link to="/terms" className="underline">Terms of Service</Link>.
+                        {t('login.privacyNotice')}{' '}
+                        <Link to="/privacy" className="underline">{t('login.privacyPolicy')}</Link>
+                        {' '}{t('login.and')}{' '}
+                        <Link to="/terms" className="underline">{t('login.termsOfService')}</Link>.
                     </p>
                 </motion.div>
             </main>
@@ -306,18 +313,16 @@ const Login = () => {
                     <div className="bg-[#FF6B9A] p-1 rounded-md text-white">
                         <Lock size={12} />
                     </div>
-                    <span>Safe Space Certified</span>
+                    <span>{t('login.safeSpace')}</span>
                 </div>
 
                 <div className="flex gap-6">
-                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">Help Center</Link>
-                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">Contact</Link>
-                    <Link to="/education" className="hover:text-[#FF6B9A] transition-colors">Parent Guide</Link>
+                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">{t('login.helpCenter')}</Link>
+                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">{t('login.contact')}</Link>
+                    <Link to="/education" className="hover:text-[#FF6B9A] transition-colors">{t('login.parentGuide')}</Link>
                 </div>
 
-                <div>
-                    © 2024 Petal Platform
-                </div>
+                <div>{t('login.copyright')}</div>
             </footer>
         </div>
     );

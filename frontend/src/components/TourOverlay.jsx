@@ -2,12 +2,13 @@ import { useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, ChevronRight } from 'lucide-react';
 import { useTour } from '../context/TourContext';
+import { useTranslation } from 'react-i18next';
 
 const TourOverlay = () => {
     const { isTourActive, currentStep, nextStep, endTour, currentStepIndex } = useTour();
+    const { t } = useTranslation();
     const [bounds, setBounds] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
-    // Update highlight position when step changes or window resizes
     const updateBounds = () => {
         if (!currentStep) return;
         const el = document.querySelector(`[data-tour-id="${currentStep.selector}"]`);
@@ -19,17 +20,14 @@ const TourOverlay = () => {
                 width: rect.width,
                 height: rect.height,
             });
-            // Scroll to element if it's off screen
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } else {
-            // If element not found, just center the modal
             setBounds({ top: window.innerHeight / 2, left: window.innerWidth / 2, width: 0, height: 0 });
         }
     };
 
     useLayoutEffect(() => {
         if (isTourActive) {
-            // Small timeout to wait for navigation/renders
             const timer = setTimeout(updateBounds, 300);
             window.addEventListener('resize', updateBounds);
             return () => {
@@ -60,7 +58,7 @@ const TourOverlay = () => {
                 }}
             />
 
-            {/* Click blocking layer for the "hole" */}
+            {/* Click blocking layer */}
             <div className="absolute inset-0 pointer-events-auto bg-transparent" onClick={(e) => e.stopPropagation()} />
 
             {/* Pulse highlight */}
@@ -116,7 +114,7 @@ const TourOverlay = () => {
                                 onClick={endTour}
                                 className="flex-1 py-3 px-4 rounded-xl border-2 border-gray-300 bg-gray-100 text-gray-800 font-bold text-sm hover:bg-gray-200 transition-colors shadow-sm"
                             >
-                                Skip Tour
+                                {t('tour.skip')}
                             </button>
                             <button
                                 onClick={nextStep}

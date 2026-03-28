@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, Droplets, Activity, Zap, TrendingUp, AlertCircle, CalendarDays, Smile } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 
 const Insights = () => {
+    const { t } = useTranslation();
     const [insights, setInsights] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [authError, setAuthError] = useState(false);
@@ -29,7 +31,7 @@ const Insights = () => {
             <div className="flex items-center justify-center p-8 h-[70vh]">
                 <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl font-bold flex flex-col gap-2 items-center shadow-sm">
                     <span className="text-xl">🔒</span>
-                    <p>Please sign in to view your insights.</p>
+                    <p>{t('insights.signInNeeded')}</p>
                 </div>
             </div>
         );
@@ -56,16 +58,16 @@ const Insights = () => {
                             <Lightbulb size={20} />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">Data Insights</h1>
-                            <p className="text-sm text-gray-500 font-medium">Your health analytics based on logged data</p>
+                            <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">{t('insights.title')}</h1>
+                            <p className="text-sm text-gray-500 font-medium">{t('insights.subtitle')}</p>
                         </div>
                     </div>
                 </header>
                 <div className="bg-white rounded-[2rem] p-16 shadow-card border border-gray-100 flex flex-col items-center justify-center text-center">
                     <div className="text-6xl mb-4">🌱</div>
-                    <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-2">No insights yet</h2>
+                    <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-2">{t('insights.noInsights')}</h2>
                     <p className="text-sm text-gray-500 font-medium max-w-sm">
-                        Start logging your cycle dates, symptoms, and moods in the Cycle Tracker. Insights appear after a few logs!
+                        {t('insights.noInsightsDesc')}
                     </p>
                 </div>
             </div>
@@ -80,8 +82,8 @@ const Insights = () => {
                         <Lightbulb size={20} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">Data Insights</h1>
-                        <p className="text-sm text-gray-500 font-medium">Your health analytics based on logged data</p>
+                        <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">{t('insights.title')}</h1>
+                        <p className="text-sm text-gray-500 font-medium">{t('insights.subtitle')}</p>
                     </div>
                 </div>
             </header>
@@ -94,7 +96,7 @@ const Insights = () => {
                             <AlertCircle size={32} />
                         </div>
                         <div className="z-10">
-                            <p className="text-white/80 text-xs font-bold tracking-widest uppercase mb-1">Most Frequent Symptom</p>
+                            <p className="text-white/80 text-xs font-bold tracking-widest uppercase mb-1">{t('insights.mostFrequentSymptom')}</p>
                             <h2 className="text-3xl font-heading font-extrabold capitalize filter drop-shadow-sm">{top_symptom}</h2>
                         </div>
                     </div>
@@ -106,7 +108,7 @@ const Insights = () => {
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col">
                         <h3 className="font-heading font-bold text-lg mb-6 flex items-center gap-2">
                             <CalendarDays className="text-[#D81B60]" size={20} />
-                            Cycle Length History
+                            {t('insights.cycleLengthHistory')}
                         </h3>
                         <div className="flex-1 flex items-end gap-3 h-48 border-b border-gray-100 pb-2">
                             {cycle_length_history.map((cycle, i) => {
@@ -128,7 +130,7 @@ const Insights = () => {
                                 );
                             })}
                         </div>
-                        <p className="text-xs text-gray-400 font-medium text-center mt-4">Length in days (capped at 40 in view)</p>
+                        <p className="text-xs text-gray-400 font-medium text-center mt-4">{t('insights.lengthNote')}</p>
                     </section>
                 )}
 
@@ -136,7 +138,7 @@ const Insights = () => {
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col">
                         <h3 className="font-heading font-bold text-lg mb-6 flex items-center gap-2">
                             <Activity className="text-[#D81B60]" size={20} />
-                            Symptom Frequency
+                            {t('insights.symptomFrequency')}
                         </h3>
                         <div className="flex-1 flex flex-col justify-center space-y-4">
                             {symptom_frequency.map((item, i) => {
@@ -163,12 +165,12 @@ const Insights = () => {
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col lg:col-span-2">
                         <h3 className="font-heading font-bold text-lg mb-6 flex items-center gap-2">
                             <Smile className="text-[#D81B60]" size={20} />
-                            Mood Trend (Last 4 Weeks)
+                            {t('insights.moodTrend')}
                         </h3>
                         <div className="flex-1 flex flex-col justify-end h-48 border-b-2 border-l-2 border-gray-100 pb-2 pl-4 pr-2 pt-8 relative">
                             {/* Y-axis labels */}
-                            <div className="absolute left-[-16px] bottom-2 text-[10px] font-bold text-gray-400">Low</div>
-                            <div className="absolute left-[-16px] top-6 text-[10px] font-bold text-gray-400">High</div>
+                            <div className="absolute left-[-16px] bottom-2 text-[10px] font-bold text-gray-400">{t('insights.low')}</div>
+                            <div className="absolute left-[-16px] top-6 text-[10px] font-bold text-gray-400">{t('insights.high')}</div>
                             
                             <div className="flex items-end justify-between h-full w-full">
                                 {mood_trend.map((trend, i) => {

@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PetalIcon from './PetalIcon';
 import HeroIllustration from './HeroIllustration';
 import { useTour } from '../context/TourContext';
 
 const Hero = () => {
     const { startTour } = useTour();
+    const { t } = useTranslation();
 
     return (
         <section className="w-full max-w-7xl mx-auto px-6 py-12 md:py-20 flex flex-col md:flex-row items-center gap-12 overflow-hidden">
@@ -23,7 +25,7 @@ const Hero = () => {
                     className="inline-flex items-center gap-2 bg-[#FDF7F8] border border-pink-100 px-4 py-2 rounded-full text-brand-pink font-bold text-sm shadow-sm"
                 >
                     <PetalIcon size={16} />
-                    Your Cycle, Your Vibe ✨
+                    {t('hero.badge')}
                 </motion.div>
 
                 <motion.h1
@@ -33,7 +35,7 @@ const Hero = () => {
                     className="text-5xl md:text-7xl font-heading font-extrabold leading-[1.1] tracking-tight"
                     data-tour-id="hero-title"
                 >
-                    Know Your <br /> Body, <span className="text-brand-pink text-gradient">Feel <br /> Amazing.</span>
+                    {t('hero.title1')} <br /> {t('hero.title2')} <span className="text-brand-pink text-gradient">{t('hero.title3')} <br /> {t('hero.title4')}</span>
                 </motion.h1>
 
                 <motion.p
@@ -42,7 +44,7 @@ const Hero = () => {
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="text-lg md:text-xl text-brand-gray max-w-md leading-relaxed font-medium"
                 >
-                    The easy, friendly way to track your cycle, understand your moods, and get tips that actually make sense. 💖
+                    {t('hero.subtitle')}
                 </motion.p>
 
                 <motion.div
@@ -51,17 +53,17 @@ const Hero = () => {
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="flex flex-wrap items-center gap-4"
                 >
-                    <button 
+                    <button
                         className="bg-gradient-pink hover:opacity-90 text-white px-8 py-4 rounded-full font-bold transition-all shadow-soft hover:-translate-y-1 hover:shadow-lg"
                         data-tour-id="hero-get-started"
                     >
-                        Get Started
+                        {t('hero.getStarted')}
                     </button>
-                    <button 
+                    <button
                         onClick={startTour}
                         className="bg-white border-2 border-gray-100 text-brand-dark hover:border-brand-pink hover:text-brand-pink px-8 py-3.5 rounded-full font-bold transition-all"
                     >
-                        Take a Tour
+                        {t('hero.takeTour')}
                     </button>
                 </motion.div>
 
@@ -81,7 +83,7 @@ const Hero = () => {
                             />
                         ))}
                     </div>
-                    <p className="text-xs text-brand-gray font-bold">Join 50k+ friends on the journey 🌈</p>
+                    <p className="text-xs text-brand-gray font-bold">{t('hero.joinFriends')}</p>
                 </motion.div>
             </div>
 
@@ -93,9 +95,9 @@ const Hero = () => {
                 className="flex-1 relative w-full h-full min-h-[450px] flex justify-center items-center"
             >
                 <HeroIllustration />
-                
+
                 {/* Floating Badge */}
-                <motion.div 
+                <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     className="absolute bottom-10 right-0 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-pink-50 max-w-[200px] z-20"
