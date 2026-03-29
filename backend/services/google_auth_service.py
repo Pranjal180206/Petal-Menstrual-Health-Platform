@@ -129,7 +129,7 @@ async def get_or_create_user(db, profile: dict) -> dict:
         },
         "cycle_preferences": {
             "average_cycle_length": 28,
-            "average_period_length": 5,
+            "period_duration": 5,
             "luteal_phase_length": 14
         },
         "notification_preferences": {

@@ -18,7 +18,7 @@ router = APIRouter()
 def inject_user_defaults(user: dict) -> dict:
     user.setdefault("cycle_preferences", {
         "average_cycle_length": 28,
-        "average_period_length": 5,
+        "period_duration": 5,
         "luteal_phase_length": 14
     })
     user.setdefault("notification_preferences", {
@@ -84,7 +84,7 @@ async def register(request: Request, user_in: UserRegister):
     }
     user_dict["cycle_preferences"] = {
         "average_cycle_length": 28,
-        "average_period_length": 5,
+        "period_duration": 5,
         "luteal_phase_length": 14
     }
     user_dict["notification_preferences"] = {

@@ -18,7 +18,7 @@ class UserSettingsUpdate(BaseModel):
 
 class CyclePreferencesUpdate(BaseModel):
     average_cycle_length: Optional[int] = Field(None, ge=15, le=60)
-    average_period_length: Optional[int] = Field(None, ge=1, le=15)
+    period_duration: Optional[int] = Field(None, ge=1, le=15)
     luteal_phase_length: Optional[int] = Field(None, ge=10, le=16)
 
 class UserService:

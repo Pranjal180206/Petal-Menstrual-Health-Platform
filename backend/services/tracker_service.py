@@ -4,6 +4,7 @@ from bson import ObjectId
 from models.cycle_model import CycleCreateReq, CycleUpdateReq
 from database import get_db
 from fastapi import HTTPException
+from services.cycle_history import get_parsed_cycle_history, CYCLE_MIN_DAYS, CYCLE_MAX_DAYS
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,30 +26,29 @@ class TrackerService:
 
     @staticmethod
     async def get_tracker_summary(user_id: str) -> dict:
-        cycles = await TrackerService.get_user_cycles(user_id)
-        
-        # Calculate average cycle length (gap between start dates)
-        avg_length = 28 # default
-        if len(cycles) >= 2:
-            # Cycles are sorted descending (latest first)
+        db = get_db()
+        parsed = await get_parsed_cycle_history(db, user_id)
+
+        # Calculate average cycle length from cleaned, gap-filtered history
+        avg_length = 28  # default
+        if len(parsed) >= 2:
             total_days = 0
             valid_gaps = 0
-            for i in range(len(cycles) - 1):
-                start_current = cycles[i]["cycle_start_date"]
-                start_previous = cycles[i+1]["cycle_start_date"]
-                gap = (start_current - start_previous).days
-                if 20 <= gap <= 45: # Consider only reasonable gaps
+            for i in range(len(parsed) - 1):
+                gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
+                if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
                     total_days += gap
                     valid_gaps += 1
             if valid_gaps > 0:
                 avg_length = total_days // valid_gaps
 
         prediction = None
-        if len(cycles) > 0:
-            last_start = cycles[0]["cycle_start_date"]
+        if parsed:
+            last_start = parsed[-1]["start_date"]
             prediction = last_start + timedelta(days=avg_length)
 
-        # Convert ObjectIds to strings before returning
+        # Fetch full cycle list for past_cycles (including raw logs with IDs)
+        cycles = await TrackerService.get_user_cycles(user_id)
         for c in cycles:
             c["id"] = str(c.pop("_id", ""))
 

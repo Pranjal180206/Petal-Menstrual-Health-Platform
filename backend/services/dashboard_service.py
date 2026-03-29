@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from services.cycle_history import get_parsed_cycle_history, CYCLE_MIN_DAYS, CYCLE_MAX_DAYS
 
 async def calculate_cycle_streak(user_id: str, db) -> int:
     """
@@ -37,22 +38,24 @@ async def get_dashboard_summary(user_id: str, db) -> dict:
     from bson import ObjectId
     user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
     
-    # Get all cycle logs sorted by date
-    logs = await db["cycle_logs"].find(
-        {"user_id": {"$in": [user_id, user_id_obj]}}
-    ).sort("cycle_start_date", -1).limit(6).to_list(6)
+    # Get parsed, gap-filtered cycle history via shared utility
+    parsed = await get_parsed_cycle_history(db, user_id)
 
-    if len(logs) >= 2:
-        # Calculate actual average from logged cycles
+    if len(parsed) >= 2:
+        # Calculate actual average from cleaned history
         gaps = []
-        for i in range(len(logs) - 1):
-            gap = (logs[i]["cycle_start_date"].replace(tzinfo=None) - logs[i+1]["cycle_start_date"].replace(tzinfo=None)).days
-            if 15 <= gap <= 60:  # only valid cycle lengths
+        for i in range(len(parsed) - 1):
+            gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
+            if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
                 gaps.append(gap)
         avg = round(sum(gaps) / len(gaps)) if gaps else 28
     else:
         avg = 28  # ML_PLACEHOLDER: replace with ml_service when ready
 
+    # last_period_date comes from the raw descending query (keeps existing behaviour)
+    logs = await db["cycle_logs"].find(
+        {"user_id": {"$in": [user_id, user_id_obj]}}
+    ).sort("cycle_start_date", -1).limit(6).to_list(6)
     last_period_date = logs[0]["cycle_start_date"] if logs else None
     next_period_prediction = last_period_date + timedelta(days=avg) if last_period_date else None
     average_cycle_length = avg
