@@ -43,18 +43,24 @@ const CycleTrackerLayout = () => {
                 <div className="px-5 pt-5 pb-3">
                     <div 
                         data-tour-id="petal-logo-sidebar"
-                        className="flex items-center gap-3 px-1 mb-4"
+                        className="flex flex-col mb-4 px-1"
                     >
-                        <div className="bg-gradient-to-br from-[#D81B60] to-[#F06292] text-white p-2 rounded-xl shadow-sm">
-                            <PetalIcon size={20} />
+                        <div className="flex items-center gap-3">
+                            <div className="bg-gradient-to-br from-[#D81B60] to-[#F06292] text-white p-2 rounded-xl shadow-sm">
+                                <PetalIcon size={20} />
+                            </div>
+                            <div>
+                                <span className="font-heading font-bold text-xl tracking-tight text-[#1D1D2C] block leading-none">
+                                    Petal
+                                </span>
+                                <span className="text-[10px] text-[#D81B60] font-bold tracking-wide uppercase">
+                                    {t('sidebar.tagline')}
+                                </span>
+                            </div>
                         </div>
-                        <div>
-                            <span className="font-heading font-bold text-xl tracking-tight text-[#1D1D2C] block leading-none">
-                                Petal
-                            </span>
-                            <span className="text-[10px] text-[#D81B60] font-bold tracking-wide uppercase">
-                                {t('sidebar.tagline')}
-                            </span>
+                        <div className="flex items-center gap-1.5 mt-2 ml-12">
+                            <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
+                            <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
                         </div>
                     </div>
 

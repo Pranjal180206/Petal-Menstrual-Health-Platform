@@ -9,11 +9,17 @@ const Footer = () => {
 
                 {/* Brand/Logo Column */}
                 <div className="max-w-xs space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-brand-pink text-white p-1 rounded-full">
-                            <PetalIcon size={16} />
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-brand-pink text-white p-1 rounded-full">
+                                <PetalIcon size={16} />
+                            </div>
+                            <span className="font-heading font-bold text-xl text-brand-dark tracking-tight">Petal</span>
                         </div>
-                        <span className="font-heading font-bold text-xl text-brand-dark tracking-tight">Petal</span>
+                        <div className="flex items-center gap-1.5 ml-8 mt-1">
+                            <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
+                            <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                        </div>
                     </div>
                     <p className="text-sm text-brand-gray leading-relaxed">
                         Making health and body education inclusive, fun, and empowering for everyone.

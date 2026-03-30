@@ -12,11 +12,17 @@ const Navbar = ({ isHome = false }) => {
     return (
         <nav className="w-full max-w-7xl mx-auto px-6 py-8 md:py-10 flex items-center justify-between relative z-50">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 cursor-pointer group">
-                <div className="bg-brand-pink text-white p-2 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-pink-200">
-                    <PetalIcon size={32} />
+            <Link to="/" className="flex flex-col cursor-pointer group">
+                <div className="flex items-center gap-2">
+                    <div className="bg-brand-pink text-white p-2 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform shadow-lg shadow-pink-200">
+                        <PetalIcon size={32} />
+                    </div>
+                    <span className="font-heading font-extrabold text-4xl text-brand-dark tracking-tighter">Petal</span>
                 </div>
-                <span className="font-heading font-extrabold text-4xl text-brand-dark tracking-tighter">Petal</span>
+                <div className="flex items-center gap-1.5 mt-1 ml-[56px]">
+                    <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
+                    <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                </div>
             </Link>
 
             {/* Desktop Links */}
