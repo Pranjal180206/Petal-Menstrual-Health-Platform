@@ -62,7 +62,6 @@ const Settings = () => {
     const [language, setLanguage] = useState(user?.language_preference || 'en');
 
     /* ── Appearance ── */
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accent') || '#D81B60');
 
     // Sync state on user change
@@ -86,14 +85,9 @@ const Settings = () => {
     }, [user, navigate]);
 
     useEffect(() => {
-        if (darkMode) {
-            document.body.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.body.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [darkMode]);
+        document.body.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    }, []);
 
     useEffect(() => {
         localStorage.setItem('accent', accentColor);
@@ -416,17 +410,6 @@ const Settings = () => {
                             <p className="text-sm text-gray-500 mb-6">Customize how Petal looks for you.</p>
 
                             <div className="space-y-6">
-                                <div className="flex items-center justify-between p-4 rounded-xl bg-[#FAFAFA]">
-                                    <div>
-                                        <p className="text-sm font-bold text-[#1D1D2C]">Dark Mode</p>
-                                        <p className="text-xs text-gray-400">Easy on the eyes, especially at night</p>
-                                    </div>
-                                    <Toggle
-                                        checked={darkMode}
-                                        onChange={setDarkMode}
-                                    />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-bold text-[#1D1D2C] mb-1">Accent Color</p>
                                     <p className="text-xs text-gray-400 mb-3">Choose your primary app color</p>

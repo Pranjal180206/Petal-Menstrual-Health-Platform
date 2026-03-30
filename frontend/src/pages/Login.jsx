@@ -91,11 +91,17 @@ const Login = () => {
 
             {/* Header */}
             <header className="w-full px-8 py-3 flex justify-between items-center relative z-10 shrink-0">
-                <Link to="/" className="flex items-center gap-3">
-                    <div className="text-[#FF6B9A]">
-                        <PetalIcon size={28} />
+                <Link to="/" className="flex flex-col">
+                    <div className="flex items-center gap-3">
+                        <div className="text-[#FF6B9A]">
+                            <PetalIcon size={28} />
+                        </div>
+                        <span className="font-heading font-extrabold text-2xl tracking-tight">Petal</span>
                     </div>
-                    <span className="font-heading font-extrabold text-2xl tracking-tight">Petal</span>
+                    <div className="flex items-center gap-1.5 mt-1 ml-10">
+                        <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
+                        <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                    </div>
                 </Link>
                 <div className="text-sm font-semibold text-gray-500">
                     {t('login.needHelp')} <Link to="/contact" className="text-[#FF6B9A] hover:underline">{t('login.askAdult')}</Link>

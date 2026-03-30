@@ -1,4 +1,4 @@
-import { MessageSquare, Video, Star } from 'lucide-react';
+
 import PetalIcon from './PetalIcon';
 import { Link } from 'react-router-dom';
 
@@ -9,39 +9,27 @@ const Footer = () => {
 
                 {/* Brand/Logo Column */}
                 <div className="max-w-xs space-y-6">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-brand-pink text-white p-1 rounded-full">
-                            <PetalIcon size={16} />
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-brand-pink text-white p-1 rounded-full">
+                                <PetalIcon size={16} />
+                            </div>
+                            <span className="font-heading font-bold text-xl text-brand-dark tracking-tight">Petal</span>
                         </div>
-                        <span className="font-heading font-bold text-xl text-brand-dark tracking-tight">Petal</span>
+                        <div className="flex items-center gap-1.5 ml-8 mt-1">
+                            <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
+                            <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                        </div>
                     </div>
                     <p className="text-sm text-brand-gray leading-relaxed">
-                        Making menstrual health education inclusive, fun, and empowering for the next generation.
+                        Making health and body education inclusive, fun, and empowering for everyone.
                     </p>
-                    <div className="flex gap-3">
-                        <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-dark hover:text-brand-pink transition-colors">
-                            <Star size={18} />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-dark hover:text-brand-pink transition-colors">
-                            <MessageSquare size={18} />
-                        </button>
-                        <button className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-brand-dark hover:text-brand-pink transition-colors">
-                            <Video size={18} />
-                        </button>
-                    </div>
+
                 </div>
 
                 {/* Links Columns */}
                 <div className="flex gap-16 md:gap-24">
-                    <div className="space-y-4">
-                        <h4 className="font-heading font-bold text-brand-dark">Explore</h4>
-                        <ul className="space-y-3">
-                            <li><Link to="/dashboard/tracker" className="text-sm text-brand-gray hover:text-brand-pink">Mood Tracker</Link></li>
-                            <li><Link to="/education" className="text-sm text-brand-gray hover:text-brand-pink">Period Tips</Link></li>
-                            <li><Link to="/education" className="text-sm text-brand-gray hover:text-brand-pink">Expert Talk</Link></li>
-                            <li><Link to="/community" className="text-sm text-brand-gray hover:text-brand-pink">Friends Hub</Link></li>
-                        </ul>
-                    </div>
+
 
                     <div className="space-y-4">
                         <h4 className="font-heading font-bold text-brand-dark">Privacy</h4>

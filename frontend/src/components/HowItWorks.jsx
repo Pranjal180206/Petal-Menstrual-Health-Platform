@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FileEdit, Search, Award } from 'lucide-react';
+import { FileEdit, Activity, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const HowItWorks = () => {
@@ -13,13 +13,13 @@ const HowItWorks = () => {
             description: t('howItWorks.step1Desc'),
         },
         {
-            icon: <Search size={28} className="text-slate-600" />,
+            icon: <Activity size={28} className="text-slate-600" />,
             iconBg: "bg-slate-100",
             title: t('howItWorks.step2Title'),
             description: t('howItWorks.step2Desc'),
         },
         {
-            icon: <Award size={28} className="text-yellow-500" />,
+            icon: <Users size={28} className="text-yellow-500" />,
             iconBg: "bg-yellow-50",
             title: t('howItWorks.step3Title'),
             description: t('howItWorks.step3Desc'),
