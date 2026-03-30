@@ -1,0 +1,20 @@
+Cell 17:
+SAFE_FEATURES = [
+    'baseline',              # previous cycle length
+    'LengthofMenses',        # current period duration
+    'MeanMensesLength',      # rolling average period length
+    'TotalMensesScore',      # total flow score
+    'MensesScoreDayOne',     # flow intensity day 1
+    'MensesScoreDayTwo',     # flow intensity day 2
+    'MensesScoreDayThree',   # flow intensity day 3
+    'MensesScoreDaySeven',   # flow intensity day 7
+    'MeanBleedingIntensity', # average flow intensity
+    'PhasesBleeding',        # bleeding phases count
+    'Age',                   # user age
+    'UnusualBleeding', 'Boys', 'Girls'       # binary unusual bleeding flag
+]
+
+# Use only features that actually exist in the dataframe to prevent KeyError
+X = df[[col for col in SAFE_FEATURES if col in df.columns]]
+y = df['target_adjustment']
+---

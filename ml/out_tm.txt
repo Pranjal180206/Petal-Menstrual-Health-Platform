@@ -1,0 +1,220 @@
+Cell 0:
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import accuracy_score, mean_absolute_error
+import joblib
+---
+Cell 1:
+df = pd.read_csv("menstrual_data.csv")
+pd.set_option('display.max_columns', None)
+---
+Cell 2:
+df.head()
+---
+Cell 3:
+df.shape
+---
+Cell 4:
+df.columns
+---
+Cell 5:
+df.info()
+---
+Cell 6:
+df.describe()
+---
+Cell 7:
+missing = df.isnull().sum()
+missing = missing[missing > 0].sort_values(ascending=False)
+
+print("\nMissing Values:\n", missing)
+---
+Cell 8:
+import matplotlib.pyplot as plt
+
+df.hist(figsize=(15,10), bins=20)
+plt.tight_layout()
+plt.show()
+---
+Cell 9:
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+for col in df.select_dtypes(include=['int64','float64']).columns[:10]:
+    plt.figure(figsize=(4,2))
+    sns.boxplot(x=df[col])
+    plt.title(col)
+    plt.show()
+---
+Cell 10:
+skewness = df.select_dtypes(include=['int64','float64']).skew()
+print(skewness.sort_values(ascending=False))
+---
+Cell 11:
+df['LengthofCycle'] = pd.to_numeric(df['LengthofCycle'], errors='coerce')
+df['LengthofCycle'].fillna(df['LengthofCycle'].median(), inplace=True)
+---
+Cell 12:
+df['baseline'] = df.groupby('ClientID')['LengthofCycle'] \
+                   .transform(lambda x: x.rolling(3, min_periods=1).mean())
+df['baseline'] = df['baseline'].replace('', np.nan) #convert empty strings to NaN
+
+---
+Cell 13:
+df['baseline'] = df['LengthofCycle'].rolling(window=3, min_periods=1).mean()
+df['target_adjustment'] = df['LengthofCycle'] - df['baseline']
+---
+Cell 14:
+drop_cols = [
+    'ClientID',
+    'CycleNumber',
+
+    # duplicate encoded
+    'AgeM','MaristatusM','ReligionM','EthnicityM',
+    'SchoolyearsM','MedvitsM','MedvitexplainM',
+    'LivingkidsM','SpousesameM','NextpregM',
+
+    # text / noisy
+    'Medvitexplain','Whychart','Methoddate',
+        'Religion','Ethnicity','OccupationM','IncomeM',
+
+    'MensesScoreDay10','MensesScoreDay11','MensesScoreDay12',
+    'MensesScoreDay13','MensesScoreDay14','MensesScoreDay15',
+    'MensesScoreDayEight',
+
+    'MensesScoreDayFour','MensesScoreDayFive',
+    'MensesScoreDaySix','MensesScoreDayNine',
+
+    'Medvits',
+
+    'Group','CycleWithPeakorNot','ReproductiveCategory'
+
+]
+
+df.drop(columns=drop_cols, inplace=True, errors='ignore')
+---
+Cell 15:
+leak_cols = [
+    'MeanCycleLength',   
+    'EstimatedDayofOvulation',
+    'LengthofLutealPhase',
+    'TotalDaysofFertility',
+    'TotalFertilityFormula'
+]
+
+df.drop(columns=leak_cols, inplace=True, errors='ignore')
+---
+Cell 16:
+for col in df.select_dtypes(include='object').columns:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col].astype(str))
+---
+Cell 17:
+SAFE_FEATURES = [
+    'baseline',              # previous cycle length
+    'LengthofMenses',        # current period duration
+    'MeanMensesLength',      # rolling average period length
+    'TotalMensesScore',      # total flow score
+    'MensesScoreDayOne',     # flow intensity day 1
+    'MensesScoreDayTwo',     # flow intensity day 2
+    'MensesScoreDayThree',   # flow intensity day 3
+    'MensesScoreDaySeven',   # flow intensity day 7
+    'MeanBleedingIntensity', # average flow intensity
+    'PhasesBleeding',        # bleeding phases count
+    'Age',                   # user age
+    'UnusualBleeding', 'Boys', 'Girls'       # binary unusual bleeding flag
+]
+
+# Use only features that actually exist in the dataframe to prevent KeyError
+X = df[[col for col in SAFE_FEATURES if col in df.columns]]
+y = df['target_adjustment']
+---
+Cell 18:
+print(df.columns.tolist())
+---
+Cell 19:
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+---
+Cell 20:
+from sklearn.ensemble import RandomForestRegressor
+
+model = RandomForestRegressor(
+    n_estimators=150,
+    max_depth=10,          
+    min_samples_split=5,
+    min_samples_leaf=2,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+---
+Cell 21:
+importances = model.feature_importances_
+
+for col, val in zip(X.columns, importances):
+    print(col, val)
+---
+Cell 22:
+y_pred_adjustment = model.predict(X_test)
+baseline_test = df.loc[X_test.index, 'baseline']
+final_prediction = baseline_test + y_pred_adjustment
+---
+Cell 23:
+actual = df.loc[X_test.index, 'LengthofCycle']
+
+mae = mean_absolute_error(actual, final_prediction)
+
+print("Hybrid Model MAE:", mae)
+---
+Cell 24:
+from sklearn.metrics import mean_absolute_error
+
+# TRAIN predictions
+train_pred_adjustment = model.predict(X_train)
+train_baseline = df.loc[X_train.index, 'baseline']
+train_final = train_baseline + train_pred_adjustment
+
+train_actual = df.loc[X_train.index, 'LengthofCycle']
+
+train_mae = mean_absolute_error(train_actual, train_final)
+
+
+# TEST predictions (you already have)
+test_mae = mae
+
+print("Train MAE:", train_mae)
+print("Test MAE:", test_mae)
+
+---
+Cell 25:
+confidence = 1 - (abs(final_prediction  - baseline_test) / 10)
+print("Prediction Confidence (0-1):", confidence)
+---
+Cell 26:
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.metrics import make_scorer, mean_absolute_error
+
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+
+mae_scorer = make_scorer(mean_absolute_error, greater_is_better=False)
+
+scores = cross_val_score(model, X, y, cv=kf, scoring=mae_scorer)
+
+print("MAE scores:", -scores)
+print("Mean MAE:", -scores.mean())
+---
+Cell 27:
+import joblib
+# Save model
+joblib.dump(model, 'menstrual_model.joblib')
+
+---
+Cell 28:
+
+---
