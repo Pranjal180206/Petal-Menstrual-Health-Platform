@@ -4,9 +4,7 @@ import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
 
 const Education = () => {
-    const [darkMode, setDarkMode] = useState(false);
-    const [onboardingDone, setOnboardingDone] = useState(false);
-    const [showToast, setShowToast] = useState(false);
+    const darkMode = false;
     const heroRef = React.useRef(null);
     const contentRef = React.useRef(null);
 
@@ -29,16 +27,6 @@ const Education = () => {
     const [quizAnswers, setQuizAnswers] = useState({});
     const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
     const [quizResult, setQuizResult] = useState(null);
-
-    const handleSkipIntro = () => {
-        contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    const handleFinishOnboarding = () => {
-        setOnboardingDone(true);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3500);
-    };
 
     // On mount
     useEffect(() => {
@@ -139,19 +127,6 @@ const Education = () => {
             style={{ background: darkMode ? '#0f1117' : undefined }}
         >
             <Navbar />
-
-            {/* Success Toast */}
-            {showToast && (
-                <div
-                    className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl"
-                    style={{ background: darkMode ? '#1e293b' : '#0f172a' }}
-                >
-                    <span className="material-symbols-outlined" style={{ color: '#f472b6' }}>check_circle</span>
-                    <span className="text-sm font-black uppercase tracking-widest text-white">
-                        Onboarding Complete! Welcome to the Hub 🎉
-                    </span>
-                </div>
-            )}
 
             <div className="layout-container flex h-full grow flex-col">
                 <main className="max-w-[1400px] mx-auto w-full px-6 py-10">
@@ -342,91 +317,6 @@ const Education = () => {
                                 )}
                             </div>
                         )}
-                    </div>
-
-                    {/* Accessibility Bar */}
-                    <div
-                        className="mt-16 rounded-3xl p-8 border-2 flex flex-col md:flex-row items-center justify-between gap-8 transition-colors duration-500"
-                        style={{
-                            background: darkMode ? '#1e293b' : 'white',
-                            borderColor: darkMode ? '#334155' : '#fda4af',
-                        }}
-                    >
-                        <div className="flex flex-col gap-2">
-                            <h5
-                                className="text-lg font-black"
-                                style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}
-                            >
-                                Accessibility First
-                            </h5>
-                            <p
-                                className="text-sm font-medium"
-                                style={{ color: darkMode ? '#94a3b8' : '#64748b' }}
-                            >
-                                {darkMode
-                                    ? '🌙 Dark mode is on — easy on the eyes.'
-                                    : 'Customize your reading experience for maximum comfort.'}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4 items-center">
-                            {/* Dark Mode Toggle */}
-                            <label
-                                className="inline-flex items-center cursor-pointer px-4 py-2 rounded-2xl transition-colors"
-                                style={{
-                                    background: darkMode ? '#0f172a' : '#f8fafc',
-                                    border: darkMode ? '1px solid #334155' : '1px solid transparent',
-                                }}
-                            >
-                                <input
-                                    className="sr-only peer"
-                                    type="checkbox"
-                                    checked={darkMode}
-                                    onChange={() => setDarkMode(v => !v)}
-                                />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500 relative"></div>
-                                <span
-                                    className="ms-3 text-sm font-bold"
-                                    style={{ color: darkMode ? '#e2e8f0' : '#374151' }}
-                                >
-                                    🌙 Dark Mode
-                                </span>
-                            </label>
-
-                            {/* Skip Intro */}
-                            <button
-                                onClick={handleSkipIntro}
-                                className="font-black text-xs uppercase tracking-widest flex items-center gap-2 transition-colors"
-                                style={{ color: '#94a3b8' }}
-                                onMouseEnter={e => e.currentTarget.style.color = '#f472b6'}
-                                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
-                            >
-                                Check Content
-                                <span className="material-symbols-outlined text-sm">fast_forward</span>
-                            </button>
-
-                            {/* Finish Onboarding */}
-                            <button
-                                onClick={handleFinishOnboarding}
-                                disabled={onboardingDone}
-                                className="px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest transition-all"
-                                style={
-                                    onboardingDone
-                                        ? {
-                                            background: darkMode ? '#1e293b' : '#e2e8f0',
-                                            color: darkMode ? '#475569' : '#94a3b8',
-                                            cursor: 'not-allowed',
-                                        }
-                                        : {
-                                            background: '#FF6B9D',
-                                            color: 'white',
-                                            boxShadow: '0 8px 24px rgba(255,107,157,0.3)',
-                                        }
-                                }
-                            >
-                                {onboardingDone ? '✓ Completed' : 'Finish Onboarding'}
-                            </button>
-                        </div>
                     </div>
 
                 </main>

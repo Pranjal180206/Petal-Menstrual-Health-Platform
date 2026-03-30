@@ -51,40 +51,17 @@ const Hero = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
-                    className="flex flex-wrap items-center gap-4"
+                    className="flex justify-center w-full"
                 >
                     <button
-                        className="bg-gradient-pink hover:opacity-90 text-white px-8 py-4 rounded-full font-bold transition-all shadow-soft hover:-translate-y-1 hover:shadow-lg"
-                        data-tour-id="hero-get-started"
-                    >
-                        {t('hero.getStarted')}
-                    </button>
-                    <button
                         onClick={startTour}
-                        className="bg-white border-2 border-gray-100 text-brand-dark hover:border-brand-pink hover:text-brand-pink px-8 py-3.5 rounded-full font-bold transition-all"
+                        className="bg-white border-2 border-brand-pink text-brand-dark hover:bg-brand-pink hover:text-white px-12 py-4 text-lg rounded-full font-bold transition-all shadow-md"
                     >
                         {t('hero.takeTour')}
                     </button>
                 </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                    className="flex items-center gap-3 pt-4"
-                >
-                    <div className="flex -space-x-2">
-                        {[1, 2, 3].map((i) => (
-                            <img
-                                key={i}
-                                src={`https://i.pravatar.cc/100?img=${i + 15}`}
-                                alt="Avatar"
-                                className="w-9 h-9 rounded-full border-2 border-white object-cover shadow-sm"
-                            />
-                        ))}
-                    </div>
-                    <p className="text-xs text-brand-gray font-bold">{t('hero.joinFriends')}</p>
-                </motion.div>
+
             </div>
 
             {/* Right Illustration */}

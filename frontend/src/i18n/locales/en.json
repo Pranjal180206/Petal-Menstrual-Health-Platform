@@ -6,12 +6,12 @@
     "signIn": "Sign In"
   },
   "hero": {
-    "badge": "Your Cycle, Your Vibe ✨",
+    "badge": "Your Health, Your Vibe ✨",
     "title1": "Know Your",
     "title2": "Body,",
     "title3": "Feel",
     "title4": "Amazing.",
-    "subtitle": "The easy, friendly way to track your cycle, understand your moods, and get tips that actually make sense. 💖",
+    "subtitle": "The easy, friendly way to track your daily health, understand your moods, and get tips that actually make sense. 💖",
     "getStarted": "Get Started",
     "takeTour": "Take a Tour",
     "joinFriends": "Join 50k+ friends on the journey 🌈"
@@ -25,14 +25,14 @@
     "desc3": "Expert advice whenever you need it"
   },
   "howItWorks": {
-    "heading": "How Petal Works",
-    "subheading": "Three simple steps to becoming an expert on you! No clinical talk, just helpful vibes.",
-    "step1Title": "Log Your Mood",
-    "step1Desc": "Quickly tap how you're feeling and any symptoms. It's like a digital diary, but smarter.",
-    "step2Title": "See The Magic",
-    "step2Desc": "We find the patterns in your cycle so you can plan for big tests, games, or just lazy Sundays.",
-    "step3Title": "Get Tips",
-    "step3Desc": "Receive personalized advice on nutrition, sleep, and self-care tailored just for your phase."
+    "heading": "Platform Features",
+    "subheading": "Everything you need to understand your body, track your health, and connect with others.",
+    "step1Title": "Detailed Tracking",
+    "step1Desc": "Log your daily symptoms, energy levels, and moods to build a personalized calendar of your unique health patterns.",
+    "step2Title": "Smart Risk Analysis",
+    "step2Desc": "Our system analyzes your logged data to spot potential irregularities and generates PDF health reports you can easily share.",
+    "step3Title": "Community & Learning",
+    "step3Desc": "Join the secure Friends Hub for peer support, and explore expert-reviewed articles and videos about your body."
   },
   "cta": {
     "title": "Ready to bloom into your best self?",
@@ -40,7 +40,7 @@
     "button": "Join Petal Now"
   },
   "footer": {
-    "tagline": "Making menstrual health education inclusive, fun, and empowering for the next generation.",
+    "tagline": "Making health and body education inclusive, fun, and empowering for everyone.",
     "copyright": "© 2024 Petal Health. Made with ✨ for you.",
     "explore": "Explore",
     "privacy": "Privacy",
