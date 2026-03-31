@@ -13,6 +13,7 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import CommunityHub from './pages/CommunityHub';
 import Education from './pages/Education';
+import Quizzes from './pages/Quizzes';
 import UserProfile from './pages/UserProfile';
 import FloatingBackground from './components/FloatingBackground';
 import AdminPanel from './pages/AdminPanel';
@@ -112,6 +113,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
         <Route path="/community" element={<PageWrapper><CommunityHub /></PageWrapper>} />
         <Route path="/education" element={<PageWrapper><Education /></PageWrapper>} />
+        <Route path="/quizzes" element={<PageWrapper><Quizzes /></PageWrapper>} />
         <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
         <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
         <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />

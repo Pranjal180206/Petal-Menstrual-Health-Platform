@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
@@ -8,25 +9,72 @@ const Education = () => {
     const heroRef = React.useRef(null);
     const contentRef = React.useRef(null);
 
-    // Active Tab: 'articles', 'myths', 'quizzes', 'quizDetail'
+    // Active Tab: 'articles', 'myths', 'videos'
     const [activeTab, setActiveTab] = useState('articles');
 
     // Data States
     const [articles, setArticles] = useState([]);
     const [isArticlesLoading, setIsArticlesLoading] = useState(true);
 
-    const [myths, setMyths] = useState([]);
-    const [isMythsLoading, setIsMythsLoading] = useState(true);
+    const [myths, setMyths] = useState([
+        {
+            id: 'm1',
+            myth: "Girls should not exercise during periods",
+            fact: "Light exercise can actually help reduce cramps and improve mood"
+        },
+        {
+            id: 'm2',
+            myth: "You cannot take a bath during menstruation",
+            fact: "Maintaining hygiene, including bathing, is important and safe"
+        },
+        {
+            id: 'm3',
+            myth: "Period blood is 'dirty' blood",
+            fact: "It is a natural biological process involving shedding of the uterine lining"
+        },
+        {
+            id: 'm4',
+            myth: "PMS is just in a woman's head",
+            fact: "PMS is a real medical condition caused by hormonal changes during the cycle"
+        },
+        {
+            id: 'm5',
+            myth: "Menstruation should always be painful",
+            fact: "Mild discomfort is common, but severe pain may need medical attention"
+        },
+        {
+            id: 'm6',
+            myth: "You can't get pregnant while on your period",
+            fact: "While less likely, sperm can survive for days, making pregnancy possible during your period"
+        }
+    ]);
+    const [isMythsLoading, setIsMythsLoading] = useState(false);
 
-    const [quizzes, setQuizzes] = useState([]);
-    const [isQuizzesLoading, setIsQuizzesLoading] = useState(true);
-
-    // active quiz states
-    const [activeQuiz, setActiveQuiz] = useState(null);
-    const [isQuizDetailLoading, setIsQuizDetailLoading] = useState(false);
-    const [quizAnswers, setQuizAnswers] = useState({});
-    const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
-    const [quizResult, setQuizResult] = useState(null);
+    // Videos states
+    const [videos, setVideos] = useState([
+        {
+            id: 1,
+            title: "Understanding Your Cycle",
+            description: "A quick 5-min guide to the 4 phases of your menstrual cycle.",
+            thumbnail: "https://img.youtube.com/vi/vFjao9F1RII/hqdefault.jpg",
+            videoUrl: "https://www.youtube.com/embed/vFjao9F1RII"
+        },
+        {
+            id: 2,
+            title: "Nutrition for Menstrual Health",
+            description: "What to eat during different phases to feel your best.",
+            thumbnail: "https://img.youtube.com/vi/W4mI9-ZzB3A/hqdefault.jpg",
+            videoUrl: "https://www.youtube.com/embed/W4mI9-ZzB3A"
+        },
+        {
+            id: 3,
+            title: "Debunking Period Myths",
+            description: "Doctors react to common misconceptions about periods.",
+            thumbnail: "https://img.youtube.com/vi/qEMO_bU5YyA/hqdefault.jpg",
+            videoUrl: "https://www.youtube.com/embed/qEMO_bU5YyA"
+        }
+    ]);
+    const [activeVideo, setActiveVideo] = useState(null);
 
     // On mount
     useEffect(() => {
@@ -44,7 +92,12 @@ const Education = () => {
         const fetchMyths = async () => {
             try {
                 const res = await axiosInstance.get('/education/myth-facts');
-                setMyths(res.data);
+                if (res.data && res.data.length > 0) {
+                    setMyths(prev => {
+                        const newMyths = res.data.filter(newM => !prev.some(p => p.id === newM.id));
+                        return [...prev, ...newMyths];
+                    });
+                }
             } catch (err) {
                 console.error("Error fetching myths:", err);
             } finally {
@@ -52,64 +105,11 @@ const Education = () => {
             }
         };
 
-        const fetchQuizzes = async () => {
-            try {
-                const res = await axiosInstance.get('/quizzes/');
-                setQuizzes(res.data);
-            } catch (err) {
-                console.error("Error fetching quizzes:", err);
-            } finally {
-                setIsQuizzesLoading(false);
-            }
-        };
-
         fetchArticles();
         fetchMyths();
-        fetchQuizzes();
     }, []);
 
-    const handleOpenQuiz = async (quizId) => {
-        setIsQuizDetailLoading(true);
-        setActiveQuiz(null);
-        setQuizAnswers({});
-        setQuizResult(null);
-        setActiveTab('quizDetail');
-        try {
-            const res = await axiosInstance.get(`/quizzes/${quizId}`);
-            setActiveQuiz(res.data);
-        } catch (err) {
-            console.error("Error fetching quiz detail:", err);
-        } finally {
-            setIsQuizDetailLoading(false);
-        }
-    };
 
-    const handleSelectOption = (questionId, optionId) => {
-        if (quizResult) return; // Cannot change after submit
-        setQuizAnswers(prev => ({
-            ...prev,
-            [questionId]: optionId
-        }));
-    };
-
-    const handleSubmitQuiz = async () => {
-        if (!activeQuiz) return;
-        setIsSubmittingQuiz(true);
-        try {
-            const formattedAnswers = Object.entries(quizAnswers).map(([qId, optId]) => ({
-                question_id: qId,
-                selected_option_id: optId
-            }));
-            const res = await axiosInstance.post(`/quizzes/${activeQuiz.id}/submit`, {
-                answers: formattedAnswers
-            });
-            setQuizResult(res.data);
-        } catch (err) {
-            console.error("Error submitting quiz:", err);
-        } finally {
-            setIsSubmittingQuiz(false);
-        }
-    };
 
     // UI Helpers
     const tabClass = (tabName) => {
@@ -159,13 +159,19 @@ const Education = () => {
                         </p>
                     </div>
 
-                    <div ref={contentRef} className="mb-8 flex flex-wrap gap-4 px-2">
+                    <div ref={contentRef} className="mb-8 flex flex-wrap gap-4 px-2 items-center">
                         <button onClick={() => setActiveTab('articles')} className={tabClass('articles')}>Articles</button>
+                        <button onClick={() => setActiveTab('videos')} className={tabClass('videos')}>Videos</button>
                         <button onClick={() => setActiveTab('myths')} className={tabClass('myths')}>Myths & Facts</button>
-                        <button onClick={() => setActiveTab('quizzes')} className={tabClass('quizzes')}>Quizzes</button>
-                        {activeTab === 'quizDetail' && (
-                            <button className={tabClass('quizDetail')}>Active Quiz</button>
-                        )}
+                        
+                        {/* Standalone Quizzes Page Link */}
+                        <Link 
+                            to="/quizzes" 
+                            className={`px-6 py-3 rounded-full font-black text-sm uppercase tracking-widest transition-all ${darkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'} flex items-center gap-2`}
+                        >
+                            Quizzes
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </Link>
                     </div>
 
                     <div className="min-h-[400px]">
@@ -211,117 +217,74 @@ const Education = () => {
                             </div>
                         )}
 
-                        {/* QUIZZES LIST SECTION */}
-                        {activeTab === 'quizzes' && (
+                        {/* VIDEOS SECTION */}
+                        {activeTab === 'videos' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {isQuizzesLoading ? (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Loading quizzes...</p>
-                                ) : quizzes.length > 0 ? (
-                                    quizzes.map(q => (
-                                        <div key={q.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} flex flex-col shadow-sm`}>
-                                            <h3 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{q.title?.en || 'Untitled Quiz'}</h3>
-                                            <p className={`text-sm mb-6 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{q.description?.en || ''}</p>
-                                            <button 
-                                                onClick={() => handleOpenQuiz(q.id)}
-                                                className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
-                                            >
-                                                Start Quiz
-                                            </button>
+                                {videos.length > 0 ? (
+                                    videos.map(v => (
+                                        <div key={v.id} className={`p-0 overflow-hidden rounded-3xl border-2 flex flex-col ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
+                                            <div className="relative w-full aspect-video bg-slate-900 group">
+                                                <img src={v.thumbnail} alt={v.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <div className="bg-black/50 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm">
+                                                        <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="p-6 flex flex-col flex-grow">
+                                                <h3 className={`text-xl font-black mb-2 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{v.title}</h3>
+                                                <p className={`text-sm mb-6 flex-grow line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{v.description}</p>
+                                                <button 
+                                                    onClick={() => setActiveVideo(v)}
+                                                    className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
+                                                >
+                                                    Watch Now
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>No quizzes found.</p>
+                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>No videos found.</p>
                                 )}
                             </div>
                         )}
 
-                        {/* ACTIVE QUIZ DETAIL SECTION */}
-                        {activeTab === 'quizDetail' && (
-                            <div className="max-w-3xl">
-                                {isQuizDetailLoading ? (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Loading quiz details...</p>
-                                ) : activeQuiz ? (
-                                    <div className={`p-8 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
-                                        <h2 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{activeQuiz.title?.en || 'Quiz'}</h2>
-                                        <p className={`text-lg mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{activeQuiz.description?.en || ''}</p>
-                                        
-                                        <div className="flex flex-col gap-8">
-                                            {activeQuiz.questions?.map((q, idx) => {
-                                                const resultForQuestion = quizResult?.results?.find(r => r.question_id === q.id);
-                                                return (
-                                                    <div key={q.id} className="flex flex-col gap-4">
-                                                        <h4 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                            {idx + 1}. {q.text?.en ?? q.text}
-                                                        </h4>
-                                                        <div className="flex flex-col gap-3">
-                                                            {q.options?.map(opt => {
-                                                                const isSelected = quizAnswers[q.id] === opt.id;
-                                                                const isCorrectOption = resultForQuestion?.is_correct && isSelected;
-                                                                const isWrongOption = resultForQuestion && !resultForQuestion.is_correct && isSelected;
-
-                                                                let bgClass = darkMode ? 'bg-slate-900 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100';
-                                                                if (isSelected) bgClass = darkMode ? 'bg-slate-700 ring-2 ring-pink-500' : 'bg-pink-50 ring-2 ring-pink-500';
-                                                                if (quizResult && isCorrectOption) bgClass = 'bg-green-100 ring-2 ring-green-500 text-green-900';
-                                                                if (quizResult && isWrongOption) bgClass = 'bg-red-100 ring-2 ring-red-500 text-red-900';
-
-                                                                return (
-                                                                    <button
-                                                                        key={opt.id}
-                                                                        disabled={!!quizResult}
-                                                                        onClick={() => handleSelectOption(q.id, opt.id)}
-                                                                        className={`text-left p-4 rounded-2xl transition-all ${bgClass} ${darkMode && !quizResult && !isSelected ? 'text-slate-300' : (isSelected && !quizResult && !darkMode && 'text-slate-900')} ${!darkMode && !isSelected && 'text-slate-700'}`}
-                                                                    >
-                                                                        {opt.text?.en ?? opt.text}
-                                                                    </button>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                        {resultForQuestion && (
-                                                            <div className={`p-4 rounded-xl mt-2 text-sm ${resultForQuestion.is_correct ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                                                                <span className="font-bold block mb-1">
-                                                                    {resultForQuestion.is_correct ? '✅ Correct' : '❌ Incorrect'}
-                                                                </span>
-                                                                {resultForQuestion.explanation?.en}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-
-                                        {!quizResult ? (
-                                            <button 
-                                                onClick={handleSubmitQuiz}
-                                                disabled={isSubmittingQuiz || Object.keys(quizAnswers).length < (activeQuiz.questions?.length || 0)}
-                                                className={`mt-10 w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isSubmittingQuiz || Object.keys(quizAnswers).length < (activeQuiz.questions?.length || 0) ? 'opacity-50 cursor-not-allowed bg-slate-300 text-slate-500' : 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg'}`}
-                                            >
-                                                {isSubmittingQuiz ? 'Submitting...' : 'Submit Answers'}
-                                            </button>
-                                        ) : (
-                                            <div className="mt-10 p-6 rounded-2xl bg-slate-100 dark:bg-slate-800 text-center">
-                                                <h3 className="text-2xl font-black mb-2 dark:text-white">Results: {quizResult.score_percentage}%</h3>
-                                                <p className={`font-bold text-lg ${quizResult.passed ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {quizResult.passed ? 'You passed!' : 'Keep learning and try again!'}
-                                                </p>
-                                                <button 
-                                                    onClick={() => setActiveTab('quizzes')}
-                                                    className="mt-6 px-6 py-2 rounded-full border-2 border-slate-300 dark:border-slate-600 font-bold dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                                                >
-                                                    Back to Quizzes
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Quiz not found.</p>
-                                )}
-                            </div>
-                        )}
                     </div>
 
                 </main>
             </div>
             <Footer />
+
+            {/* VIDEO MODAL */}
+            {activeVideo && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="relative w-full max-w-4xl bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+                        {/* Close button */}
+                        <button 
+                            onClick={() => setActiveVideo(null)}
+                            className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-colors backdrop-blur-md"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                        
+                        {/* Video Container (16:9 aspect ratio) */}
+                        <div className="relative w-full pt-[56.25%]">
+                            <iframe 
+                                className="absolute inset-0 w-full h-full"
+                                src={activeVideo.videoUrl} 
+                                title={activeVideo.title}
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                        <div className={`p-6 ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
+                            <h2 className="text-2xl font-black mb-2">{activeVideo.title}</h2>
+                            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{activeVideo.description}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
