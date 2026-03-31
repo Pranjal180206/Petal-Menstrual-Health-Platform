@@ -30,6 +30,13 @@ const Footer = () => {
                 {/* Links Columns */}
                 <div className="flex gap-16 md:gap-24">
 
+                    <div className="space-y-4">
+                        <h4 className="font-heading font-bold text-brand-dark">About</h4>
+                        <ul className="space-y-3">
+                            <li><Link to="/about-upay" className="text-sm text-brand-gray hover:text-brand-pink">About Upay</Link></li>
+                            <li><a href="https://upayngo.org" target="_blank" rel="noopener noreferrer" className="text-sm text-brand-gray hover:text-brand-pink">Upay Website</a></li>
+                        </ul>
+                    </div>
 
                     <div className="space-y-4">
                         <h4 className="font-heading font-bold text-brand-dark">Privacy</h4>

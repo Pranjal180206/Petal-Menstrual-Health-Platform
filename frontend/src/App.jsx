@@ -17,6 +17,7 @@ import Quizzes from './pages/Quizzes';
 import UserProfile from './pages/UserProfile';
 import FloatingBackground from './components/FloatingBackground';
 import AdminPanel from './pages/AdminPanel';
+import AboutUpay from './pages/AboutUpay';
 
 // Cycle Tracker parent layout + all sub-pages
 import CycleTrackerLayout from './components/CycleTrackerLayout';
@@ -117,6 +118,7 @@ const AnimatedRoutes = () => {
         <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
         <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
         <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
+        <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
 
         {/* Admin Panel */}
         <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
