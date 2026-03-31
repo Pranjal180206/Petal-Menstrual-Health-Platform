@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
@@ -68,6 +69,7 @@ const Education = () => {
     // Videos states
     const [videos, setVideos] = useState([]);
     const [activeVideo, setActiveVideo] = useState(null);
+    const [activeArticle, setActiveArticle] = useState(null);
     const lang = i18n.language || 'en';
 
     // On mount and language change
@@ -270,10 +272,10 @@ const Education = () => {
                                         const isTranslatedArticle = a._translated;
                                         
                                         return (
-                                        <div key={a.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
+                                        <div key={a.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm flex flex-col h-full`}>
                                             <div className="flex items-start justify-between mb-3">
-                                                <h3 className={`text-xl font-black flex-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                    {a.title}
+                                                <h3 className={`text-xl font-black flex-1 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {getLocalizedText(a.title, lang)}
                                                 </h3>
                                                 {isTranslatedArticle && (
                                                     <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-600">
@@ -281,9 +283,23 @@ const Education = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                {a.content}
+                                            <p className={`text-sm leading-relaxed mb-6 line-clamp-4 flex-grow ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {getLocalizedText(a.content, lang)}
                                             </p>
+                                            <button 
+                                                onClick={() => setActiveArticle({
+                                                    title: getLocalizedText(a.title, lang),
+                                                    content: getLocalizedText(a.content, lang),
+                                                    category: a.category || "General",
+                                                    sourceLang: a._sourceLang,
+                                                    isTranslated: isTranslatedArticle
+                                                })}
+                                                className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
+                                                    darkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-pink-50 text-pink-600 hover:bg-pink-100 border border-pink-100'
+                                                }`}
+                                            >
+                                                {t('education.readMore', 'Read Article')}
+                                            </button>
                                             {isTranslatedArticle && a._sourceLang && (
                                                 <p className="mt-2 text-xs italic text-slate-400">
                                                     {t('education.originalLanguage')}: {getLanguageName(a._sourceLang)}
@@ -342,12 +358,12 @@ const Education = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 flex flex-col flex-grow">
-                                                <h3 className={`text-xl font-black mb-2 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{video.title}</h3>
-                                                <p className={`text-sm mb-6 flex-grow line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{video.description}</p>
+                                                <h3 className={`text-xl font-black mb-2 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{getLocalizedText(video.title, lang)}</h3>
+                                                <p className={`text-sm mb-6 flex-grow line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{getLocalizedText(video.description, lang)}</p>
                                                 <button 
                                                     onClick={() => setActiveVideo({
-                                                        title: video.title,
-                                                        description: video.description,
+                                                        title: getLocalizedText(video.title, lang),
+                                                        description: getLocalizedText(video.description, lang),
                                                         videoUrl: video.youtube_url || video.video_url
                                                     })}
                                                     className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
@@ -399,6 +415,50 @@ const Education = () => {
                             <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{activeVideo.description}</p>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* ARTICLE MODAL (Floating full-screen) */}
+            {activeArticle && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/60 backdrop-blur-md">
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className={`relative w-full max-w-4xl h-[90vh] md:h-auto max-h-[85vh] overflow-hidden rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-white'}`}
+                    >
+                        {/* Header */}
+                        <div className={`px-10 py-8 border-b ${darkMode ? 'border-slate-800' : 'border-slate-50'} flex items-start justify-between bg-gradient-to-r ${darkMode ? 'from-slate-900 to-slate-800' : 'from-white to-pink-50/30'}`}>
+                            <div className="pr-8">
+                                <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 ${darkMode ? 'bg-pink-500/20 text-pink-400' : 'bg-pink-100 text-pink-600'}`}>
+                                    {activeArticle.category}
+                                </div>
+                                <h2 className={`text-3xl md:text-4xl font-black leading-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    {activeArticle.title}
+                                </h2>
+                            </div>
+                            <button 
+                                onClick={() => setActiveArticle(null)}
+                                className={`flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${darkMode ? 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200'}`}
+                            >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-10 md:p-12 overflow-y-auto custom-scrollbar flex-grow bg-white/50 backdrop-blur-sm">
+                            <div className={`prose prose-lg max-w-none prose-headings:font-black prose-p:font-medium prose-p:leading-relaxed ${darkMode ? 'prose-invert' : 'prose-slate'}`}>
+                                <p className={`whitespace-pre-wrap text-lg md:text-xl font-medium leading-relaxed opacity-90 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                                    {activeArticle.content}
+                                </p>
+                            </div>
+                            
+                            {activeArticle.isTranslated && (
+                                <div className={`mt-12 pt-8 border-t ${darkMode ? 'border-slate-800' : 'border-slate-100'} text-sm italic opacity-60`}>
+                                    {t('education.originalLanguage')}: {getLanguageName(activeArticle.sourceLang)}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
                 </div>
             )}
         </div>

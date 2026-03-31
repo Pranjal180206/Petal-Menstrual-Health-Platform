@@ -7,7 +7,8 @@ async def get_articles(db) -> list:
         results.append({
             "id": str(doc["_id"]),
             "title": doc.get("title", ""),
-            "content": doc.get("content", "")
+            "content": doc.get("content", ""),
+            "category": doc.get("category", "General")
         })
     return results
 
@@ -19,7 +20,7 @@ async def get_myth_facts(db) -> list:
     async for doc in cursor:
         results.append({
             "id": str(doc["_id"]),
-            "myth": doc["myth"],
-            "fact": doc["fact"]
+            "myth": doc.get("myth", ""),
+            "fact": doc.get("fact", "")
         })
     return results
