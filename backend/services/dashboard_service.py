@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from services.cycle_history import get_parsed_cycle_history, CYCLE_MIN_DAYS, CYCLE_MAX_DAYS
+from services.ml_service import predict_next_period, ML_AVAILABLE
 
 async def calculate_cycle_streak(user_id: str, db) -> int:
     """
@@ -34,31 +35,55 @@ async def calculate_cycle_streak(user_id: str, db) -> int:
             
     return streak
 
-async def get_dashboard_summary(user_id: str, db) -> dict:
+async def get_dashboard_summary(user_id: str, db, user: dict = None) -> dict:
     from bson import ObjectId
     user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
     
     # Get parsed, gap-filtered cycle history via shared utility
     parsed = await get_parsed_cycle_history(db, user_id)
 
-    if len(parsed) >= 2:
-        # Calculate actual average from cleaned history
-        gaps = []
-        for i in range(len(parsed) - 1):
-            gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
-            if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
-                gaps.append(gap)
-        avg = round(sum(gaps) / len(gaps)) if gaps else 28
-    else:
-        avg = 28  # ML_PLACEHOLDER: replace with ml_service when ready
+    # Use ML model if available and enough history exists (≥3 cycles)
+    next_period_prediction = None
+    average_cycle_length = 28
+    avg = 28
+    ml_driven = False
 
-    # last_period_date comes from the raw descending query (keeps existing behaviour)
-    logs = await db["cycle_logs"].find(
-        {"user_id": {"$in": [user_id, user_id_obj]}}
-    ).sort("cycle_start_date", -1).limit(6).to_list(6)
-    last_period_date = logs[0]["cycle_start_date"] if logs else None
-    next_period_prediction = last_period_date + timedelta(days=avg) if last_period_date else None
-    average_cycle_length = avg
+    if ML_AVAILABLE and len(parsed) >= 3 and user is not None:
+        try:
+            ml_result = predict_next_period(parsed, user)
+            avg = ml_result["predicted_cycle_length"]
+            next_period_prediction = ml_result.get("next_period_date")  # ISO string from ml_service
+            average_cycle_length = avg
+            ml_driven = ml_result.get("ml_driven", False)
+        except Exception:
+            ml_result = None
+    else:
+        ml_result = None
+
+    if not ML_AVAILABLE or len(parsed) < 3 or ml_result is None:
+        if len(parsed) >= 2:
+            # Calculate actual average from cleaned history
+            gaps = []
+            for i in range(len(parsed) - 1):
+                gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
+                if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
+                    gaps.append(gap)
+            avg = round(sum(gaps) / len(gaps)) if gaps else 28
+        else:
+            avg = 28
+        average_cycle_length = avg
+        # last_period_date used to compute next_period_prediction in rule-based path
+        logs = await db["cycle_logs"].find(
+            {"user_id": {"$in": [user_id, user_id_obj]}}
+        ).sort("cycle_start_date", -1).limit(6).to_list(6)
+        last_period_date = logs[0]["cycle_start_date"] if logs else None
+        next_period_prediction = (last_period_date + timedelta(days=avg)).isoformat() if last_period_date else None
+    else:
+        # ML path: still need last_period_date for the response
+        logs = await db["cycle_logs"].find(
+            {"user_id": {"$in": [user_id, user_id_obj]}}
+        ).sort("cycle_start_date", -1).limit(6).to_list(6)
+        last_period_date = logs[0]["cycle_start_date"] if logs else None
     
     cycle_streak = await calculate_cycle_streak(user_id, db)
     
@@ -93,13 +118,14 @@ async def get_dashboard_summary(user_id: str, db) -> dict:
     
     return {
         "last_period_date": last_period_date.isoformat() if last_period_date else None,
-        "next_period_prediction": next_period_prediction.isoformat() if next_period_prediction else None,
+        "next_period_prediction": next_period_prediction,  # already ISO string from both paths
         "average_cycle_length": average_cycle_length,
         "cycle_streak": cycle_streak,
         "cycles_logged": cycles_logged,
         "mood_this_week": mood_this_week,
         "top_symptoms_this_week": top_symptoms_this_week,
-        "community_posts_count": community_posts_count
+        "community_posts_count": community_posts_count,
+        "ml_driven": ml_driven,
     }
 
 async def get_insights(user_id: str, db) -> dict:
@@ -107,22 +133,29 @@ async def get_insights(user_id: str, db) -> dict:
     user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
 
     # cycle_length_history
-    cycle_pipeline = [
-        {"$match": {"user_id": {"$in": [user_id, user_id_obj]}}},
-        {"$sort": {"cycle_start_date": 1}},
-        {"$project": {"cycle_start_date": 1, "cycle_length": 1}}
-    ]
-    cycle_cursor = db["cycle_logs"].aggregate(cycle_pipeline)
-    logs = await cycle_cursor.to_list(length=100)  # Bounded — ML pipeline will replace this
-    
+    parsed = await get_parsed_cycle_history(db, user_id)
     cycle_length_history = []
-    for i, log in enumerate(logs):
-        # ML_PLACEHOLDER: replace with ml_service call when ready
-        length = log.get("cycle_length") or 28
-        cycle_length_history.append({
-            "cycle": f"Cycle {i+1:02d}",
-            "length": length
-        })
+    
+    # Render historic cycles safely
+    for i, log in enumerate(parsed):
+        if log.get("cycle_length") is not None:
+            cycle_length_history.append({
+                "cycle": f"Cycle {i+1:02d}",
+                "length": log["cycle_length"]
+            })
+            
+    # ML_PLACEHOLDER REPLACEMENT: Predict the upcoming cycle length and graph it!
+    if ML_AVAILABLE and len(parsed) >= 3:
+        try:
+            user = await db["users"].find_one({"_id": {"$in": [user_id, user_id_obj]}})
+            if user:
+                ml_res = predict_next_period(parsed, user)
+                cycle_length_history.append({
+                    "cycle": "AI Predicted",
+                    "length": ml_res["predicted_cycle_length"]
+                })
+        except Exception as e:
+            pass
         
     # symptom_frequency
     freq_pipeline = [
@@ -139,71 +172,44 @@ async def get_insights(user_id: str, db) -> dict:
     
     four_weeks_ago = datetime.now(timezone.utc) - timedelta(days=28)
     
-    mood_map_expr = {
-        "$switch": {
-            "branches": [
-                {"case": {"$in": [{"$toLower": "$mood"}, ["awful", "terrible"]]}, "then": 1},
-                {"case": {"$in": [{"$toLower": "$mood"}, ["sad", "angry", "stressed", "anxious"]]}, "then": 2},
-                {"case": {"$in": [{"$toLower": "$mood"}, ["okay", "neutral", "fine", "calm"]]}, "then": 3},
-                {"case": {"$in": [{"$toLower": "$mood"}, ["good", "happy", "energetic"]]}, "then": 4},
-                {"case": {"$in": [{"$toLower": "$mood"}, ["great", "excellent", "amazing"]]}, "then": 5}
-            ],
-            "default": 3
-        }
-    }
+    # Query daily_symptoms for the last 4 weeks
+    daily_symptoms_cursor = db["daily_symptoms"].find({
+        "user_id": {"$in": [user_id, user_id_obj]},
+        "date": {"$gte": four_weeks_ago}
+    })
+    daily_logs = await daily_symptoms_cursor.to_list(100)
     
-    mood_trend_pipeline = [
-        {"$match": {
-            "user_id": {"$in": [user_id, user_id_obj]},
-            "cycle_start_date": {"$gte": four_weeks_ago},
-            "mood": {"$nin": [None, ""]}
-        }},
-        {"$addFields": {
-            "score": mood_map_expr,
-            "days_ago": {
-                "$floor": {
-                    "$divide": [
-                        {"$subtract": [datetime.now(timezone.utc), "$cycle_start_date"]},
-                        1000 * 60 * 60 * 24
-                    ]
-                }
-            }
-        }},
-        {"$addFields": {
-            "week_idx": {
-                "$switch": {
-                    "branches": [
-                        {"case": {"$lt": ["$days_ago", 7]}, "then": "WK 04"},
-                        {"case": {"$lt": ["$days_ago", 14]}, "then": "WK 03"},
-                        {"case": {"$lt": ["$days_ago", 21]}, "then": "WK 02"},
-                        {"case": {"$lt": ["$days_ago", 28]}, "then": "WK 01"}
-                    ],
-                    "default": "Older"
-                }
-            }
-        }},
-        {"$match": {"week_idx": {"$ne": "Older"}}},
-        {"$group": {
-            "_id": "$week_idx",
-            "avg_score": {"$avg": "$score"}
-        }},
-        {"$sort": {"_id": 1}}
-    ]
-    
-    mood_cursor = db["cycle_logs"].aggregate(mood_trend_pipeline)
-    mood_res = await mood_cursor.to_list(length=4)  # Bounded — exactly 4 weekly groupings (WK 01–04)
-
-    res_map = {doc["_id"]: doc["avg_score"] for doc in mood_res}
+    # Build mood_trend
     mood_trend = []
-    
-    if mood_res:
-        for wk in ["WK 01", "WK 02", "WK 03", "WK 04"]:
-            val = res_map.get(wk, 0)
-            mood_trend.append({"week": wk, "mood_score": round(val, 1) if val > 0 else 0})
+    for log in daily_logs:
+        if log.get("mood"):
+            mood_trend.append({
+                "date": log["date"].strftime("%Y-%m-%d"),
+                "mood": log["mood"]
+            })
             
+    # Build symptom_trend
+    trend = {}
+    for log in daily_logs:
+        date_str = log["date"].strftime("%Y-%m-%d")
+        
+        if date_str not in trend:
+            trend[date_str] = {"date": date_str, "cramps": 0, "fatigue": 0}
+            
+        symptoms = [s.lower() for s in log.get("symptoms", [])]
+        
+        if "cramps" in symptoms:
+            trend[date_str]["cramps"] += 1
+        if "fatigue" in symptoms:
+            trend[date_str]["fatigue"] += 1
+            
+    symptom_trend = list(trend.values())
+    symptom_trend = sorted(symptom_trend, key=lambda x: x["date"])
+
     return {
         "cycle_length_history": cycle_length_history,
         "symptom_frequency": symptom_frequency,
         "mood_trend": mood_trend,
-        "top_symptom": top_symptom
+        "top_symptom": top_symptom,
+        "symptom_trend": symptom_trend
     }

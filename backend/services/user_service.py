@@ -55,9 +55,15 @@ class UserService:
         return created_user
 
     @staticmethod
-    async def update_user_profile(user_id: ObjectId, update_data) -> Optional[dict]:
+    async def update_user_profile(user_id, update_data) -> Optional[dict]:
         from pymongo import ReturnDocument
+        from bson import ObjectId
         db = get_db()
+        
+        try:
+            oid = ObjectId(user_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
         
         # Convert Pydantic model to dict if needed, excluding unset/none
         data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
@@ -74,13 +80,15 @@ class UserService:
                     payload[k] = v
                     
         if not payload:
-            return await db["users"].find_one({"_id": user_id})
+            return await db["users"].find_one({"_id": oid})
             
         updated = await db["users"].find_one_and_update(
-            {"_id": user_id},
+            {"_id": oid},
             {"$set": payload},
             return_document=ReturnDocument.AFTER
         )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="User not found or update failed")
         return updated
 
     @staticmethod
@@ -88,6 +96,12 @@ class UserService:
         if db is None:
             db = get_db()
         from pymongo import ReturnDocument
+        from bson import ObjectId
+        
+        try:
+            oid = ObjectId(user_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
         
         data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
         
@@ -105,10 +119,12 @@ class UserService:
             return await db["users"].find_one({"_id": user_id})
             
         updated = await db["users"].find_one_and_update(
-            {"_id": user_id},
+            {"_id": oid},
             {"$set": payload},
             return_document=ReturnDocument.AFTER
         )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="User not found or update failed")
         return updated
 
     @staticmethod
@@ -116,6 +132,12 @@ class UserService:
         if db is None:
             db = get_db()
         from pymongo import ReturnDocument
+        from bson import ObjectId
+        
+        try:
+            oid = ObjectId(user_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid user ID format")
         
         data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
         
@@ -128,10 +150,12 @@ class UserService:
             return await db["users"].find_one({"_id": user_id})
             
         updated = await db["users"].find_one_and_update(
-            {"_id": user_id},
+            {"_id": oid},
             {"$set": payload},
             return_document=ReturnDocument.AFTER
         )
+        if updated is None:
+            raise HTTPException(status_code=404, detail="User not found or update failed")
         return updated
 
 user_service = UserService()

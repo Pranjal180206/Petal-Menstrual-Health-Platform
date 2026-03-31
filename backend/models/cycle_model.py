@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
@@ -14,6 +14,8 @@ class CycleLog(BaseModel):
     flow_intensity: Optional[str] = None
     mood: Optional[str] = None
     notes: Optional[str] = None
+    unusual_bleeding: Optional[bool] = None
+    # True if user experienced any spotting/bleeding outside expected period days
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     model_config = ConfigDict(
@@ -29,6 +31,7 @@ class CycleCreateReq(BaseModel):
     flow_intensity: Optional[str] = None
     mood: Optional[str] = None
     notes: Optional[str] = None
+    unusual_bleeding: Optional[bool] = None
 
 class CycleUpdateReq(BaseModel):
     cycle_start_date: Optional[datetime] = None
@@ -37,6 +40,7 @@ class CycleUpdateReq(BaseModel):
     flow_intensity: Optional[str] = None
     mood: Optional[str] = None
     notes: Optional[str] = None
+    unusual_bleeding: Optional[bool] = None
 
 class TrackerSummary(BaseModel):
     average_cycle_length: int

@@ -1,0 +1,19 @@
+{
+  "type": "<class 'sklearn.ensemble._forest.RandomForestRegressor'>",
+  "features": [
+    "baseline",
+    "LengthofMenses",
+    "MeanMensesLength",
+    "TotalMensesScore",
+    "MensesScoreDayOne",
+    "MensesScoreDayTwo",
+    "MensesScoreDayThree",
+    "MensesScoreDaySeven",
+    "MeanBleedingIntensity",
+    "PhasesBleeding",
+    "Age",
+    "UnusualBleeding",
+    "Boys",
+    "Girls"
+  ]
+}

@@ -26,26 +26,45 @@ class TrackerService:
 
     @staticmethod
     async def get_tracker_summary(user_id: str) -> dict:
+        from services.ml_service import predict_next_period, ML_AVAILABLE
+        
         db = get_db()
         parsed = await get_parsed_cycle_history(db, user_id)
 
-        # Calculate average cycle length from cleaned, gap-filtered history
-        avg_length = 28  # default
-        if len(parsed) >= 2:
-            total_days = 0
-            valid_gaps = 0
-            for i in range(len(parsed) - 1):
-                gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
-                if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
-                    total_days += gap
-                    valid_gaps += 1
-            if valid_gaps > 0:
-                avg_length = total_days // valid_gaps
-
+        avg_length = 28
         prediction = None
-        if parsed:
-            last_start = parsed[-1]["start_date"]
-            prediction = last_start + timedelta(days=avg_length)
+        
+        # ML PATH: Use predictive insights if conditions met
+        if ML_AVAILABLE and len(parsed) >= 3:
+            from bson import ObjectId
+            user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
+            user = await db["users"].find_one({"_id": {"$in": [user_id, user_id_obj]}})
+            
+            if user:
+                try:
+                    ml_res = predict_next_period(parsed, user)
+                    avg_length = ml_res["predicted_cycle_length"]
+                    # Convert ISO string output back to datetime for Tracker Summary
+                    prediction = datetime.fromisoformat(ml_res["next_period_date"])
+                except Exception:
+                    pass
+
+        # FALLBACK PATH: Proceed with rule-based heuristics if ML skipped or failed
+        if prediction is None:
+            if len(parsed) >= 2:
+                total_days = 0
+                valid_gaps = 0
+                for i in range(len(parsed) - 1):
+                    gap = (parsed[i + 1]["start_date"] - parsed[i]["start_date"]).days
+                    if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
+                        total_days += gap
+                        valid_gaps += 1
+                if valid_gaps > 0:
+                    avg_length = total_days // valid_gaps
+
+            if parsed:
+                last_start = parsed[-1]["start_date"]
+                prediction = last_start + timedelta(days=avg_length)
 
         # Fetch full cycle list for past_cycles (including raw logs with IDs)
         cycles = await TrackerService.get_user_cycles(user_id)
@@ -110,7 +129,7 @@ class TrackerService:
         return updated
 
     @staticmethod
-    async def log_mood_today(user_id: str, mood: str, db=None) -> dict:
+    async def log_mood_today(user_id: str, mood: str, db=None, flow_score: float = None) -> dict:
         if db is None:
             db = get_db()
         from pymongo import ReturnDocument
@@ -130,16 +149,19 @@ class TrackerService:
         })
         
         if existing:
-            # Update existing log with mood
+            # Update existing log with mood (and optional flow_score)
+            update_fields = {"mood": mood}
+            if flow_score is not None:
+                update_fields["flow_score"] = flow_score
             updated = await db["cycle_logs"].find_one_and_update(
                 {"_id": existing["_id"]},
-                {"$set": {"mood": mood}},
+                {"$set": update_fields},
                 return_document=ReturnDocument.AFTER
             )
             updated["id"] = str(updated.pop("_id", ""))
             return updated
         else:
-            # Create minimal log with just mood for today
+            # Create minimal log with just mood (and optional flow_score) for today
             new_log = {
                 "user_id": user_id,
                 "cycle_start_date": now,
@@ -149,6 +171,8 @@ class TrackerService:
                 "notes": None,
                 "created_at": now
             }
+            if flow_score is not None:
+                new_log["flow_score"] = flow_score
             result = await db["cycle_logs"].insert_one(new_log)
             new_log["id"] = str(result.inserted_id)
             new_log.pop("_id", None)

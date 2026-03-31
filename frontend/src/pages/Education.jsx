@@ -6,6 +6,12 @@ import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedText, formatContentWithLanguageInfo, getLanguageName, translateArticle, detectLanguage } from '../utils/translation';
 
+const getEmbedUrl = (url) => {
+    if (!url) return "";
+    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
+    return videoIdMatch ? `https://www.youtube.com/embed/${videoIdMatch[1]}?rel=0&modestbranding=1` : url;
+};
+
 const Education = () => {
     const { t, i18n } = useTranslation();
     const darkMode = false;
@@ -56,34 +62,16 @@ const Education = () => {
     const [isMythsLoading, setIsMythsLoading] = useState(false);
 
     // Videos states
-    const [videos, setVideos] = useState([
-        {
-            id: 1,
-            titleKey: "education.videos.v1Title",
-            descKey: "education.videos.v1Desc",
-            thumbnail: "https://img.youtube.com/vi/vFjao9F1RII/hqdefault.jpg",
-            videoUrl: "https://www.youtube.com/embed/vFjao9F1RII"
-        },
-        {
-            id: 2,
-            titleKey: "education.videos.v2Title",
-            descKey: "education.videos.v2Desc",
-            thumbnail: "https://img.youtube.com/vi/W4mI9-ZzB3A/hqdefault.jpg",
-            videoUrl: "https://www.youtube.com/embed/W4mI9-ZzB3A"
-        },
-        {
-            id: 3,
-            titleKey: "education.videos.v3Title",
-            descKey: "education.videos.v3Desc",
-            thumbnail: "https://img.youtube.com/vi/qEMO_bU5YyA/hqdefault.jpg",
-            videoUrl: "https://www.youtube.com/embed/qEMO_bU5YyA"
-        }
-    ]);
+    const [videos, setVideos] = useState([]);
     const [activeVideo, setActiveVideo] = useState(null);
     const lang = i18n.language || 'en';
 
     // On mount and language change
     useEffect(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7248/ingest/b54e18c9-28e3-44a2-899c-030a6502b734',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'06837a'},body:JSON.stringify({sessionId:'06837a',runId:'pre-fix',hypothesisId:'H1',location:'frontend/src/pages/Education.jsx:89',message:'Education mounted; current videos state is placeholder',data:{activeTabInitial:activeTab,videosStateType:Array.isArray(videos)?'array':typeof videos,videosCount:Array.isArray(videos)?videos.length:null,videoKeysSample:Array.isArray(videos)&&videos[0]?Object.keys(videos[0]).slice(0,10):null},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
+
         const fetchArticles = async () => {
             try {
                 const res = await axiosInstance.get('/education/articles');
@@ -148,9 +136,21 @@ const Education = () => {
             }
         };
 
+        const fetchVideos = async () => {
+            try {
+                const res = await axiosInstance.get('/education/videos');
+                console.log("VIDEOS API:", res.data);
+                setVideos(res.data);
+            } catch (err) {
+                console.error("Error fetching videos:", err);
+            }
+        };
+
         fetchArticles();
         fetchMyths();
+        fetchVideos();
     }, []); // Only fetch on mount
+
 
     // Translate articles when language changes
     useEffect(() => {
@@ -327,10 +327,10 @@ const Education = () => {
                         {activeTab === 'videos' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {videos.length > 0 ? (
-                                    videos.map(v => (
-                                        <div key={v.id} className={`p-0 overflow-hidden rounded-3xl border-2 flex flex-col ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
+                                    videos.map(video => (
+                                        <div key={video._id} className={`p-0 overflow-hidden rounded-3xl border-2 flex flex-col ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
                                             <div className="relative w-full aspect-video bg-slate-900 group">
-                                                <img src={v.thumbnail} alt={t(v.titleKey)} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
+                                                <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                     <div className="bg-black/50 rounded-full w-12 h-12 flex items-center justify-center backdrop-blur-sm">
                                                         <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
@@ -338,10 +338,14 @@ const Education = () => {
                                                 </div>
                                             </div>
                                             <div className="p-6 flex flex-col flex-grow">
-                                                <h3 className={`text-xl font-black mb-2 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{t(v.titleKey)}</h3>
-                                                <p className={`text-sm mb-6 flex-grow line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{t(v.descKey)}</p>
+                                                <h3 className={`text-xl font-black mb-2 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{video.title}</h3>
+                                                <p className={`text-sm mb-6 flex-grow line-clamp-2 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{video.description}</p>
                                                 <button 
-                                                    onClick={() => setActiveVideo(v)}
+                                                    onClick={() => setActiveVideo({
+                                                        title: video.title,
+                                                        description: video.description,
+                                                        videoUrl: video.video_url
+                                                    })}
                                                     className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
                                                 >
                                                     {t('education.watchNow')}
@@ -375,18 +379,20 @@ const Education = () => {
                         
                         {/* Video Container (16:9 aspect ratio) */}
                         <div className="relative w-full pt-[56.25%]">
+                            {console.log("FINAL EMBED:", getEmbedUrl(activeVideo.videoUrl))}
                             <iframe 
                                 className="absolute inset-0 w-full h-full"
-                                src={activeVideo.videoUrl} 
-                                title={t(activeVideo.titleKey)}
+                                src={getEmbedUrl(activeVideo.videoUrl)} 
+                                title={activeVideo.title}
                                 frameBorder="0" 
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                 allowFullScreen
+                                referrerPolicy="strict-origin-when-cross-origin"
                             ></iframe>
                         </div>
                         <div className={`p-6 ${darkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`}>
-                            <h2 className="text-2xl font-black mb-2">{t(activeVideo.titleKey)}</h2>
-                            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{t(activeVideo.descKey)}</p>
+                            <h2 className="text-2xl font-black mb-2">{activeVideo.title}</h2>
+                            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>{activeVideo.description}</p>
                         </div>
                     </div>
                 </div>

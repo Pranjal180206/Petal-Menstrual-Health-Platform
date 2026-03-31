@@ -1,0 +1,35 @@
+{
+  "n_features": 14,
+  "feature_importances": [
+    0.35139759893530276,
+    0.08337139410612338,
+    0.08965752077385193,
+    0.09694270641546557,
+    0.052114250207889505,
+    0.04931387883203287,
+    0.030990370805648544,
+    0.05570649926848098,
+    0.065821891366243,
+    0.039636948104967366,
+    0.044444484039544846,
+    0.016962258556072772,
+    0.01313808515294653,
+    0.010502113435430036
+  ],
+  "feature_names": [
+    "baseline",
+    "LengthofMenses",
+    "MeanMensesLength",
+    "TotalMensesScore",
+    "MensesScoreDayOne",
+    "MensesScoreDayTwo",
+    "MensesScoreDayThree",
+    "MensesScoreDaySeven",
+    "MeanBleedingIntensity",
+    "PhasesBleeding",
+    "Age",
+    "UnusualBleeding",
+    "Boys",
+    "Girls"
+  ]
+}

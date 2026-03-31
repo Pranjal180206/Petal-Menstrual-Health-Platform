@@ -84,5 +84,8 @@ class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[int] = None
+    height: Optional[float] = Field(None, ge=100, le=250)
+    weight: Optional[float] = Field(None, ge=30,  le=250)
+    breastfeeding: Optional[bool]  = None
     is_menstruating: Optional[bool] = None
     profile: Optional[UserProfileNestedUpdate] = None

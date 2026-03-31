@@ -138,11 +138,13 @@ const RiskAnalysis = () => {
     const { factors = [], cycle_consistency, symptom_intensity, average_cycle_length, cycles_logged, overall_risk, symptom_trend = [], cycle_comparison = [] } = analysisResult;
     const visibleFactors = showAllFactors ? factors : factors.slice(0, 3);
 
-    const riskKey = overall_risk || 'unknown';
+    const riskLevel = overall_risk || 'unknown';
+    const displayKey = ["low", "moderate", "high"].includes(riskLevel) ? riskLevel : "unknown";
+    
     const activeRisk = {
-        ...( RISK_CONFIG[riskKey] || RISK_CONFIG.unknown ),
-        label:   t(`riskAnalysis.risk.${riskKey}`),
-        message: t(`riskAnalysis.risk.${riskKey}Msg`),
+        ...( RISK_CONFIG[displayKey] || RISK_CONFIG.unknown ),
+        label:   t(`riskAnalysis.risk.${displayKey}`),
+        message: t(`riskAnalysis.risk.${displayKey}Msg`),
     };
     const getBannerStyles = (color) => {
         switch (color) {

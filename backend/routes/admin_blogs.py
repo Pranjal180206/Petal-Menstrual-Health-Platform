@@ -17,7 +17,7 @@ async def list_blogs(request: Request, db=Depends(get_db), _=Depends(get_admin_u
 @router.post("/blogs", status_code=201)
 @limiter.limit("30/minute")
 async def create_blog(request: Request, body: BlogCreate, db=Depends(get_db), _=Depends(get_admin_user)):
-    return await admin_service.create_blog(db, body.dict())
+    return await admin_service.create_blog(db, body.model_dump())
 
 @router.patch("/blogs/{blog_id}")
 @limiter.limit("30/minute")
@@ -26,7 +26,7 @@ async def update_blog(request: Request, blog_id: str, body: BlogUpdate, db=Depen
         ObjectId(blog_id)
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid ID format")
-    updated = await admin_service.update_blog(db, blog_id, body.dict(exclude_unset=True))
+    updated = await admin_service.update_blog(db, blog_id, body.model_dump(exclude_unset=True))
     if not updated:
         raise HTTPException(status_code=404, detail="Blog not found")
     return updated

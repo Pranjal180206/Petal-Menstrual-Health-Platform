@@ -6,10 +6,14 @@ from database import get_db
 
 router = APIRouter()
 
-_SENSITIVE_FIELDS = {"password_hash", "is_admin", "google_id", "is_active", "role"}
+_SENSITIVE_FIELDS = {"password_hash", "is_admin", "google_id", "is_active", "role", "bmi"}
 
 def sanitize_user(user: dict) -> dict:
-    return {k: v for k, v in user.items() if k not in _SENSITIVE_FIELDS}
+    cleaned = {k: v for k, v in user.items() if k not in _SENSITIVE_FIELDS}
+    cleaned.setdefault("height", None)
+    cleaned.setdefault("weight", None)
+    cleaned.setdefault("breastfeeding", None)
+    return cleaned
 
 
 @router.get("/profile")
@@ -24,7 +28,16 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
 @router.patch("/profile")
 async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
     user_id = current_user["_id"]
-    updated_user = await user_service.update_user_profile(user_id, body)
+    
+    update_data = body.model_dump(exclude_unset=True)
+    height = update_data.get("height")
+    weight = update_data.get("weight")
+
+    if height and weight:
+        bmi = round(weight / ((height / 100) ** 2), 1)
+        update_data["bmi"] = bmi
+
+    updated_user = await user_service.update_user_profile(user_id, update_data)
     
     if updated_user:
         user = dict(updated_user)

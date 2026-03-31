@@ -1,12 +1,18 @@
 from typing import List
 from models.report_model import RiskAnalysisResult, RiskFactor
 from services.tracker_service import TrackerService
+from services.cycle_history import (
+    CYCLE_MIN_DAYS,
+    CYCLE_MAX_DAYS,
+    get_parsed_cycle_history
+)
+from services.ml_service import assess_risk_from_cycles, ML_AVAILABLE
 from fpdf import FPDF
 from datetime import datetime
 
 class ReportsService:
     @staticmethod
-    async def analyze_risks(user_id: str) -> RiskAnalysisResult:
+    async def analyze_risks(user_id: str, current_user: dict = None) -> RiskAnalysisResult:
         from database import get_db
         import datetime
         cycles = await TrackerService.get_user_cycles(user_id)
@@ -41,25 +47,61 @@ class ReportsService:
 
         db = get_db()
         thirty_days_ago = datetime.datetime.utcnow() - datetime.timedelta(days=30)
-        symptoms_cursor = db["daily_symptoms"].find({
+        # Fetch from the unified cycle_logs collection which holds daily logs too
+        symptoms_cursor = db["cycle_logs"].find({
             "user_id": user_id, 
-            "date": {"$gte": thirty_days_ago}
+            "cycle_start_date": {"$gte": thirty_days_ago}
         })
         daily_logs = await symptoms_cursor.to_list(length=100)
         
-        symptom_trend_dict = {
-            "WK 01": {"week": "WK 01", "cramps": 0, "fatigue": 0},
-            "WK 02": {"week": "WK 02", "cramps": 0, "fatigue": 0},
-            "WK 03": {"week": "WK 03", "cramps": 0, "fatigue": 0},
-            "WK 04": {"week": "WK 04", "cramps": 0, "fatigue": 0},
+        # Initialize severity mapping based on 1-3 scale
+        SYMPTOM_SEVERITY = {
+            "cramps": 3.0,
+            "fatigue": 2.0,
         }
+        
+        symptom_trend_dict = {
+            "WK 01": {"week": "WK 01", "cramps": 0.0, "fatigue": 0.0, "c_count": 0, "f_count": 0},
+            "WK 02": {"week": "WK 02", "cramps": 0.0, "fatigue": 0.0, "c_count": 0, "f_count": 0},
+            "WK 03": {"week": "WK 03", "cramps": 0.0, "fatigue": 0.0, "c_count": 0, "f_count": 0},
+            "WK 04": {"week": "WK 04", "cramps": 0.0, "fatigue": 0.0, "c_count": 0, "f_count": 0},
+        }
+        
         for log in daily_logs:
-            week_num = min(4, max(1, (datetime.datetime.utcnow() - log["date"]).days // 7 + 1))
+            # Determine which week it belongs to (WK04 is most recent 7 days, WK01 is oldest)
+            log_date = log.get("cycle_start_date") or log.get("created_at")
+            if not log_date:
+                continue
+                
+            week_offset = (datetime.datetime.utcnow() - log_date).days // 7
+            week_num = min(4, max(1, week_offset + 1))
             week_key = f"WK 0{5 - week_num}"
+            
             if week_key in symptom_trend_dict:
-                symptoms = log.get("symptoms", [])
-                symptom_trend_dict[week_key]["cramps"] += 1 if "cramps" in [s.lower() for s in symptoms] else 0
-                symptom_trend_dict[week_key]["fatigue"] += 1 if "fatigue" in [s.lower() for s in symptoms] else 0
+                symptoms = [s.lower() for s in log.get("symptoms", [])]
+                if "cramps" in symptoms:
+                    symptom_trend_dict[week_key]["cramps"] += SYMPTOM_SEVERITY["cramps"]
+                    symptom_trend_dict[week_key]["c_count"] += 1
+                if "fatigue" in symptoms:
+                    symptom_trend_dict[week_key]["fatigue"] += SYMPTOM_SEVERITY["fatigue"]
+                    symptom_trend_dict[week_key]["f_count"] += 1
+
+        # Calculate averages, then remove count keys
+        for k, v in symptom_trend_dict.items():
+            if v["c_count"] > 0:
+                v["cramps"] = round(v["cramps"] / v["c_count"], 1)
+            else:
+                v["cramps"] = 0.0
+                
+            if v["f_count"] > 0:
+                v["fatigue"] = round(v["fatigue"] / v["f_count"], 1)
+            else:
+                v["fatigue"] = 0.0
+                
+            v.pop("c_count")
+            v.pop("f_count")
+
+        symptom_trend = list(symptom_trend_dict.values())
 
         symptom_trend = list(symptom_trend_dict.values())
         
@@ -67,6 +109,7 @@ class ReportsService:
         cycle_consistency = 100
         avg_length = 28
         intensity_trend = "Stable"
+        overall_risk = "low"
         
         if len(cycles) >= 2:
             # Sort chronologically (oldest first for trend analysis)
@@ -81,7 +124,7 @@ class ReportsService:
                 start_current = sorted_cycles[i]["cycle_start_date"]
                 start_next = sorted_cycles[i+1]["cycle_start_date"]
                 gap = (start_next - start_current).days
-                if 20 <= gap <= 45:
+                if CYCLE_MIN_DAYS <= gap <= CYCLE_MAX_DAYS:
                     total_days += gap
                     valid_gaps += 1
                     lengths.append(gap)
@@ -135,6 +178,18 @@ class ReportsService:
                     description="Severe physical symptoms logged consistently in recent cycles."
                 ))
                 
+        # ML Model Risk Assessment
+        if ML_AVAILABLE and current_user is not None:
+            parsed_history = await get_parsed_cycle_history(db, user_id)
+            if len(parsed_history) >= 3:
+                ml_risk = assess_risk_from_cycles(parsed_history, current_user)
+                if ml_risk["cycle_consistency"] is not None:
+                    cycle_consistency = ml_risk["cycle_consistency"]
+                if ml_risk["overall_risk"] != "unknown":
+                    overall_risk = ml_risk["overall_risk"]
+                for mf in ml_risk["ml_factors"]:
+                    factors.append(RiskFactor(**mf))
+                
         # Fallback if no data
         if not factors and len(cycles) > 0:
              factors.append(RiskFactor(
@@ -153,7 +208,8 @@ class ReportsService:
             average_cycle_length=avg_length,
             factors=factors,
             symptom_trend=symptom_trend,
-            cycle_comparison=cycle_comparison
+            cycle_comparison=cycle_comparison,
+            overall_risk=overall_risk
         )
 
     @staticmethod
@@ -179,10 +235,19 @@ class ReportsService:
             pdf.cell(0, 10, "Please log at least 3 cycles before a full risk report can be generated.", ln=True)
             return pdf.output()
             
+        RISK_DISPLAY = {
+            "low": "Low Risk",
+            "moderate": "Moderate Risk",
+            "high": "High Risk",
+            "unknown": "Unable to Assess"
+        }
+        risk_display = RISK_DISPLAY.get(analysis_result.overall_risk, "Unable to Assess")
+
         # Overall Risk Summary
         pdf.set_font("helvetica", "B", 14)
         pdf.cell(0, 10, "Summary", ln=True)
         pdf.set_font("helvetica", "", 12)
+        pdf.cell(0, 8, f"Overall Risk Level: {risk_display}", ln=True)
         pdf.cell(0, 8, f"Cycle Consistency: {analysis_result.cycle_consistency}%", ln=True)
         pdf.cell(0, 8, f"Average Cycle Length: {analysis_result.average_cycle_length} Days", ln=True)
         pdf.cell(0, 8, f"Symptom Intensity Trend: {analysis_result.symptom_intensity}", ln=True)

@@ -19,7 +19,7 @@ async def list_videos(request: Request, db=Depends(get_db), _=Depends(get_admin_
 @router.post("/videos", status_code=201)
 @limiter.limit("30/minute")
 async def create_video(request: Request, body: VideoCreate, db=Depends(get_db), _=Depends(get_admin_user)):
-    return await admin_service.create_video(db, body.dict())
+    return await admin_service.create_video(db, body.model_dump())
 
 
 @router.patch("/videos/{video_id}")
@@ -29,7 +29,7 @@ async def update_video(request: Request, video_id: str, body: VideoUpdate, db=De
         ObjectId(video_id)
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid ID format")
-    updated = await admin_service.update_video(db, video_id, body.dict(exclude_unset=True))
+    updated = await admin_service.update_video(db, video_id, body.model_dump(exclude_unset=True))
     if not updated:
         raise HTTPException(status_code=404, detail="Video not found")
     return updated

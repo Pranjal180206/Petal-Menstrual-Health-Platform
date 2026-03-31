@@ -6,7 +6,8 @@ from models.cycle_model import CycleCreateReq, CycleUpdateReq, TrackerSummary
 from services.tracker_service import tracker_service
 from services.auth_service import get_current_user
 from database import get_db
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+from typing import Optional
 
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
@@ -36,6 +37,16 @@ async def update_cycle(request: Request, cycle_id: str, body: CycleUpdateReq, cu
 
 class MoodLogRequest(BaseModel):
     mood: str
+    flow_score: Optional[float] = None
+    # Per-day bleeding intensity: 1.0=spotting, 2.0=light, 3.0=average, 4.0=heavy
+    # Collected on period days only, null on non-period days
+
+    @field_validator("flow_score")
+    @classmethod
+    def validate_flow_score(cls, v):
+        if v is not None and v not in (1.0, 2.0, 3.0, 4.0):
+            raise ValueError("flow_score must be one of: 1.0, 2.0, 3.0, 4.0")
+        return v
 
 @router.post("/mood-today")
 @limiter.limit("10/minute")
@@ -46,6 +57,6 @@ async def log_mood_today(
     current_user=Depends(get_current_user)
 ):
     result = await tracker_service.log_mood_today(
-        str(current_user["_id"]), body.mood, db
+        str(current_user["_id"]), body.mood, db, flow_score=body.flow_score
     )
     return result
