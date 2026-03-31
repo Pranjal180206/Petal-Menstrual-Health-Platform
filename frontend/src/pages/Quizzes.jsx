@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedText } from '../utils/translation';
 
 const Quizzes = () => {
     const darkMode = false;
@@ -19,7 +20,7 @@ const Quizzes = () => {
     const [isSubmittingQuiz, setIsSubmittingQuiz] = useState(false);
     const [quizResult, setQuizResult] = useState(null);
 
-    // On mount
+    // On mount and language change
     useEffect(() => {
         const fetchQuizzes = async () => {
             try {
@@ -33,7 +34,7 @@ const Quizzes = () => {
         };
 
         fetchQuizzes();
-    }, []);
+    }, [lang]); // Re-fetch when language changes
 
     const handleOpenQuiz = async (quizId) => {
         setIsQuizDetailLoading(true);
@@ -118,10 +119,14 @@ const Quizzes = () => {
                                 {isQuizzesLoading ? (
                                     <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('quizzes.loading')}</p>
                                 ) : quizzes.length > 0 ? (
-                                    quizzes.map(q => (
+                                    quizzes.map(q => {
+                                        const quizTitle = getLocalizedText(q.title, lang, t('quizzes.untitledQuiz'));
+                                        const quizDesc = getLocalizedText(q.description, lang, '');
+                                        
+                                        return (
                                         <div key={q.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} flex flex-col shadow-sm`}>
-                                            <h3 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{q.title?.[lang] || q.title?.en || q.title || t('quizzes.untitledQuiz')}</h3>
-                                            <p className={`text-sm mb-4 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{q.description?.[lang] || q.description?.en || q.description || ''}</p>
+                                            <h3 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{quizTitle}</h3>
+                                            <p className={`text-sm mb-4 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{quizDesc}</p>
                                             
                                             <div className="flex justify-between items-center mb-6 text-sm">
                                                 <span className={`px-3 py-1 rounded-full font-bold bg-pink-100 text-pink-600`}>
@@ -139,7 +144,8 @@ const Quizzes = () => {
                                                 {t('quizzes.startQuiz')}
                                             </button>
                                         </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('quizzes.noQuizzes')}</p>
                                 )}
@@ -160,22 +166,29 @@ const Quizzes = () => {
                                 </button>
 
                                 <div className={`p-8 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
-                                    <h2 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{activeQuiz.title?.[lang] || activeQuiz.title?.en || activeQuiz.title || t('quizzes.defaultQuizTitle')}</h2>
-                                    <p className={`text-lg mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{activeQuiz.description?.[lang] || activeQuiz.description?.en || activeQuiz.description || ''}</p>
+                                    <h2 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                        {getLocalizedText(activeQuiz.title, lang, t('quizzes.defaultQuizTitle'))}
+                                    </h2>
+                                    <p className={`text-lg mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                        {getLocalizedText(activeQuiz.description, lang, '')}
+                                    </p>
                                     
                                     <div className="flex flex-col gap-8">
                                         {activeQuiz.questions?.map((q, idx) => {
                                             const resultForQuestion = quizResult?.results?.find(r => r.question_id === q.id);
+                                            const questionText = getLocalizedText(q.text, lang);
+                                            
                                             return (
                                                 <div key={q.id} className="flex flex-col gap-4">
                                                     <h4 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                        {idx + 1}. {q.text?.[lang] ?? q.text?.en ?? q.text}
+                                                        {idx + 1}. {questionText}
                                                     </h4>
                                                     <div className="flex flex-col gap-3">
                                                         {q.options?.map(opt => {
                                                             const isSelected = quizAnswers[q.id] === opt.id;
                                                             const isCorrectOption = resultForQuestion?.is_correct && isSelected;
                                                             const isWrongOption = resultForQuestion && !resultForQuestion.is_correct && isSelected;
+                                                            const optionText = getLocalizedText(opt.text, lang);
 
                                                             let bgClass = darkMode ? 'bg-slate-900 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100';
                                                             if (isSelected) bgClass = darkMode ? 'bg-slate-700 ring-2 ring-pink-500' : 'bg-pink-50 ring-2 ring-pink-500';
@@ -189,7 +202,7 @@ const Quizzes = () => {
                                                                     onClick={() => handleSelectOption(q.id, opt.id)}
                                                                     className={`text-left p-4 rounded-2xl transition-all ${bgClass} ${darkMode && !quizResult && !isSelected ? 'text-slate-300' : (isSelected && !quizResult && !darkMode && 'text-slate-900')} ${!darkMode && !isSelected && 'text-slate-700'}`}
                                                                 >
-                                                                    {opt.text?.[lang] ?? opt.text?.en ?? opt.text}
+                                                                    {optionText}
                                                                 </button>
                                                             )
                                                         })}
@@ -199,7 +212,7 @@ const Quizzes = () => {
                                                             <span className="font-bold block mb-1">
                                                                 {resultForQuestion.is_correct ? t('quizzes.correct') : t('quizzes.incorrect')}
                                                             </span>
-                                                            {resultForQuestion.explanation?.[lang] || resultForQuestion.explanation?.en || resultForQuestion.explanation}
+                                                            {getLocalizedText(resultForQuestion.explanation, lang)}
                                                         </div>
                                                     )}
                                                 </div>

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedText, formatContentWithLanguageInfo, getLanguageName, translateArticle, detectLanguage } from '../utils/translation';
 
 const Education = () => {
     const { t, i18n } = useTranslation();
@@ -16,7 +17,9 @@ const Education = () => {
 
     // Data States
     const [articles, setArticles] = useState([]);
+    const [originalArticles, setOriginalArticles] = useState([]); // Keep original for re-translation
     const [isArticlesLoading, setIsArticlesLoading] = useState(true);
+    const [isTranslating, setIsTranslating] = useState(false);
 
     const [myths, setMyths] = useState([
         {
@@ -79,11 +82,12 @@ const Education = () => {
     const [activeVideo, setActiveVideo] = useState(null);
     const lang = i18n.language || 'en';
 
-    // On mount
+    // On mount and language change
     useEffect(() => {
         const fetchArticles = async () => {
             try {
                 const res = await axiosInstance.get('/education/articles');
+                setOriginalArticles(res.data); // Store originals
                 setArticles(res.data);
             } catch (err) {
                 console.error("Error fetching articles:", err);
@@ -97,13 +101,48 @@ const Education = () => {
             try {
                 const res = await axiosInstance.get('/education/myth-facts');
                 if (res.data && res.data.length > 0) {
-                    setMyths(prev => {
-                        const newMyths = res.data.filter(newM => !prev.some(p => p.id === newM.id));
-                        return [...prev, ...newMyths];
-                    });
+                    // Replace all myths with backend + hardcoded (backend has priority)
+                    const backendMyths = res.data.map(m => ({
+                        ...m,
+                        id: m.id || m._id
+                    }));
+                    
+                    // Keep hardcoded myths that aren't in backend
+                    const hardcodedMyths = [
+                        { id: 'm1', mythKey: 'education.mythsList.m1.myth', factKey: 'education.mythsList.m1.fact' },
+                        { id: 'm2', mythKey: 'education.mythsList.m2.myth', factKey: 'education.mythsList.m2.fact' },
+                        { id: 'm3', mythKey: 'education.mythsList.m3.myth', factKey: 'education.mythsList.m3.fact' },
+                        { id: 'm4', mythKey: 'education.mythsList.m4.myth', factKey: 'education.mythsList.m4.fact' },
+                        { id: 'm5', mythKey: 'education.mythsList.m5.myth', factKey: 'education.mythsList.m5.fact' },
+                        { id: 'm6', mythKey: 'education.mythsList.m6.myth', factKey: 'education.mythsList.m6.fact' }
+                    ];
+                    
+                    const backendIds = backendMyths.map(m => m.id);
+                    const remainingHardcoded = hardcodedMyths.filter(m => !backendIds.includes(m.id));
+                    
+                    setMyths([...backendMyths, ...remainingHardcoded]);
+                } else {
+                    // No backend myths, use hardcoded only
+                    setMyths([
+                        { id: 'm1', mythKey: 'education.mythsList.m1.myth', factKey: 'education.mythsList.m1.fact' },
+                        { id: 'm2', mythKey: 'education.mythsList.m2.myth', factKey: 'education.mythsList.m2.fact' },
+                        { id: 'm3', mythKey: 'education.mythsList.m3.myth', factKey: 'education.mythsList.m3.fact' },
+                        { id: 'm4', mythKey: 'education.mythsList.m4.myth', factKey: 'education.mythsList.m4.fact' },
+                        { id: 'm5', mythKey: 'education.mythsList.m5.myth', factKey: 'education.mythsList.m5.fact' },
+                        { id: 'm6', mythKey: 'education.mythsList.m6.myth', factKey: 'education.mythsList.m6.fact' }
+                    ]);
                 }
             } catch (err) {
                 console.error("Error fetching myths:", err);
+                // Fallback to hardcoded on error
+                setMyths([
+                    { id: 'm1', mythKey: 'education.mythsList.m1.myth', factKey: 'education.mythsList.m1.fact' },
+                    { id: 'm2', mythKey: 'education.mythsList.m2.myth', factKey: 'education.mythsList.m2.fact' },
+                    { id: 'm3', mythKey: 'education.mythsList.m3.myth', factKey: 'education.mythsList.m3.fact' },
+                    { id: 'm4', mythKey: 'education.mythsList.m4.myth', factKey: 'education.mythsList.m4.fact' },
+                    { id: 'm5', mythKey: 'education.mythsList.m5.myth', factKey: 'education.mythsList.m5.fact' },
+                    { id: 'm6', mythKey: 'education.mythsList.m6.myth', factKey: 'education.mythsList.m6.fact' }
+                ]);
             } finally {
                 setIsMythsLoading(false);
             }
@@ -111,8 +150,36 @@ const Education = () => {
 
         fetchArticles();
         fetchMyths();
-    }, []);
+    }, []); // Only fetch on mount
 
+    // Translate articles when language changes
+    useEffect(() => {
+        const translateAllArticles = async () => {
+            if (originalArticles.length === 0) return;
+            
+            // If language is English, show originals (most content is in English)
+            if (lang === 'en') {
+                setArticles(originalArticles);
+                return;
+            }
+            
+            setIsTranslating(true);
+            try {
+                // Translate articles in parallel
+                const translatedArticles = await Promise.all(
+                    originalArticles.map(article => translateArticle(article, lang))
+                );
+                setArticles(translatedArticles);
+            } catch (error) {
+                console.error('Error translating articles:', error);
+                setArticles(originalArticles); // Fallback to originals
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateAllArticles();
+    }, [lang, originalArticles]); // Re-translate when language or originals change
 
 
     // UI Helpers
@@ -181,19 +248,50 @@ const Education = () => {
                     <div className="min-h-[400px]">
                         {/* ARTICLES SECTION */}
                         {activeTab === 'articles' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                {isTranslating && (
+                                    <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                                        <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span className="text-sm font-medium text-blue-700">{t('education.translating')}</span>
+                                    </div>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {isArticlesLoading ? (
                                     <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.loadingArticles')}</p>
                                 ) : articles.length > 0 ? (
-                                    articles.map(a => (
+                                    articles.map(a => {
+                                        const isTranslatedArticle = a._translated;
+                                        
+                                        return (
                                         <div key={a.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
-                                            <h3 className={`text-xl font-black mb-3 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{a.title?.[lang] || a.title?.en || a.title}</h3>
-                                            <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>{a.content?.[lang] || a.content?.en || a.content}</p>
+                                            <div className="flex items-start justify-between mb-3">
+                                                <h3 className={`text-xl font-black flex-1 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {a.title}
+                                                </h3>
+                                                {isTranslatedArticle && (
+                                                    <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-600">
+                                                        {t('education.translated')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className={`text-sm leading-relaxed ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {a.content}
+                                            </p>
+                                            {isTranslatedArticle && a._sourceLang && (
+                                                <p className="mt-2 text-xs italic text-slate-400">
+                                                    {t('education.originalLanguage')}: {getLanguageName(a._sourceLang)}
+                                                </p>
+                                            )}
                                         </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
                                     <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.noArticles')}</p>
                                 )}
+                                </div>
                             </div>
                         )}
 
@@ -204,8 +302,8 @@ const Education = () => {
                                     <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.loadingMyths')}</p>
                                 ) : myths.length > 0 ? (
                                     myths.map(m => {
-                                        const mythText = m.mythKey ? t(m.mythKey) : (m.myth?.[lang] || m.myth?.en || m.myth);
-                                        const factText = m.factKey ? t(m.factKey) : (m.fact?.[lang] || m.fact?.en || m.fact);
+                                        const mythText = m.mythKey ? t(m.mythKey) : getLocalizedText(m.myth, lang);
+                                        const factText = m.factKey ? t(m.factKey) : getLocalizedText(m.fact, lang);
                                         return (
                                         <div key={m.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} flex flex-col gap-4 shadow-sm`}>
                                             <div>

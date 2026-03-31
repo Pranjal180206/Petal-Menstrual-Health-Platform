@@ -6,6 +6,8 @@ import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { detectLanguage, getLanguageName } from '../utils/translation';
 
 const AVATAR_COLORS = ['#FF6B9A', '#A78BFA', '#34D399', '#60A5FA', '#FBBF24', '#F87171'];
 const ANONYMOUS_NAMES = ['MoonPetal', 'SilverWave', 'CosmicBloom', 'StarDust', 'NightBlossom', 'CrystalDew'];
@@ -17,43 +19,110 @@ const getAvatarColor = (str = '') => {
     return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-const AFFIRMATIONS = [
-    "Your body is doing something incredible. Be kind to yourself today. 💗",
-    "You are allowed to take up space. Your feelings are valid. 🌸",
-    "Every cycle is a reminder of your body's quiet strength. ✨",
-    "Rest is not weakness — it's wisdom. Take care of yourself today. 🌙",
-    "You are more resilient than you know. Keep going, one day at a time. 🌷",
-    "It's okay to feel everything deeply. That's your superpower. 💫",
-    "Your body deserves patience, not perfection. 🤍",
-    "You belong here. Your story matters. 🌺",
-    "Small steps still move you forward. You're doing great. 🦋",
-    "Today, choose gentleness — especially with yourself. 🌿",
-    "You are growing even on the hard days. Trust the process. 🌱",
-    "Feeling off? That's okay. Tomorrow is a fresh start. 🌅",
-    "You don't have to be okay all the time. That's what this space is for. 💜",
-    "Your worth is not tied to your productivity. Rest freely. ☁️",
-    "Every version of you — tired, happy, unsure — is worthy of love. 💖",
-    "You've made it through every hard day so far. That's 100%. 🌟",
-    "Your emotions are not too much. They're perfectly you. 🎀",
-    "Be the friend to yourself that you are to others. 🤗",
-    "Healing isn't linear, and that's completely fine. 🌊",
-    "You are seen, you are heard, you are not alone here. 💞",
-    "Today is a good day to be proud of how far you've come. 🏵️",
-    "Your sensitivity is a gift, not a flaw. 🌸",
-    "Breathe. You've got this. One moment at a time. 🍃",
-    "Kindness starts within. How will you show up for yourself today? 🌼",
-    "You are enough — exactly as you are, right now. ✨",
-    "Cramps, mood swings, bloating — you handle so much. You're amazing. 💪",
-    "Your cycle doesn't define you, but understanding it empowers you. 🔮",
-    "Every day you show up is a win worth celebrating. 🎉",
-    "It's okay to ask for help. Strength includes reaching out. 🤝",
-    "You are blooming, even when it doesn't feel like it. 🌻",
-];
+const AFFIRMATIONS = {
+    en: [
+        "Your body is doing something incredible. Be kind to yourself today. 💗",
+        "You are allowed to take up space. Your feelings are valid. 🌸",
+        "Every cycle is a reminder of your body's quiet strength. ✨",
+        "Rest is not weakness — it's wisdom. Take care of yourself today. 🌙",
+        "You are more resilient than you know. Keep going, one day at a time. 🌷",
+        "It's okay to feel everything deeply. That's your superpower. 💫",
+        "Your body deserves patience, not perfection. 🤍",
+        "You belong here. Your story matters. 🌺",
+        "Small steps still move you forward. You're doing great. 🦋",
+        "Today, choose gentleness — especially with yourself. 🌿",
+        "You are growing even on the hard days. Trust the process. 🌱",
+        "Feeling off? That's okay. Tomorrow is a fresh start. 🌅",
+        "You don't have to be okay all the time. That's what this space is for. 💜",
+        "Your worth is not tied to your productivity. Rest freely. ☁️",
+        "Every version of you — tired, happy, unsure — is worthy of love. 💖",
+        "You've made it through every hard day so far. That's 100%. 🌟",
+        "Your emotions are not too much. They're perfectly you. 🎀",
+        "Be the friend to yourself that you are to others. 🤗",
+        "Healing isn't linear, and that's completely fine. 🌊",
+        "You are seen, you are heard, you are not alone here. 💞",
+        "Today is a good day to be proud of how far you've come. 🏵️",
+        "Your sensitivity is a gift, not a flaw. 🌸",
+        "Breathe. You've got this. One moment at a time. 🍃",
+        "Kindness starts within. How will you show up for yourself today? 🌼",
+        "You are enough — exactly as you are, right now. ✨",
+        "Cramps, mood swings, bloating — you handle so much. You're amazing. 💪",
+        "Your cycle doesn't define you, but understanding it empowers you. 🔮",
+        "Every day you show up is a win worth celebrating. 🎉",
+        "It's okay to ask for help. Strength includes reaching out. 🤝",
+        "You are blooming, even when it doesn't feel like it. 🌻",
+    ],
+    hi: [
+        "आपका शरीर कुछ अविश्वसनीय कर रहा है। आज खुद के प्रति दयालु रहें। 💗",
+        "आप जगह लेने के हकदार हैं। आपकी भावनाएँ मान्य हैं। 🌸",
+        "हर चक्र आपके शरीर की शांत शक्ति की याद दिलाता है। ✨",
+        "आराम कमजोरी नहीं है — यह बुद्धिमत्ता है। आज खुद का ख्याल रखें। 🌙",
+        "आप जितना सोचते हैं उससे अधिक लचीले हैं। एक समय में एक दिन आगे बढ़ते रहें। 🌷",
+        "सब कुछ गहराई से महसूस करना ठीक है। यही आपकी महाशक्ति है। 💫",
+        "आपका शरीर धैर्य का हकदार है, पूर्णता का नहीं। 🤍",
+        "आप यहाँ हैं। आपकी कहानी मायने रखती है। 🌺",
+        "छोटे कदम भी आपको आगे बढ़ाते हैं। आप बहुत अच्छा कर रहे हैं। 🦋",
+        "आज, कोमलता चुनें — खासकर अपने साथ। 🌿",
+        "कठिन दिनों में भी आप बढ़ रहे हैं। प्रक्रिया पर भरोसा करें। 🌱",
+        "थोड़ा अलग महसूस कर रहे हैं? कोई बात नहीं। कल एक नई शुरुआत है। 🌅",
+        "आपको हर समय ठीक रहने की जरूरत नहीं है। इसीलिए यह स्थान है। 💜",
+        "आपकी कीमत आपकी उत्पादकता से नहीं जुड़ी है। स्वतंत्र रूप से आराम करें। ☁️",
+        "आपका हर संस्करण — थका हुआ, खुश, अनिश्चित — प्यार के योग्य है। 💖",
+        "आपने अब तक हर कठिन दिन पार कर लिया है। यह 100% है। 🌟",
+        "आपकी भावनाएँ बहुत अधिक नहीं हैं। वे पूरी तरह से आप हैं। 🎀",
+        "अपने लिए वही दोस्त बनें जो आप दूसरों के लिए हैं। 🤗",
+        "उपचार रैखिक नहीं है, और यह पूरी तरह से ठीक है। 🌊",
+        "आपको देखा जाता है, आपको सुना जाता है, आप यहाँ अकेले नहीं हैं। 💞",
+        "आज गर्व करने का अच्छा दिन है कि आप कितनी दूर आ गए हैं। 🏵️",
+        "आपकी संवेदनशीलता एक उपहार है, दोष नहीं। 🌸",
+        "साँस लें। आप यह कर सकते हैं। एक समय में एक क्षण। 🍃",
+        "दयालुता भीतर से शुरू होती है। आज आप खुद के लिए कैसे उपस्थित होंगे? 🌼",
+        "आप पर्याप्त हैं — बिल्कुल जैसे आप हैं, अभी। ✨",
+        "ऐंठन, मूड स्विंग, सूजन — आप बहुत कुछ संभालते हैं। आप अद्भुत हैं। 💪",
+        "आपका चक्र आपको परिभाषित नहीं करता, लेकिन इसे समझना आपको सशक्त बनाता है। 🔮",
+        "हर दिन जब आप दिखाई देते हैं तो यह जश्न मनाने लायक जीत है। 🎉",
+        "मदद माँगना ठीक है। शक्ति में पहुँचना शामिल है। 🤝",
+        "आप खिल रहे हैं, भले ही ऐसा न लगे। 🌻",
+    ],
+    mr: [
+        "तुमचे शरीर काहीतरी अविश्वसनीय करत आहे. आज स्वतःशी दयाळू व्हा. 💗",
+        "तुम्हाला जागा घेण्याची परवानगी आहे. तुमच्या भावना वैध आहेत. 🌸",
+        "प्रत्येक चक्र तुमच्या शरीराच्या शांत शक्तीची आठवण करून देते. ✨",
+        "विश्रांती ही कमकुवतपणा नहीं — ती शहाणपण आहे. आज स्वतःची काळजी घ्या. 🌙",
+        "तुम्ही तुम्हाला माहीत असेल त्यापेक्षा अधिक लवचिक आहात. एका वेळी एक दिवस पुढे जा. 🌷",
+        "सर्वकाही खोलवर अनुभवणे ठीक आहे. तीच तुमची महासत्ता आहे. 💫",
+        "तुमचे शरीर धैर्याला पात्र आहे, परिपूर्णतेला नाही. 🤍",
+        "तुम्ही येथे आहात. तुमची कथा महत्त्वाची आहे. 🌺",
+        "छोटी पावले देखील तुम्हाला पुढे नेतात. तुम्ही उत्तम करत आहात. 🦋",
+        "आज, सौम्यता निवडा — विशेषतः स्वतःशी. 🌿",
+        "कठीण दिवसांतही तुम्ही वाढत आहात. प्रक्रियेवर विश्वास ठेवा. 🌱",
+        "थोडे वेगळे वाटत आहे? काही हरकत नाही. उद्या एक नवीन सुरुवात आहे. 🌅",
+        "तुम्हाला सर्व वेळ ठीक असण्याची गरज नाही. म्हणूनच ही जागा आहे. 💜",
+        "तुमची किंमत तुमच्या उत्पादकतेशी जोडलेली नाही. मुक्तपणे विश्रांती घ्या. ☁️",
+        "तुमची प्रत्येक आवृत्ती — थकलेली, आनंदी, अनिश्चित — प्रेमासाठी योग्य आहे. 💖",
+        "तुम्ही आतापर्यंत प्रत्येक कठीण दिवस पार केला आहे. ते 100% आहे. 🌟",
+        "तुमच्या भावना जास्त नाहीत. त्या पूर्णपणे तुमच्या आहेत. 🎀",
+        "तुम्ही इतरांसाठी जे मित्र आहात ते स्वतःसाठी व्हा. 🤗",
+        "बरे होणे रेषीय नाही, आणि ते पूर्णपणे ठीक आहे. 🌊",
+        "तुम्हाला पाहिले जाते, तुम्हाला ऐकले जाते, तुम्ही येथे एकटे नाही. 💞",
+        "आज अभिमान बाळगण्याचा चांगला दिवस आहे की तुम्ही किती दूर आलात. 🏵️",
+        "तुमची संवेदनशीलता एक भेट आहे, दोष नाही. 🌸",
+        "श्वास घ्या. तुम्ही हे करू शकता. एका वेळी एक क्षण. 🍃",
+        "दयाळूपणा आतून सुरू होतो. आज तुम्ही स्वतःसाठी कसे उपस्थित राहाल? 🌼",
+        "तुम्ही पुरेसे आहात — तुम्ही जसे आहात तसे, आत्ता. ✨",
+        "पेटके, मूड स्विंग, सूज — तुम्ही खूप काही हाताळता. तुम्ही आश्चर्यकारक आहात. 💪",
+        "तुमचे चक्र तुम्हाला परिभाषित करत नाही, परंतु ते समजून घेणे तुम्हाला सक्षम करते. 🔮",
+        "तुम्ही दिसता तो प्रत्येक दिवस साजरा करण्यासारखा विजय आहे. 🎉",
+        "मदत मागणे ठीक आहे. शक्तीमध्ये पोहोचणे समाविष्ट आहे. 🤝",
+        "तुम्ही फुलत आहात, जरी तसे वाटत नसले तरी. 🌻",
+    ]
+};
 
-const getDailyAffirmation = () => {
+const getDailyAffirmation = (lang = 'en') => {
     const today = new Date();
     const dayIndex = Math.floor(today.getTime() / 86400000); // changes every 24h
-    return AFFIRMATIONS[dayIndex % AFFIRMATIONS.length];
+    const affirmationsForLang = AFFIRMATIONS[lang] || AFFIRMATIONS.en;
+    return affirmationsForLang[dayIndex % affirmationsForLang.length];
 };
 
 const formatTimestamp = (isoString) => {
@@ -72,7 +141,7 @@ const formatTimestamp = (isoString) => {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
-const PostCard = ({ post, onLike, onReply, onFlag }) => {
+const PostCard = ({ post, onLike, onReply, onFlag, currentLang }) => {
     const [showReplyBox, setShowReplyBox] = useState(false);
     const [replyText, setReplyText] = useState('');
     const [isSendingReply, setIsSendingReply] = useState(false);
@@ -86,6 +155,10 @@ const PostCard = ({ post, onLike, onReply, onFlag }) => {
         setShowReplyBox(false);
         setIsSendingReply(false);
     };
+
+    // Detect post language
+    const detectedLang = detectLanguage(post.content);
+    const showLangIndicator = detectedLang !== 'unknown' && detectedLang !== currentLang;
 
     return (
         <div
@@ -109,6 +182,11 @@ const PostCard = ({ post, onLike, onReply, onFlag }) => {
                             <h4 className="font-bold text-sm text-[#1D1D2C]">{post.username}</h4>
                             {post.isUserPost && (
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-[#FF6B9A]" style={{ background: 'rgba(255,107,154,0.1)' }}>You</span>
+                            )}
+                            {showLangIndicator && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-blue-600" style={{ background: 'rgba(59,130,246,0.1)' }}>
+                                    {getLanguageName(detectedLang)}
+                                </span>
                             )}
                         </div>
                         <p className="text-xs text-gray-400 font-medium">{formatTimestamp(post.createdAt)}</p>
@@ -355,6 +433,8 @@ const ShareStoryModal = ({ onClose, onSubmit }) => {
 
 const CommunityHub = () => {
     const { user } = useAuth();
+    const { t, i18n } = useTranslation();
+    const currentLang = i18n.language || 'en';
     const currentUserId = user?._id || user?.id || null;
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -398,7 +478,7 @@ const CommunityHub = () => {
             }
         };
         fetchPosts();
-    }, []);
+    }, [currentLang]); // Re-fetch when language changes
 
     const handleLike = async (postId) => {
         try {
@@ -715,6 +795,7 @@ const CommunityHub = () => {
                                             onLike={handleLike}
                                             onReply={handleReply}
                                             onFlag={handleFlag}
+                                            currentLang={currentLang}
                                         />
                                     </div>
                                 ))
@@ -769,7 +850,7 @@ const CommunityHub = () => {
                             style={{ background: 'linear-gradient(135deg, #FFF0F4, #FDF7F9)' }}
                         >
                             <p className="font-display text-sm font-bold text-[#E11D48] italic leading-relaxed">
-                                "{getDailyAffirmation()}"
+                                "{getDailyAffirmation(currentLang)}"
                             </p>
                             <p className="text-xs text-gray-400 font-medium mt-2">Daily affirmation</p>
                         </div>

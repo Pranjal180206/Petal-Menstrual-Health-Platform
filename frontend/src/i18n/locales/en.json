@@ -266,6 +266,9 @@
     "factLabel": "Fact",
     "watchNow": "Watch Now",
     "noVideos": "No videos found.",
+    "originalLanguage": "Original language",
+    "translating": "Translating articles...",
+    "translated": "Translated",
     "videos": {
       "v1Title": "Understanding Your Cycle",
       "v1Desc": "A quick 5-min guide to the 4 phases of your menstrual cycle.",
