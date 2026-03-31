@@ -14,6 +14,8 @@ import CommunityHub from './pages/CommunityHub';
 import Education from './pages/Education';
 import Quizzes from './pages/Quizzes';
 import UserProfile from './pages/UserProfile';
+import Onboarding from './pages/Onboarding';
+import TrackerRestrictionPage from './pages/TrackerRestrictionPage';
 import FloatingBackground from './components/FloatingBackground';
 import AdminPanel from './pages/AdminPanel';
 import AboutUpay from './pages/AboutUpay';
@@ -45,6 +47,36 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
+  return children;
+};
+
+// ── Tracker Guard — redirects "Boy" users away from tracker ──
+const TrackerGuard = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user && !user.is_menstruating && user.gender === 'Boy') {
+    return <Navigate to="/tracker-restricted" replace />;
+  }
+  return children;
+};
+
+// ── Onboarding Redirect — Forces onboarding if not complete ──
+const OnboardingRedirect = ({ children }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  
+  if (loading) return null;
+  
+  // If logged in but onboarding not complete, force redirect
+  if (user && !user.onboarding_complete && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If onboarding IS complete but user tries to go back to /onboarding
+  if (user && user.onboarding_complete && location.pathname === '/onboarding') {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 };
 
@@ -107,39 +139,45 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Public Pages */}
-        <Route path="/" element={<PageWrapper><LandingPage /></PageWrapper>} />
-        <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
-        <Route path="/community" element={<PageWrapper><CommunityHub /></PageWrapper>} />
-        <Route path="/education" element={<PageWrapper><Education /></PageWrapper>} />
-        <Route path="/quizzes" element={<PageWrapper><Quizzes /></PageWrapper>} />
-        <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
-        <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
-        <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
-        <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
+      <OnboardingRedirect>
+        <Routes location={location} key={location.pathname}>
+          {/* Public Pages */}
+          <Route path="/" element={<PageWrapper><LandingPage /></PageWrapper>} />
+          <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+          <Route path="/community" element={<PageWrapper><CommunityHub /></PageWrapper>} />
+          <Route path="/education" element={<PageWrapper><Education /></PageWrapper>} />
+          <Route path="/quizzes" element={<PageWrapper><Quizzes /></PageWrapper>} />
+          <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
+          <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
+          <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
+          <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
+          <Route path="/tracker-restricted" element={<PageWrapper><TrackerRestrictionPage /></PageWrapper>} />
 
-        {/* Admin Panel */}
-        <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+          {/* Onboarding Flow */}
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-        {/* Protected Pages */}
-        <Route path="/profile" element={<ProtectedRoute><PageWrapper><UserProfile /></PageWrapper></ProtectedRoute>} />
+          {/* Admin Panel */}
+          <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
 
-        {/* Cycle Tracker — open during testing, wrap with ProtectedRoute when ready to lock */}
-        <Route path="/cycle-tracker" element={<CycleTrackerLayout />}>
-          <Route index element={<DashboardOverview />} />
-          <Route path="tracker" element={<CycleTracker />} />
-          <Route path="risk" element={<RiskAnalysis />} />
-          <Route path="report" element={<ReportGenerator />} />
-          <Route path="insights" element={<Insights />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
+          {/* Protected Pages */}
+          <Route path="/profile" element={<ProtectedRoute><PageWrapper><UserProfile /></PageWrapper></ProtectedRoute>} />
 
-        {/* Legacy redirects — keep old URLs working */}
-        <Route path="/dashboard" element={<Navigate to="/cycle-tracker" replace />} />
-        <Route path="/dashboard/tracker" element={<Navigate to="/cycle-tracker/tracker" replace />} />
-        <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
-      </Routes>
+          {/* Cycle Tracker — open during testing, wrap with ProtectedRoute when ready to lock */}
+          <Route path="/cycle-tracker" element={<ProtectedRoute><TrackerGuard><CycleTrackerLayout /></TrackerGuard></ProtectedRoute>}>
+            <Route index element={<DashboardOverview />} />
+            <Route path="tracker" element={<CycleTracker />} />
+            <Route path="risk" element={<RiskAnalysis />} />
+            <Route path="report" element={<ReportGenerator />} />
+            <Route path="insights" element={<Insights />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
+
+          {/* Legacy redirects — keep old URLs working */}
+          <Route path="/dashboard" element={<Navigate to="/cycle-tracker" replace />} />
+          <Route path="/dashboard/tracker" element={<Navigate to="/cycle-tracker/tracker" replace />} />
+          <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
+        </Routes>
+      </OnboardingRedirect>
     </AnimatePresence>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
@@ -88,6 +89,21 @@ const Quizzes = () => {
             <div className="layout-container flex h-full grow flex-col">
                 <main className="max-w-[1400px] mx-auto w-full px-6 py-10">
                     
+                    {/* Back to Education Button */}
+                    {!activeQuiz && !isQuizDetailLoading && (
+                        <div className="mb-6 px-4">
+                            <Link 
+                                to="/education"
+                                className="inline-flex items-center gap-2 text-pink-500 font-bold hover:text-pink-600 transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                {t('quizzes.backToEducation')}
+                            </Link>
+                        </div>
+                    )}
+
                     {/* Header Section */}
                     <div className="flex flex-col items-start gap-6 mb-12 px-4 max-w-2xl">
                         <span

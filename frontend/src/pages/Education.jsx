@@ -8,8 +8,12 @@ import { getLocalizedText, formatContentWithLanguageInfo, getLanguageName, trans
 
 const getEmbedUrl = (url) => {
     if (!url) return "";
-    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-    return videoIdMatch ? `https://www.youtube.com/embed/${videoIdMatch[1]}?rel=0&modestbranding=1` : url;
+    // Handle watch?v=, youtu.be/, embed/, and shorts/
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+    const match = url.match(regExp);
+    const videoId = (match && match[2].length === 11) ? match[2] : null;
+    
+    return videoId ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1` : url;
 };
 
 const Education = () => {
@@ -328,7 +332,7 @@ const Education = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {videos.length > 0 ? (
                                     videos.map(video => (
-                                        <div key={video._id} className={`p-0 overflow-hidden rounded-3xl border-2 flex flex-col ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
+                                        <div key={video.id} className={`p-0 overflow-hidden rounded-3xl border-2 flex flex-col ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
                                             <div className="relative w-full aspect-video bg-slate-900 group">
                                                 <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -344,7 +348,7 @@ const Education = () => {
                                                     onClick={() => setActiveVideo({
                                                         title: video.title,
                                                         description: video.description,
-                                                        videoUrl: video.video_url
+                                                        videoUrl: video.youtube_url || video.video_url
                                                     })}
                                                     className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
                                                 >

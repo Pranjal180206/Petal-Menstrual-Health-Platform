@@ -30,5 +30,9 @@ export const authApi = {
   getCurrentUser: async () => {
     const response = await axiosInstance.get('/auth/me');
     return response.data;
+  },
+  updateProfile: async (updateData) => {
+    const response = await axiosInstance.patch('/users/profile', updateData);
+    return response.data;
   }
 };
