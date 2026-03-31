@@ -248,5 +248,78 @@
     "contact": "Contact",
     "parentGuide": "Parent Guide",
     "copyright": "© 2024 Petal Platform"
+  },
+  "education": {
+    "badge": "Education Hub",
+    "title1": "Learn your rhythm.",
+    "title2": "Live your flow.",
+    "subtitle": "No taboos, just the real talk you need about your body and health. Choose a section below to get started.",
+    "articlesTab": "Articles",
+    "videosTab": "Videos",
+    "mythsTab": "Myths & Facts",
+    "quizzesTab": "Quizzes",
+    "loadingArticles": "Loading articles...",
+    "noArticles": "No articles found.",
+    "loadingMyths": "Loading myths and facts...",
+    "noMyths": "No myths found.",
+    "mythLabel": "Myth",
+    "factLabel": "Fact",
+    "watchNow": "Watch Now",
+    "noVideos": "No videos found.",
+    "videos": {
+      "v1Title": "Understanding Your Cycle",
+      "v1Desc": "A quick 5-min guide to the 4 phases of your menstrual cycle.",
+      "v2Title": "Nutrition for Menstrual Health",
+      "v2Desc": "What to eat during different phases to feel your best.",
+      "v3Title": "Debunking Period Myths",
+      "v3Desc": "Doctors react to common misconceptions about periods."
+    },
+    "mythsList": {
+      "m1": {
+        "myth": "Girls should not exercise during periods",
+        "fact": "Light exercise can actually help reduce cramps and improve mood"
+      },
+      "m2": {
+        "myth": "You cannot take a bath during menstruation",
+        "fact": "Maintaining hygiene, including bathing, is important and safe"
+      },
+      "m3": {
+        "myth": "Period blood is 'dirty' blood",
+        "fact": "It is a natural biological process involving shedding of the uterine lining"
+      },
+      "m4": {
+        "myth": "PMS is just in a woman's head",
+        "fact": "PMS is a real medical condition caused by hormonal changes during the cycle"
+      },
+      "m5": {
+        "myth": "Menstruation should always be painful",
+        "fact": "Mild discomfort is common, but severe pain may need medical attention"
+      },
+      "m6": {
+        "myth": "You can't get pregnant while on your period",
+        "fact": "While less likely, sperm can survive for days, making pregnancy possible during your period"
+      }
+    }
+  },
+  "quizzes": {
+    "badge": "Quizzes",
+    "title": "Test your knowledge.",
+    "subtitle": "Take our interactive quizzes to see how much you know about menstrual health.",
+    "loading": "Loading quizzes...",
+    "noQuizzes": "No quizzes found.",
+    "untitledQuiz": "Untitled Quiz",
+    "questionsSuffix": "Questions",
+    "defaultDifficulty": "Medium",
+    "startQuiz": "Start Quiz",
+    "loadingDetails": "Loading quiz details...",
+    "backToAll": "Back to all quizzes",
+    "defaultQuizTitle": "Quiz",
+    "correct": "✅ Correct",
+    "incorrect": "❌ Incorrect",
+    "submitting": "Submitting...",
+    "submitAnswers": "Submit Answers",
+    "results": "Results:",
+    "passed": "You passed!",
+    "failed": "Keep learning and try again!"
   }
 }

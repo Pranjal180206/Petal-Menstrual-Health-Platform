@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
+import { useTranslation } from 'react-i18next';
 
 const Quizzes = () => {
     const darkMode = false;
+    const { t, i18n } = useTranslation();
+    const lang = i18n.language || 'en';
 
     // quiz states
     const [quizzes, setQuizzes] = useState([]);
@@ -93,19 +96,19 @@ const Quizzes = () => {
                                 color: darkMode ? '#f472b6' : '#e63888',
                             }}
                         >
-                            Quizzes
+                            {t('quizzes.badge')}
                         </span>
                         <h1
                             className="text-5xl md:text-6xl font-black leading-[1.1]"
                             style={{ color: darkMode ? '#f1f5f9' : '#0f172a' }}
                         >
-                            Test your knowledge.
+                            {t('quizzes.title')}
                         </h1>
                         <p
                             className="text-lg font-medium leading-relaxed"
                             style={{ color: darkMode ? '#94a3b8' : '#475569' }}
                         >
-                            Take our interactive quizzes to see how much you know about menstrual health.
+                            {t('quizzes.subtitle')}
                         </p>
                     </div>
 
@@ -113,19 +116,19 @@ const Quizzes = () => {
                         {!activeQuiz && !isQuizDetailLoading && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {isQuizzesLoading ? (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Loading quizzes...</p>
+                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('quizzes.loading')}</p>
                                 ) : quizzes.length > 0 ? (
                                     quizzes.map(q => (
                                         <div key={q.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} flex flex-col shadow-sm`}>
-                                            <h3 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{q.title?.en || 'Untitled Quiz'}</h3>
-                                            <p className={`text-sm mb-4 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{q.description?.en || ''}</p>
+                                            <h3 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{q.title?.[lang] || q.title?.en || q.title || t('quizzes.untitledQuiz')}</h3>
+                                            <p className={`text-sm mb-4 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{q.description?.[lang] || q.description?.en || q.description || ''}</p>
                                             
                                             <div className="flex justify-between items-center mb-6 text-sm">
                                                 <span className={`px-3 py-1 rounded-full font-bold bg-pink-100 text-pink-600`}>
-                                                    {q.questions?.length > 0 ? `${q.questions.length} Questions` : '5 Questions'}
+                                                    {q.questions?.length > 0 ? `${q.questions.length} ${t('quizzes.questionsSuffix')}` : `5 ${t('quizzes.questionsSuffix')}`}
                                                 </span>
                                                 <span className={`px-3 py-1 rounded-full font-bold bg-blue-100 text-blue-600`}>
-                                                    {q.difficulty || 'Medium'}
+                                                    {q.difficulty || t('quizzes.defaultDifficulty')}
                                                 </span>
                                             </div>
 
@@ -133,18 +136,18 @@ const Quizzes = () => {
                                                 onClick={() => handleOpenQuiz(q.id)}
                                                 className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${darkMode ? 'bg-pink-500 text-white hover:bg-pink-600' : 'bg-[#FF6B9D] text-white hover:opacity-90'}`}
                                             >
-                                                Start Quiz
+                                                {t('quizzes.startQuiz')}
                                             </button>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>No quizzes found.</p>
+                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('quizzes.noQuizzes')}</p>
                                 )}
                             </div>
                         )}
 
                         {/* ACTIVE QUIZ DETAIL SECTION */}
-                        {isQuizDetailLoading && <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>Loading quiz details...</p>}
+                        {isQuizDetailLoading && <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('quizzes.loadingDetails')}</p>}
 
                         {activeQuiz && (
                             <div className="max-w-3xl">
@@ -153,12 +156,12 @@ const Quizzes = () => {
                                     className="mb-6 flex items-center gap-2 text-pink-500 font-bold hover:text-pink-600 transition-colors"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                                    Back to all quizzes
+                                    {t('quizzes.backToAll')}
                                 </button>
 
                                 <div className={`p-8 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm`}>
-                                    <h2 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{activeQuiz.title?.en || 'Quiz'}</h2>
-                                    <p className={`text-lg mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{activeQuiz.description?.en || ''}</p>
+                                    <h2 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{activeQuiz.title?.[lang] || activeQuiz.title?.en || activeQuiz.title || t('quizzes.defaultQuizTitle')}</h2>
+                                    <p className={`text-lg mb-8 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>{activeQuiz.description?.[lang] || activeQuiz.description?.en || activeQuiz.description || ''}</p>
                                     
                                     <div className="flex flex-col gap-8">
                                         {activeQuiz.questions?.map((q, idx) => {
@@ -166,7 +169,7 @@ const Quizzes = () => {
                                             return (
                                                 <div key={q.id} className="flex flex-col gap-4">
                                                     <h4 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                        {idx + 1}. {q.text?.en ?? q.text}
+                                                        {idx + 1}. {q.text?.[lang] ?? q.text?.en ?? q.text}
                                                     </h4>
                                                     <div className="flex flex-col gap-3">
                                                         {q.options?.map(opt => {
@@ -186,7 +189,7 @@ const Quizzes = () => {
                                                                     onClick={() => handleSelectOption(q.id, opt.id)}
                                                                     className={`text-left p-4 rounded-2xl transition-all ${bgClass} ${darkMode && !quizResult && !isSelected ? 'text-slate-300' : (isSelected && !quizResult && !darkMode && 'text-slate-900')} ${!darkMode && !isSelected && 'text-slate-700'}`}
                                                                 >
-                                                                    {opt.text?.en ?? opt.text}
+                                                                    {opt.text?.[lang] ?? opt.text?.en ?? opt.text}
                                                                 </button>
                                                             )
                                                         })}
@@ -194,9 +197,9 @@ const Quizzes = () => {
                                                     {resultForQuestion && (
                                                         <div className={`p-4 rounded-xl mt-2 text-sm ${resultForQuestion.is_correct ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                                                             <span className="font-bold block mb-1">
-                                                                {resultForQuestion.is_correct ? '✅ Correct' : '❌ Incorrect'}
+                                                                {resultForQuestion.is_correct ? t('quizzes.correct') : t('quizzes.incorrect')}
                                                             </span>
-                                                            {resultForQuestion.explanation?.en}
+                                                            {resultForQuestion.explanation?.[lang] || resultForQuestion.explanation?.en || resultForQuestion.explanation}
                                                         </div>
                                                     )}
                                                 </div>
@@ -210,13 +213,13 @@ const Quizzes = () => {
                                             disabled={isSubmittingQuiz || Object.keys(quizAnswers).length < (activeQuiz.questions?.length || 0)}
                                             className={`mt-10 w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all ${isSubmittingQuiz || Object.keys(quizAnswers).length < (activeQuiz.questions?.length || 0) ? 'opacity-50 cursor-not-allowed bg-slate-300 text-slate-500' : 'bg-pink-500 text-white hover:bg-pink-600 shadow-lg'}`}
                                         >
-                                            {isSubmittingQuiz ? 'Submitting...' : 'Submit Answers'}
+                                            {isSubmittingQuiz ? t('quizzes.submitting') : t('quizzes.submitAnswers')}
                                         </button>
                                     ) : (
                                         <div className="mt-10 p-6 rounded-2xl bg-slate-100 dark:bg-slate-800 text-center">
-                                            <h3 className="text-2xl font-black mb-2 dark:text-white">Results: {quizResult.score_percentage}%</h3>
+                                            <h3 className="text-2xl font-black mb-2 dark:text-white">{t('quizzes.results')} {quizResult.score_percentage}%</h3>
                                             <p className={`font-bold text-lg ${quizResult.passed ? 'text-green-600' : 'text-red-600'}`}>
-                                                {quizResult.passed ? 'You passed!' : 'Keep learning and try again!'}
+                                                {quizResult.passed ? t('quizzes.passed') : t('quizzes.failed')}
                                             </p>
                                         </div>
                                     )}
