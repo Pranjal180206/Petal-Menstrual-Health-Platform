@@ -6,7 +6,6 @@ import TourOverlay from './components/TourOverlay';
 import TourPrompt from './components/TourPrompt';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Stats from './components/Stats';
 import HowItWorks from './components/HowItWorks';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
@@ -153,7 +152,6 @@ const LandingPage = () => (
       <Hero />
     </div>
     <div className="relative z-10">
-      <Stats />
       <HowItWorks />
       <CTA />
       <Footer />

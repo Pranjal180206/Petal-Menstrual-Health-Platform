@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sun, Users, Smile } from 'lucide-react';
+import { Brain, Users, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Stats = () => {
@@ -7,7 +7,7 @@ const Stats = () => {
 
     const statsData = [
         {
-            icon: <Sun size={24} className="text-orange-400" />,
+            icon: <Brain size={24} className="text-orange-400" />,
             label: t('stats.label1'),
             value: "85%",
             description: t('stats.desc1'),
@@ -21,7 +21,7 @@ const Stats = () => {
             bgColor: "bg-yellow-50"
         },
         {
-            icon: <Smile size={24} className="text-[#8B5E3C]" />,
+            icon: <Activity size={24} className="text-[#8B5E3C]" />,
             label: t('stats.label3'),
             value: "24/7",
             description: t('stats.desc3'),

@@ -6,12 +6,12 @@
     "signIn": "Sign In"
   },
   "hero": {
-    "badge": "Your Health, Your Vibe ✨",
-    "title1": "Know Your",
-    "title2": "Body,",
-    "title3": "Feel",
-    "title4": "Amazing.",
-    "subtitle": "The easy, friendly way to track your daily health, understand your moods, and get tips that actually make sense. 💖",
+    "badge": "Health + Calm ✨",
+    "title1": "Learn.",
+    "title2": "Understand.",
+    "title3": "Grow.",
+    "title4": "",
+    "subtitle": "We welcome all genders, including people who menstruate and those who want to learn.",
     "getStarted": "Get Started",
     "takeTour": "Take a Tour",
     "joinFriends": "Join 50k+ friends on the journey 🌈"
@@ -27,16 +27,16 @@
   "howItWorks": {
     "heading": "Platform Features",
     "subheading": "Everything you need to understand your body, track your health, and connect with others.",
-    "step1Title": "Detailed Tracking",
-    "step1Desc": "Log your daily symptoms, energy levels, and moods to build a personalized calendar of your unique health patterns.",
+    "step1Title": "Private Tracking",
+    "step1Desc": "Track cycles, explore body changes, and learn how your body works.",
     "step2Title": "Smart Risk Analysis",
     "step2Desc": "Our system analyzes your logged data to spot potential irregularities and generates PDF health reports you can easily share.",
     "step3Title": "Community & Learning",
     "step3Desc": "Join the secure Friends Hub for peer support, and explore expert-reviewed articles and videos about your body."
   },
   "cta": {
-    "title": "Ready to bloom into your best self?",
-    "subtitle": "Download the app and start your journey today. It's free, fun, and totally private.",
+    "title": "Ready to join the community?",
+    "subtitle": "Download the app and start your journey today. It's free, fun, and totally private for everyone.",
     "button": "Join Petal Now"
   },
   "footer": {
@@ -207,11 +207,11 @@
     "mr": "मराठी"
   },
   "login": {
-    "badge": "For Teens, By Experts",
-    "headline1": "Your body is",
-    "headline2": "amazing.",
-    "headline3": "Let's track its rhythms.",
-    "subtext": "Join a community of 50,000+ others learning about their cycle health in a safe, private space.",
+    "badge": "For Everyone, By Experts",
+    "headline1": "Menstrual health",
+    "headline2": "made simple.",
+    "headline3": "Learn, track, and connect.",
+    "subtext": "Join a community of 50,000+ others learning and sharing in a safe, private space.",
     "needHelp": "Need help?",
     "askAdult": "Ask an adult",
     "welcomeBack": "Welcome back! 👋",
@@ -251,9 +251,9 @@
   },
   "education": {
     "badge": "Education Hub",
-    "title1": "Learn your rhythm.",
-    "title2": "Live your flow.",
-    "subtitle": "No taboos, just the real talk you need about your body and health. Choose a section below to get started.",
+    "title1": "Learn your patterns.",
+    "title2": "Live your best life.",
+    "subtitle": "No taboos, just the real talk you need about your health and body. Choose a section below to get started.",
     "articlesTab": "Articles",
     "videosTab": "Videos",
     "mythsTab": "Myths & Facts",
@@ -276,7 +276,7 @@
     },
     "mythsList": {
       "m1": {
-        "myth": "Girls should not exercise during periods",
+        "myth": "You should not exercise during your period",
         "fact": "Light exercise can actually help reduce cramps and improve mood"
       },
       "m2": {
@@ -288,7 +288,7 @@
         "fact": "It is a natural biological process involving shedding of the uterine lining"
       },
       "m4": {
-        "myth": "PMS is just in a woman's head",
+        "myth": "PMS is just in your head",
         "fact": "PMS is a real medical condition caused by hormonal changes during the cycle"
       },
       "m5": {

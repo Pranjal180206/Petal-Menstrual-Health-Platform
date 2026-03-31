@@ -18,15 +18,7 @@ const Hero = () => {
                     <Sparkles size={48} />
                 </div>
 
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                    className="inline-flex items-center gap-2 bg-[#FDF7F8] border border-pink-100 px-4 py-2 rounded-full text-brand-pink font-bold text-sm shadow-sm"
-                >
-                    <PetalIcon size={16} />
-                    {t('hero.badge')}
-                </motion.div>
+
 
                 <motion.h1
                     initial={{ opacity: 0, x: -20 }}
@@ -35,7 +27,7 @@ const Hero = () => {
                     className="text-5xl md:text-7xl font-heading font-extrabold leading-[1.1] tracking-tight"
                     data-tour-id="hero-title"
                 >
-                    {t('hero.title1')} <br /> {t('hero.title2')} <span className="text-brand-pink text-gradient">{t('hero.title3')} <br /> {t('hero.title4')}</span>
+                    {t('hero.title1')} <br /> {t('hero.title2')} <br /> <span className="text-brand-pink text-gradient">{t('hero.title3')} {t('hero.title4')}</span>
                 </motion.h1>
 
                 <motion.p
@@ -73,15 +65,7 @@ const Hero = () => {
             >
                 <HeroIllustration />
 
-                {/* Floating Badge */}
-                <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-10 right-0 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-pink-50 max-w-[200px] z-20"
-                >
-                    <h4 className="text-brand-pink font-extrabold text-sm mb-1">Today's Vibe: Sparkling! ✨</h4>
-                    <p className="text-[10px] text-brand-gray font-bold leading-tight">Your energy levels are high. Perfect time for that TikTok dance! 💃</p>
-                </motion.div>
+
             </motion.div>
         </section>
     );
