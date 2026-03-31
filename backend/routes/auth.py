@@ -76,7 +76,8 @@ async def register(request: Request, user_in: UserRegister):
     user_dict["password_hash"] = get_password_hash(password)
     user_dict["role"] = "user"
     user_dict["created_at"] = datetime.utcnow()
-    user_dict["profile"] = {"language_preference": "en"}
+    user_dict["is_menstruating"] = user_in.is_menstruating
+    user_dict["onboarding_complete"] = False
     user_dict["consent"] = {
         "data_collection": True,
         "community_guidelines": True,
