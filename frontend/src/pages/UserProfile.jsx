@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Settings, LogOut, ChevronRight } from 'lucide-react';
+import { User, Settings, LogOut, ChevronRight, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -91,6 +91,19 @@ const UserProfile = () => {
                     <h3 className="font-heading font-extrabold text-xl text-brand-dark mb-4 px-2">Account</h3>
 
                     <div className="space-y-2">
+                        {user?.is_admin && (
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors group"
+                            >
+                                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                                    <Shield size={18} />
+                                </div>
+                                <span className="font-bold text-sm text-brand-dark flex-1 text-left">Admin Dashboard</span>
+                                <ChevronRight size={16} className="text-gray-300 group-hover:text-purple-600 transition-colors" />
+                            </button>
+                        )}
+
                         <button
                             onClick={() => navigate('/cycle-tracker/settings')}
                             className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors group"
@@ -99,17 +112,6 @@ const UserProfile = () => {
                                 <User size={18} />
                             </div>
                             <span className="font-bold text-sm text-brand-dark flex-1 text-left">Manage Settings</span>
-                            <ChevronRight size={16} className="text-gray-300 group-hover:text-brand-pink transition-colors" />
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/cycle-tracker/settings')}
-                            className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors group"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                                <Settings size={18} />
-                            </div>
-                            <span className="font-bold text-sm text-brand-dark flex-1 text-left">Preferences</span>
                             <ChevronRight size={16} className="text-gray-300 group-hover:text-brand-pink transition-colors" />
                         </button>
                     </div>

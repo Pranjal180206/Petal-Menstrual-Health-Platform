@@ -16,7 +16,10 @@ def sanitize_user(user: dict) -> dict:
 async def get_user_profile(current_user: dict = Depends(get_current_user)):
     user = dict(current_user)
     user["id"] = str(user.pop("_id"))
-    return sanitize_user(user)
+    is_admin = user.get("is_admin", False)
+    sanitized = sanitize_user(user)
+    sanitized["is_admin"] = is_admin
+    return sanitized
 
 @router.patch("/profile")
 async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depends(get_current_user)):
@@ -26,7 +29,10 @@ async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depe
     if updated_user:
         user = dict(updated_user)
         user["id"] = str(user.pop("_id"))
-        return sanitize_user(user)
+        is_admin = user.get("is_admin", False)
+        sanitized = sanitize_user(user)
+        sanitized["is_admin"] = is_admin
+        return sanitized
     
     return await get_user_profile(current_user)
 
@@ -38,7 +44,10 @@ async def update_user_settings(body: UserSettingsUpdate, current_user: dict = De
     if updated_user:
         user = dict(updated_user)
         user["id"] = str(user.pop("_id"))
-        return sanitize_user(user)
+        is_admin = user.get("is_admin", False)
+        sanitized = sanitize_user(user)
+        sanitized["is_admin"] = is_admin
+        return sanitized
     
     return await get_user_profile(current_user)
 
@@ -50,7 +59,10 @@ async def update_cycle_preferences(body: CyclePreferencesUpdate, current_user: d
     if updated_user:
         user = dict(updated_user)
         user["id"] = str(user.pop("_id"))
-        return sanitize_user(user)
+        is_admin = user.get("is_admin", False)
+        sanitized = sanitize_user(user)
+        sanitized["is_admin"] = is_admin
+        return sanitized
     
     return await get_user_profile(current_user)
 

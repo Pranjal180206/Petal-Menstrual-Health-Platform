@@ -58,9 +58,26 @@ async def flag_post(post_id: str, current_user: dict = Depends(get_current_user)
 
     if result.get("already_flagged"):
         raise HTTPException(status_code=409, detail="already flagged by this user")
-
     return {
         "message": "Post flagged",
         "flag_count": result["flag_count"],
         "is_flagged": result["is_flagged"],
     }
+
+@router.delete("/{post_id}", status_code=status.HTTP_200_OK)
+async def delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    is_admin = current_user.get("is_admin", False)
+    result = await community_service.delete_post(post_id, user_id, is_admin)
+    if not result:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post or post not found")
+    return {"message": "Post deleted successfully"}
+
+@router.delete("/{post_id}/reply/{reply_id}", status_code=status.HTTP_200_OK)
+async def delete_reply(post_id: str, reply_id: str, current_user: dict = Depends(get_current_user)):
+    user_id = str(current_user["_id"])
+    is_admin = current_user.get("is_admin", False)
+    result = await community_service.delete_reply(post_id, reply_id, user_id, is_admin)
+    if not result:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this reply or reply not found")
+    return {"message": "Reply deleted successfully"}

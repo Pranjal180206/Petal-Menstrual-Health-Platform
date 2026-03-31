@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit3, Heart, MessageCircle, Sparkles, MoreHorizontal, X, Send, Smile, Flag } from 'lucide-react';
+import { Edit3, Heart, MessageCircle, Sparkles, MoreHorizontal, X, Send, Smile, Flag, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -112,13 +112,25 @@ const PostCard = ({ post, onLike, onReply, onFlag }) => {
                         <p className="text-xs text-gray-400 font-medium">{formatTimestamp(post.createdAt)}</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => onFlag(post.id)}
-                    className="text-gray-300 hover:text-red-400 transition-colors"
-                    title="Flag post"
-                >
-                    <MoreHorizontal size={18} />
-                </button>
+                <div className="flex items-center gap-2">
+                    {(post.isUserPost || post.isAdmin) ? (
+                        <button
+                            onClick={() => onFlag(post.id, true)}
+                            className="text-gray-300 hover:text-red-500 transition-colors"
+                            title="Delete post"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => onFlag(post.id, false)}
+                            className="text-gray-300 hover:text-red-400 transition-colors"
+                            title="Flag post"
+                        >
+                            <MoreHorizontal size={18} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Content */}
@@ -180,7 +192,16 @@ const PostCard = ({ post, onLike, onReply, onFlag }) => {
                                             <span className="text-xs font-bold text-[#1D1D2C]">
                                                 {reply.is_anonymous ? 'Anonymous' : (reply.author?.name || 'User')}
                                             </span>
-                                            <span className="text-[10px] text-gray-400">{formatTimestamp(reply.created_at)}</span>
+                                            <span className="text-[10px] text-gray-400 ml-2">{formatTimestamp(reply.created_at)}</span>
+                                            {(reply.author?.user_id === post.currentUserId || post.isAdmin) && (
+                                                <button
+                                                    onClick={() => onFlag(post.id, true, reply.id)}
+                                                    className="ml-auto text-gray-300 hover:text-red-500 transition-colors"
+                                                    title="Delete reply"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
                                         </div>
                                         <p className="text-xs text-[#4A4A5C] leading-relaxed">{reply.content}</p>
                                     </div>
@@ -357,7 +378,9 @@ const CommunityHub = () => {
         liked: currentUserId ? (p.likes || []).includes(currentUserId) : false,
         replies: p.replies || [],
         replyCount: p.replies ? p.replies.length : 0,
-        isUserPost: currentUserId && (p.user_id === currentUserId || p.author?.id === currentUserId),
+        isUserPost: currentUserId && (p.user_id === currentUserId || p.author?.id === currentUserId || p.author?.user_id === currentUserId),
+        isAdmin: user?.is_admin || false,
+        currentUserId: currentUserId,
         ...overrides,
     });
 
@@ -418,16 +441,36 @@ const CommunityHub = () => {
         }
     };
 
-    const handleFlag = async (postId) => {
+    const handleFlag = async (postId, isDelete = false, replyId = null) => {
         try {
-            await axiosInstance.patch(`/community/${postId}/flag`);
-            showToast('Post flagged for review. Thank you! 🧡', 'success');
+            if (isDelete) {
+                const confirmDelete = window.confirm("Are you sure you want to delete this?");
+                if (!confirmDelete) return;
+                
+                if (replyId) {
+                    await axiosInstance.delete(`/community/${postId}/reply/${replyId}`);
+                    setPosts(prev => prev.map(p => {
+                        if (p.id !== postId) return p;
+                        const newReplies = p.replies.filter(r => r.id !== replyId);
+                        return { ...p, replies: newReplies, replyCount: newReplies.length };
+                    }));
+                    showToast('Reply deleted successfully', 'success');
+                } else {
+                    await axiosInstance.delete(`/community/${postId}`);
+                    setPosts(prev => prev.filter(p => p.id !== postId));
+                    showToast('Post deleted successfully', 'success');
+                }
+            } else {
+                await axiosInstance.patch(`/community/${postId}/flag`);
+                showToast('Post flagged for review. Thank you! 🧡', 'success');
+            }
         } catch (err) {
-            if (err.response?.status === 409) {
+            if (err.response?.status === 409 && !isDelete) {
                 showToast('You already flagged this post.', 'info');
                 return;
             }
-            console.error('Flag failed:', err);
+            console.error('Action failed:', err);
+            showToast('Failed to perform action', 'error');
         }
     };
 

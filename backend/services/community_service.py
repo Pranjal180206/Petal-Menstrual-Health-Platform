@@ -207,4 +207,57 @@ class CommunityService:
             "is_flagged": is_flagged,
         }
 
+    @staticmethod
+    async def delete_post(post_id: str, user_id: str, is_admin: bool) -> bool:
+        db = get_db()
+        try:
+            post_oid = ObjectId(post_id)
+        except Exception:
+            return False
+            
+        post = await db["community_posts"].find_one({"_id": post_oid})
+        if not post: return False
+        
+        # Check authorization: user is the author or admin
+        post_author_id = post.get("author", {}).get("user_id", "")
+        if not is_admin and post_author_id != user_id:
+            return False
+            
+        result = await db["community_posts"].delete_one({"_id": post_oid})
+        return result.deleted_count > 0
+
+    @staticmethod
+    async def delete_reply(post_id: str, reply_id: str, user_id: str, is_admin: bool) -> bool:
+        db = get_db()
+        try:
+            post_oid = ObjectId(post_id)
+            reply_oid = ObjectId(reply_id)
+        except Exception:
+            return False
+            
+        post = await db["community_posts"].find_one({"_id": post_oid})
+        if not post: return False
+        
+        # Find the specific reply
+        target_reply = None
+        for r in post.get("replies", []):
+            if str(r.get("id")) == reply_id or r.get("id") == reply_oid:
+                target_reply = r
+                break
+                
+        if not target_reply:
+            return False
+            
+        reply_author_id = target_reply.get("author", {}).get("user_id", "")
+        # Only author or admin can delete
+        if not is_admin and reply_author_id != user_id:
+            return False
+            
+        # Delete reply by filtering it out from the replies array
+        result = await db["community_posts"].update_one(
+            {"_id": post_oid},
+            {"$pull": {"replies": {"id": target_reply.get("id")}}}
+        )
+        return result.modified_count > 0
+
 community_service = CommunityService()
