@@ -34,6 +34,7 @@ const CycleTrackerLayout = () => {
         if (link.restricted && !isFemale && !isMenstruating) return false;
         return true;
     });
+    const showCycleSettings = isFemale;
 
     const linkClass = ({ isActive }) =>
         `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
@@ -67,13 +68,15 @@ const CycleTrackerLayout = () => {
 
                 {/* Bottom User Card */}
                 <div className="p-4 border-t border-gray-100">
-                    <NavLink
-                        to="/cycle-tracker/settings"
-                        className={linkClass}
-                    >
-                        <Settings size={18} />
-                        {t('sidebar.cycleSettings')}
-                    </NavLink>
+                    {showCycleSettings && (
+                        <NavLink
+                            to="/cycle-tracker/settings"
+                            className={linkClass}
+                        >
+                            <Settings size={18} />
+                            {t('sidebar.cycleSettings')}
+                        </NavLink>
+                    )}
 
                     <div className="flex items-center gap-3 px-4 mt-4">
                       {user?.avatar_url 

@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { X, Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Eye, Flag, Users, FileText, HelpCircle, Video, BookOpen, Shield, ChevronLeft, Search, ToggleLeft, ToggleRight, Award } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
-import PetalIcon from '../components/PetalIcon';
 import Toast from '../components/Toast';
 
 /* ── tiny helpers ── */
@@ -81,18 +80,15 @@ const AdminPanel = () => {
       {/* Sidebar */}
       <aside className="w-60 bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 h-screen z-30">
         <div className="p-5 border-b border-gray-100">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2.5">
-              <div className="bg-[#D81B60] text-white p-1.5 rounded-lg"><PetalIcon size={16} /></div>
-              <div>
-                <span className="font-bold text-base text-[#1D1D2C] block leading-none">Petal Admin</span>
-                <span className="text-[9px] text-[#D81B60] font-bold uppercase tracking-wider">Control Panel</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <img src="/upay-logo.png" alt="Upay Logo" className="h-[36px] w-auto object-contain" />
+              <div className="flex flex-col leading-none">
+                <span className="font-bold text-base text-[#1D1D2C]">Petal</span>
+                <span className="text-[10px] text-gray-500 font-medium mt-1">by Upay</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 ml-[38px]">
-              <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
-              <img src="/upay-logo.png" alt="Upay Logo" className="h-[30px] w-auto object-contain" />
-            </div>
+            <span className="text-[9px] text-[#D81B60] font-bold uppercase tracking-wider block">Control Panel</span>
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">

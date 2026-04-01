@@ -27,7 +27,6 @@ import CycleTracker from './pages/CycleTracker';
 import RiskAnalysis from './pages/RiskAnalysis';
 import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
-import AccountSettings from './pages/AccountSettings';
 import CycleSettings from './pages/CycleSettings';
 
 // ── Page transition wrapper ──
@@ -72,6 +71,19 @@ const TrackerGuard = ({ children }) => {
   return children;
 };
 
+// ── Female-only guard for cycle settings ──
+const FemaleCycleSettingsGuard = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (user.gender !== 'female') {
+    return <Navigate to="/tracker-restricted" replace />;
+  }
+
+  return children;
+};
+
 // ── Onboarding Redirect — Forces onboarding if not complete ──
 const OnboardingRedirect = ({ children }) => {
   const { user, loading } = useAuth();
@@ -106,12 +118,12 @@ const SimpleInfoPage = ({ title, children }) => (
 );
 
 const ContactPage = () => (
-  <SimpleInfoPage title="Contact & Help Center 🌸">
-    <p>We're here for you! For questions, support, or feedback, reach out to us at:</p>
-    <p className="font-bold text-[#D81B60]">support@petal-health.app</p>
-    <p>Our team responds within 24–48 hours. For urgent health concerns, please consult a healthcare professional.</p>
+  <SimpleInfoPage title="Upay Contact & Help Center">
+    <p>Need support or have feedback? Reach out to the Upay team at:</p>
+    <p className="font-bold text-[#D81B60]">support@upay.org (placeholder)</p>
+    <p>Our team usually responds within 24–48 hours. For urgent health concerns, please contact a qualified healthcare professional.</p>
     <p className="font-bold">Parent/Guardian Inquiries:</p>
-    <p>If you're a parent or guardian with questions about Petal, email us at <span className="text-[#D81B60] font-bold">parents@petal-health.app</span></p>
+    <p>If you're a parent or guardian and need guidance, contact us at <span className="text-[#D81B60] font-bold">parents@upay.org (placeholder)</span></p>
   </SimpleInfoPage>
 );
 
@@ -164,7 +176,7 @@ const AnimatedRoutes = () => {
           <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
           <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
           <Route path="/tracker-restricted" element={<PageWrapper><TrackerRestrictionPage /></PageWrapper>} />
-          <Route path="/account/settings" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/account/settings" element={<Navigate to="/profile" replace />} />
 
           {/* Onboarding Flow */}
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -182,7 +194,7 @@ const AnimatedRoutes = () => {
             <Route path="risk" element={<RiskAnalysis />} />
             <Route path="report" element={<ReportGenerator />} />
             <Route path="insights" element={<Insights />} />
-            <Route path="settings" element={<CycleSettings />} />
+            <Route path="settings" element={<FemaleCycleSettingsGuard><CycleSettings /></FemaleCycleSettingsGuard>} />
           </Route>
 
           {/* Legacy redirects — keep old URLs working */}

@@ -1,5 +1,4 @@
 
-import PetalIcon from './PetalIcon';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -9,16 +8,11 @@ const Footer = () => {
 
                 {/* Brand/Logo Column */}
                 <div className="max-w-xs space-y-6">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-brand-pink text-white p-1 rounded-full">
-                                <PetalIcon size={16} />
-                            </div>
+                    <div className="flex items-center gap-3">
+                        <img src="/upay-logo.png" alt="Upay Logo" className="h-[44px] w-auto object-contain" />
+                        <div className="flex flex-col leading-none">
                             <span className="font-heading font-bold text-xl text-brand-dark tracking-tight">Petal</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 ml-8 mt-1">
-                            <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
-                            <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                            <span className="text-xs text-gray-500 font-medium mt-1">by Upay</span>
                         </div>
                     </div>
                     <p className="text-sm text-brand-gray leading-relaxed">
