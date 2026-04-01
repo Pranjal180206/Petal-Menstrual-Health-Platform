@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from services.cycle_history import get_parsed_cycle_history, CYCLE_MIN_DAYS, CYCLE_MAX_DAYS
-from services.ml_service import predict_next_period, ML_AVAILABLE
+from services.ml_service import predict_next_period, ML_AVAILABLE, CSV_AVAILABLE, get_population_insights, get_personalized_insights
 
 async def calculate_cycle_streak(user_id: str, db) -> int:
     """
@@ -128,14 +128,19 @@ async def get_dashboard_summary(user_id: str, db, user: dict = None) -> dict:
         "ml_driven": ml_driven,
     }
 
-async def get_insights(user_id: str, db) -> dict:
+async def get_insights(user_id: str, db, user: dict = None) -> dict:
     from bson import ObjectId
     user_id_obj = ObjectId(user_id) if ObjectId.is_valid(user_id) else user_id
 
     # cycle_length_history
     parsed = await get_parsed_cycle_history(db, user_id)
     cycle_length_history = []
-    
+
+    # Ensure we have the user document for ML personalisation
+    if user is None:
+        from bson import ObjectId
+        user = await db["users"].find_one({"_id": ObjectId(user_id)})
+
     # Render historic cycles safely
     for i, log in enumerate(parsed):
         if log.get("cycle_length") is not None:
@@ -206,10 +211,22 @@ async def get_insights(user_id: str, db) -> dict:
     symptom_trend = list(trend.values())
     symptom_trend = sorted(symptom_trend, key=lambda x: x["date"])
 
+    # Build ML summary (compute once to avoid double call)
+    _pi = get_personalized_insights(parsed, user or {})
+
     return {
         "cycle_length_history": cycle_length_history,
         "symptom_frequency": symptom_frequency,
         "mood_trend": mood_trend,
         "top_symptom": top_symptom,
-        "symptom_trend": symptom_trend
+        "symptom_trend": symptom_trend,
+        # -- New ML-driven additions --
+        "ml_summary": {
+            "available": CSV_AVAILABLE,
+            "ml_driven": ML_AVAILABLE and CSV_AVAILABLE,
+            "population_insights": get_population_insights(),
+            "personalized_insights": _pi.get("insights", []),
+            "population_size": _pi.get("population_size", 0),
+        },
     }
+

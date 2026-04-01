@@ -18,4 +18,4 @@ async def ml_status():
 @router.get("/insights/")
 async def get_insights(db=Depends(get_db), current_user: dict = Depends(get_current_user)):
     user_id = str(current_user["_id"])
-    return await dashboard_service.get_insights(user_id, db)
+    return await dashboard_service.get_insights(user_id, db, user=current_user)
