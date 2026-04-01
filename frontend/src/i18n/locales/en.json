@@ -70,7 +70,8 @@
     "riskAnalysis": "Risk Analysis",
     "reportGenerator": "Report Generator",
     "insights": "Insights",
-    "settings": "Settings",
+    "cycleSettings": "Cycle Settings",
+    "accountSettings": "Account Settings",
     "member": "Member"
   },
   "dashboard": {

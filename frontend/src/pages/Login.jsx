@@ -113,14 +113,7 @@ const Login = () => {
 
                 {/* Left Column - Copy & Vector */}
                 <div className="flex-1 space-y-4 md:space-y-6 max-w-xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 bg-[#FFF5F7] px-3 py-1.5 rounded-full text-[#FF6B9A] font-bold text-xs"
-                    >
-                        <Sparkles size={14} />
-                        {t('login.badge')}
-                    </motion.div>
+
 
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
@@ -132,42 +125,9 @@ const Login = () => {
                         <span className="text-[#FF6B9A]">{t('login.headline2')}</span> {t('login.headline3')}
                     </motion.h1>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-lg text-[#4A4A5C] leading-relaxed max-w-md font-medium"
-                    >
-                        {t('login.subtext')}
-                    </motion.p>
 
-                    {/* Animated Vector */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.3 }}
-                        onMouseMove={handleMouseMove}
-                        onMouseLeave={handleMouseLeave}
-                        style={{ perspective: 1000 }}
-                        className="w-full max-w-md bg-[#FFF5F7] rounded-[2rem] p-8 md:p-12 mt-4 md:mt-6 flex items-center justify-center aspect-[16/9] relative overflow-hidden mx-auto lg:mx-0 group cursor-crosshair"
-                    >
-                        <motion.div
-                            style={{ rotateX, rotateY, x: x1, y: y1 }}
-                            whileHover={{ scale: 1.15 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="text-[#FF6B9A] z-10"
-                        >
-                            <svg viewBox="0 0 24 24" className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 fill-current drop-shadow-2xl">
-                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                            </svg>
-                        </motion.div>
-                        {/* Interactive Floating elements */}
-                        <motion.div style={{ x: x2, y: y2 }} whileHover={{ scale: 2 }} animate={{ y: [0, -10, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} className="absolute top-1/4 left-1/4 w-4 h-4 rounded-full bg-pink-300 blur-[2px]" />
-                        <motion.div style={{ x: x3, y: y3 }} whileHover={{ scale: 2 }} animate={{ y: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }} className="absolute bottom-1/4 right-1/4 w-6 h-6 rounded-full bg-yellow-300 blur-[2px]" />
-                        <motion.div style={{ x: x4, y: y4 }} whileHover={{ scale: 2 }} animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute top-1/3 right-1/3 text-orange-400">
-                            <Sparkles size={16} />
-                        </motion.div>
-                    </motion.div>
+
+
                 </div>
 
                 {/* Right Column - Login Form */}

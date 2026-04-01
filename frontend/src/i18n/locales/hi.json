@@ -69,7 +69,8 @@
     "riskAnalysis": "जोखिम विश्लेषण",
     "reportGenerator": "रिपोर्ट जनरेटर",
     "insights": "अंतर्दृष्टि",
-    "settings": "सेटिंग्स",
+    "cycleSettings": "चक्र सेटिंग्स",
+    "accountSettings": "खाता सेटिंग्स",
     "member": "सदस्य"
   },
   "dashboard": {

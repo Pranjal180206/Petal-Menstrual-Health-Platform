@@ -27,7 +27,8 @@ import CycleTracker from './pages/CycleTracker';
 import RiskAnalysis from './pages/RiskAnalysis';
 import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
-import Settings from './pages/Settings';
+import AccountSettings from './pages/AccountSettings';
+import CycleSettings from './pages/CycleSettings';
 
 // ── Page transition wrapper ──
 const PageWrapper = ({ children }) => (
@@ -163,6 +164,7 @@ const AnimatedRoutes = () => {
           <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
           <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
           <Route path="/tracker-restricted" element={<PageWrapper><TrackerRestrictionPage /></PageWrapper>} />
+          <Route path="/account/settings" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
 
           {/* Onboarding Flow */}
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -180,7 +182,7 @@ const AnimatedRoutes = () => {
             <Route path="risk" element={<RiskAnalysis />} />
             <Route path="report" element={<ReportGenerator />} />
             <Route path="insights" element={<Insights />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<CycleSettings />} />
           </Route>
 
           {/* Legacy redirects — keep old URLs working */}

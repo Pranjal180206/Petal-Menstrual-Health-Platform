@@ -72,7 +72,7 @@ const CycleTrackerLayout = () => {
                         className={linkClass}
                     >
                         <Settings size={18} />
-                        {t('sidebar.settings')}
+                        {t('sidebar.cycleSettings')}
                     </NavLink>
 
                     <div className="flex items-center gap-3 px-4 mt-4">
