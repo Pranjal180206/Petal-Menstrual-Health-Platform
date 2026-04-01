@@ -23,7 +23,7 @@ const Hero = () => {
     };
 
     return (
-        <section className="w-full max-w-7xl mx-auto px-6 py-12 md:py-20 flex flex-col items-center justify-center gap-12 overflow-hidden relative z-20">
+        <section className="w-full max-w-7xl mx-auto px-6 py-16 md:py-24 lg:py-28 min-h-[70vh] md:min-h-[78vh] flex flex-col items-center justify-center gap-12 overflow-hidden relative z-20">
             <div className="w-full space-y-8 text-center flex flex-col items-center relative z-10">
                 <motion.h1
                     initial={{ opacity: 0, y: -20 }}

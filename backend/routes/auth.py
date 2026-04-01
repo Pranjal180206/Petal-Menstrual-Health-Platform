@@ -37,8 +37,6 @@ class UserRegister(BaseModel):
     name: str
     email: str
     password: str
-    gender: str
-    age: int = Field(..., ge=7, le=120, description="Age must be between 7 and 120")
     is_menstruating: bool
 
     @field_validator("email", mode="before")
@@ -73,6 +71,8 @@ async def register(request: Request, user_in: UserRegister):
     
     user_dict = user_in.model_dump()
     password = user_dict.pop("password")
+    user_dict.setdefault("gender", "prefer not to say")
+    user_dict.setdefault("age", 0)
     user_dict["password_hash"] = get_password_hash(password)
     user_dict["role"] = "user"
     user_dict["created_at"] = datetime.utcnow()

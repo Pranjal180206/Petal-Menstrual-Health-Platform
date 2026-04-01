@@ -61,7 +61,14 @@ body::-webkit-scrollbar {
 }
 
 .bg-gradient-hero {
-  background: linear-gradient(180deg, #FFFFFF 0%, #FFF5F7 100%);
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #fffafc 28%,
+    #fff4f8 62%,
+    #fdfdff 86%,
+    #ffffff 100%
+  );
 }
 
 .bg-pattern {

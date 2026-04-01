@@ -130,7 +130,35 @@ const UsersSection = ({ show }) => {
   useEffect(() => { fetch(); }, [fetch]);
 
   const toggle = async (id) => {
-    try { await axiosInstance.patch(`/admin/users/${id}/deactivate`); show('User status updated'); fetch(); } catch { show('Failed to update', 'error'); }
+    try { 
+      await axiosInstance.patch(`/admin/users/${id}/deactivate`); 
+      show('User status updated'); 
+      fetch(); 
+    } catch (err) { 
+      show(err.response?.data?.detail || 'Failed to update', 'error'); 
+    }
+    setConfirm(null);
+  };
+
+  const promoteToAdmin = async (id) => {
+    try {
+      await axiosInstance.patch(`/admin/users/${id}/promote`);
+      show('User promoted to admin');
+      fetch();
+    } catch (err) {
+      show(err.response?.data?.detail || 'Failed to promote', 'error');
+    }
+    setConfirm(null);
+  };
+
+  const demoteFromAdmin = async (id) => {
+    try {
+      await axiosInstance.patch(`/admin/users/${id}/demote`);
+      show('Admin status removed');
+      fetch();
+    } catch (err) {
+      show(err.response?.data?.detail || 'Failed to demote', 'error');
+    }
     setConfirm(null);
   };
 
@@ -150,20 +178,38 @@ const UsersSection = ({ show }) => {
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <table className="w-full text-sm">
             <thead><tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
-              <th className="text-left px-5 py-3">Name</th><th className="text-left px-5 py-3">Email</th><th className="text-left px-5 py-3">Provider</th><th className="text-left px-5 py-3">Status</th><th className="px-5 py-3">Action</th>
+              <th className="text-left px-5 py-3">Name</th><th className="text-left px-5 py-3">Email</th><th className="text-left px-5 py-3">Role</th><th className="text-left px-5 py-3">Status</th><th className="px-5 py-3">Actions</th>
             </tr></thead>
             <tbody>
               {filtered.map(u => (
                 <tr key={u.id} className="border-t border-gray-50 hover:bg-gray-50/50">
                   <td className="px-5 py-3 font-bold text-gray-800">{u.name}</td>
                   <td className="px-5 py-3 text-gray-500">{u.email}</td>
-                  <td className="px-5 py-3"><Badge color="blue">{u.auth_provider || 'email'}</Badge></td>
+                  <td className="px-5 py-3">
+                    {u.is_admin ? <Badge color="pink">Admin</Badge> : <Badge color="gray">User</Badge>}
+                  </td>
                   <td className="px-5 py-3">{u.is_active !== false ? <Badge color="green">Active</Badge> : <Badge color="red">Deactivated</Badge>}</td>
                   <td className="px-5 py-3 text-center">
-                    <button onClick={() => setConfirm({ msg: `${u.is_active !== false ? 'Deactivate' : 'Reactivate'} ${u.name}?`, fn: () => toggle(u.id) })}
-                      className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${u.is_active !== false ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}>
-                      {u.is_active !== false ? 'Deactivate' : 'Reactivate'}
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => setConfirm({ msg: `${u.is_active !== false ? 'Deactivate' : 'Reactivate'} ${u.name}?`, fn: () => toggle(u.id) })}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ${u.is_active !== false ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}>
+                        {u.is_active !== false ? 'Deactivate' : 'Reactivate'}
+                      </button>
+                      {u.is_admin ? (
+                        <button
+                          onClick={() => setConfirm({ msg: `Remove admin privileges from ${u.name}?`, fn: () => demoteFromAdmin(u.id) })}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg text-amber-600 hover:bg-amber-50 transition-colors">
+                          Remove Admin
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setConfirm({ msg: `Promote ${u.name} to admin?`, fn: () => promoteToAdmin(u.id) })}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg text-pink-600 hover:bg-pink-50 transition-colors">
+                          Make Admin
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

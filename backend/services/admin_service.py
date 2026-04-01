@@ -200,6 +200,38 @@ async def toggle_user_active(db, user_id: str) -> dict:
     updated["id"] = str(updated.pop("_id", ""))
     return updated
 
+async def promote_user_to_admin(user_id: str, db) -> dict:
+    oid = safe_object_id(user_id)
+    user = await db["users"].find_one({"_id": oid})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.get("is_admin", False):
+        raise HTTPException(status_code=400, detail="User is already an admin")
+    updated = await db["users"].find_one_and_update(
+        {"_id": oid},
+        {"$set": {"is_admin": True}},
+        return_document=True
+    )
+    updated.pop("password_hash", None)
+    updated["id"] = str(updated.pop("_id", ""))
+    return updated
+
+async def demote_user_from_admin(user_id: str, db) -> dict:
+    oid = safe_object_id(user_id)
+    user = await db["users"].find_one({"_id": oid})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if not user.get("is_admin", False):
+        raise HTTPException(status_code=400, detail="User is not an admin")
+    updated = await db["users"].find_one_and_update(
+        {"_id": oid},
+        {"$set": {"is_admin": False}},
+        return_document=True
+    )
+    updated.pop("password_hash", None)
+    updated["id"] = str(updated.pop("_id", ""))
+    return updated
+
 
 # DEBT: No category enum validation — any string is accepted.
 # DEBT: display_order collisions are not prevented on create.

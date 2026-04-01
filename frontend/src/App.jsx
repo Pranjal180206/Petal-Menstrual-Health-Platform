@@ -198,7 +198,7 @@ const AnimatedRoutes = () => {
 const LandingPage = () => (
   <div className="relative overflow-hidden">
     <FloatingBackground />
-    <div className="bg-gradient-hero pb-12 relative z-10">
+    <div className="bg-gradient-hero pb-24 md:pb-28 lg:pb-32 relative z-10">
       <Navbar isHome={true} />
       <Hero />
     </div>

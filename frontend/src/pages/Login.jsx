@@ -15,8 +15,6 @@ const Login = () => {
         name: '',
         email: '',
         password: '',
-        gender: 'female',
-        age: 18,
         is_menstruating: true
     });
     const [error, setError] = useState('');
@@ -182,53 +180,6 @@ const Login = () => {
                                     className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-400 font-medium text-[#1D1D2C]"
                                 />
                             </div>
-
-                            {isLogin && (
-                                <div className="space-y-1.5 pt-2">
-                                    <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.genderLabel')} (One Time)</label>
-                                    <select
-                                        name="gender" value={formData.gender} onChange={handleChange}
-                                        className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium text-[#1D1D2C]"
-                                    >
-                                        <option value="female">{t('login.genderFemale')}</option>
-                                        <option value="male">{t('login.genderMale')}</option>
-                                        <option value="non-binary">{t('login.genderNonBinary')}</option>
-                                        <option value="other">{t('login.genderOther')}</option>
-                                    </select>
-                                    <p className="text-[10px] text-gray-400 ml-1">Stored to your profile later</p>
-                                </div>
-                            )}
-
-                            {!isLogin && (
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.ageLabel')}</label>
-                                        <input
-                                            type="number" 
-                                            name="age" 
-                                            required 
-                                            min="7" 
-                                            max="120"
-                                            placeholder="Enter age"
-                                            value={formData.age} 
-                                            onChange={handleChange}
-                                            className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium text-[#1D1D2C]"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.genderLabel')}</label>
-                                        <select
-                                            name="gender" value={formData.gender} onChange={handleChange}
-                                            className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium text-[#1D1D2C]"
-                                        >
-                                            <option value="female">{t('login.genderFemale')}</option>
-                                            <option value="male">{t('login.genderMale')}</option>
-                                            <option value="non-binary">{t('login.genderNonBinary')}</option>
-                                            <option value="other">{t('login.genderOther')}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            )}
 
                             <div className="flex items-center gap-3 ml-1 pt-2">
                                 <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#FF6B9A]">
