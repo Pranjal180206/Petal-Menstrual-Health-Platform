@@ -1,4 +1,4 @@
-import { Menu, Settings as SettingsIcon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PetalIcon from './PetalIcon';
@@ -44,9 +44,6 @@ const Navbar = ({ isHome = false }) => {
 
                 {user ? (
                     <div className="flex items-center gap-2">
-                        <Link to="/account/settings" className="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 hover:text-brand-pink hover:bg-pink-50 transition-all border border-gray-100 shadow-sm" title="Account Settings">
-                            <SettingsIcon size={18} />
-                        </Link>
                         <Link to="/profile" className="w-11 h-11 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-400 border-2 border-white shadow-soft hover:-translate-y-0.5 transition-transform cursor-pointer">
                             {user?.avatar_url
                             ? <img src={user.avatar_url} alt="avatar" className="w-full h-full rounded-2xl object-cover" />

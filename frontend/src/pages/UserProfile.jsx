@@ -1,21 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { User, Settings, LogOut, ChevronRight, Shield } from 'lucide-react';
+import { LogOut, ChevronRight, Shield, Save, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../api/axiosInstance';
+import Toast from '../components/Toast';
 
 const UserProfile = () => {
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, setUser: setAuthUser } = useAuth();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [toast, setToast] = useState(null);
+    const [profileForm, setProfileForm] = useState({ name: '', age: '' });
 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
                 const res = await axiosInstance.get('/users/profile');
                 setUser(res.data);
+                setProfileForm({
+                    name: res.data?.name || '',
+                    age: res.data?.age || '',
+                });
             } catch (err) {
                 console.error("Failed to load user profile:", err);
             } finally {
@@ -28,6 +35,37 @@ const UserProfile = () => {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+    };
+
+    const handleSaveProfile = async () => {
+        try {
+            const payload = {
+                name: profileForm.name,
+                age: profileForm.age === '' ? null : Number(profileForm.age),
+            };
+            const res = await axiosInstance.patch('/users/profile', payload);
+            setUser(res.data);
+            setAuthUser(res.data);
+            showToast('Profile updated successfully!', 'success');
+        } catch (err) {
+            showToast('Failed to update profile.', 'error');
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm('Are you sure you want to schedule account deletion?');
+        if (!confirmed) return;
+
+        try {
+            await axiosInstance.delete('/users/account');
+            showToast('Account deletion has been scheduled.', 'warning');
+        } catch (err) {
+            showToast('Failed to delete account.', 'error');
+        }
     };
 
     if (isLoading) {
@@ -104,17 +142,50 @@ const UserProfile = () => {
                             </button>
                         )}
 
-                        <button
-                            onClick={() => navigate('/cycle-tracker/settings')}
-                            className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors group"
-                        >
-                            <div className="w-10 h-10 rounded-xl bg-pink-50 text-brand-pink flex items-center justify-center group-hover:bg-pink-100 transition-colors">
-                                <User size={18} />
-                            </div>
-                            <span className="font-bold text-sm text-brand-dark flex-1 text-left">Manage Settings</span>
-                            <ChevronRight size={16} className="text-gray-300 group-hover:text-brand-pink transition-colors" />
-                        </button>
                     </div>
+                </div>
+
+                <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 space-y-5">
+                    <h3 className="font-heading font-extrabold text-xl text-brand-dark">Profile Settings</h3>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Name</label>
+                        <input
+                            type="text"
+                            value={profileForm.name}
+                            onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                            className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#D81B60]"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Age</label>
+                        <input
+                            type="number"
+                            min={7}
+                            max={120}
+                            value={profileForm.age}
+                            onChange={(e) => setProfileForm((prev) => ({ ...prev, age: e.target.value }))}
+                            className="w-full bg-[#F7F8FA] border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#D81B60]"
+                        />
+                    </div>
+                    <button
+                        onClick={handleSaveProfile}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#D81B60] hover:bg-[#C2185B] text-white px-6 py-3 rounded-xl font-bold transition-colors"
+                    >
+                        <Save size={16} />
+                        Save Profile
+                    </button>
+                </div>
+
+                <div className="bg-red-50 rounded-[2rem] p-6 border border-red-100">
+                    <h3 className="font-heading font-extrabold text-xl text-red-700 mb-2">Delete Account</h3>
+                    <p className="text-sm text-red-600 mb-4">This action is permanent and cannot be undone.</p>
+                    <button
+                        onClick={handleDeleteAccount}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-colors"
+                    >
+                        <Trash2 size={16} />
+                        Delete My Account
+                    </button>
                 </div>
 
                 {/* Logout */}
@@ -126,6 +197,7 @@ const UserProfile = () => {
                     Log Out
                 </button>
             </main>
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
         </div>
     );
 };

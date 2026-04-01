@@ -27,7 +27,6 @@ import CycleTracker from './pages/CycleTracker';
 import RiskAnalysis from './pages/RiskAnalysis';
 import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
-import AccountSettings from './pages/AccountSettings';
 import CycleSettings from './pages/CycleSettings';
 
 // ── Page transition wrapper ──
@@ -69,6 +68,19 @@ const TrackerGuard = ({ children }) => {
     return <Navigate to="/tracker-restricted" replace />;
   }
   
+  return children;
+};
+
+// ── Female-only guard for cycle settings ──
+const FemaleCycleSettingsGuard = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (user.gender !== 'female') {
+    return <Navigate to="/tracker-restricted" replace />;
+  }
+
   return children;
 };
 
@@ -164,7 +176,7 @@ const AnimatedRoutes = () => {
           <Route path="/terms" element={<PageWrapper><TermsPage /></PageWrapper>} />
           <Route path="/about-upay" element={<PageWrapper><AboutUpay /></PageWrapper>} />
           <Route path="/tracker-restricted" element={<PageWrapper><TrackerRestrictionPage /></PageWrapper>} />
-          <Route path="/account/settings" element={<ProtectedRoute><PageWrapper><AccountSettings /></PageWrapper></ProtectedRoute>} />
+          <Route path="/account/settings" element={<Navigate to="/profile" replace />} />
 
           {/* Onboarding Flow */}
           <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
@@ -182,7 +194,7 @@ const AnimatedRoutes = () => {
             <Route path="risk" element={<RiskAnalysis />} />
             <Route path="report" element={<ReportGenerator />} />
             <Route path="insights" element={<Insights />} />
-            <Route path="settings" element={<CycleSettings />} />
+            <Route path="settings" element={<FemaleCycleSettingsGuard><CycleSettings /></FemaleCycleSettingsGuard>} />
           </Route>
 
           {/* Legacy redirects — keep old URLs working */}

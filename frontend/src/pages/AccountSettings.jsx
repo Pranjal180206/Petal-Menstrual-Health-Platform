@@ -13,7 +13,7 @@ const SECTIONS = [
 ];
 
 const AccountSettings = () => {
-    const { user, setUser, logout } = useAuth();
+    const { user, setUser } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -24,6 +24,7 @@ const AccountSettings = () => {
     const [profile, setProfile] = useState({
         name: user?.name || '',
         email: user?.email || '',
+        age: user?.age || '',
     });
 
     // Sync state on user change
@@ -32,7 +33,7 @@ const AccountSettings = () => {
             navigate('/login');
             return;
         }
-        setProfile({ name: user.name || '', email: user.email || '' });
+        setProfile({ name: user.name || '', email: user.email || '', age: user.age || '' });
     }, [user, navigate]);
 
     useEffect(() => {
@@ -48,6 +49,7 @@ const AccountSettings = () => {
         try {
             const res = await axiosInstance.patch('/users/profile', {
                 name: profile.name,
+                age: profile.age ? Number(profile.age) : null,
             });
             setUser(res.data);
             showToast('Profile saved successfully! ✓', 'success');
@@ -67,7 +69,7 @@ const AccountSettings = () => {
             <div className="p-8 max-w-5xl mx-auto">
                 <header className="mb-8">
                     <h1 className="text-3xl font-heading font-extrabold text-[#1D1D2C] mb-1">{t('sidebar.accountSettings')}</h1>
-                    <p className="text-sm text-gray-500 font-medium">Manage your profile, security, and app preferences.</p>
+                    <p className="text-sm text-gray-500 font-medium">Manage your profile details and account access.</p>
                 </header>
 
                 <div className="flex flex-col md:flex-row gap-8">
@@ -124,6 +126,17 @@ const AccountSettings = () => {
                                             className="w-full bg-[#F7F8FA] border-2 border-transparent rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:border-[#D81B60] focus:bg-white transition-all shadow-inner-sm"
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Age</label>
+                                        <input
+                                            type="number"
+                                            min={7}
+                                            max={120}
+                                            value={profile.age}
+                                            onChange={e => setProfile(p => ({ ...p, age: e.target.value }))}
+                                            className="w-full bg-[#F7F8FA] border-2 border-transparent rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:border-[#D81B60] focus:bg-white transition-all shadow-inner-sm"
+                                        />
+                                    </div>
                                 </div>
                                 <button
                                     onClick={handleSaveProfile}
@@ -137,24 +150,6 @@ const AccountSettings = () => {
                         {/* ── ACCOUNT ── */}
                         {activeSection === 'account' && (
                             <div className="space-y-6">
-                                <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-card">
-                                    <h2 className="font-heading font-bold text-xl text-[#1D1D2C] mb-2">Logout</h2>
-                                    <p className="text-sm text-gray-500 mb-8 font-medium">Securely sign out of your current session.</p>
-                                    <button
-                                        onClick={() => {
-                                            logout();
-                                            navigate('/');
-                                        }}
-                                        className="w-full flex items-center justify-between p-6 rounded-[1.5rem] bg-gray-50 hover:bg-gray-100 transition-all group"
-                                    >
-                                        <div className="flex flex-col items-start gap-1">
-                                            <span className="text-base font-black text-[#1D1D2C]">Sign Out</span>
-                                            <span className="text-xs text-gray-400 font-medium">from this device</span>
-                                        </div>
-                                        <ChevronRight size={20} className="text-gray-300 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                </div>
-
                                 <div className="bg-red-50 border border-red-100 rounded-[2rem] p-8">
                                     <h2 className="font-heading font-bold text-xl text-red-700 mb-2 flex items-center gap-2">
                                         <Trash2 size={20} /> Danger Zone
