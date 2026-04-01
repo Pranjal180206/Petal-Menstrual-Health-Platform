@@ -243,7 +243,17 @@
     "happyMood": "😊 Happy",
     "neutralMood": "😐 Okay",
     "sadMood": "😢 Sad",
-    "irritatedMood": "😤 Irritated"
+    "irritatedMood": "😤 Irritated",
+    "mlSummary": {
+      "title": "AI-Powered Insights",
+      "subtitle": "Based on {{count}} cycle records in our dataset",
+      "mlActive": "ML Active",
+      "emptyState": "Log more cycles to unlock personalised AI insights.",
+      "populationSnapshot": "Population snapshot",
+      "lowRisk": "Low-risk cycles",
+      "avgLength": "Avg cycle length",
+      "moderateRisk": "Moderate-risk"
+    }
   },
   "languageSelector": {
     "label": "Language",

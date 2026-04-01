@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { X, Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Eye, Flag, Users, FileText, HelpCircle, Video, BookOpen, Shield, ChevronLeft, Search, ToggleLeft, ToggleRight } from 'lucide-react';
+import { X, Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Eye, Flag, Users, FileText, HelpCircle, Video, BookOpen, Shield, ChevronLeft, Search, ToggleLeft, ToggleRight, Award } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import PetalIcon from '../components/PetalIcon';
 import Toast from '../components/Toast';
@@ -47,6 +47,7 @@ const sections = [
   { id: 'articles', label: 'Articles', icon: FileText },
   { id: 'myths', label: 'Myths & Facts', icon: HelpCircle },
   { id: 'quizzes', label: 'Quizzes', icon: CheckCircle2 },
+  { id: 'scores', label: 'Scores', icon: Award },
   { id: 'videos', label: 'Videos', icon: Video },
   { id: 'blogs', label: 'Blogs', icon: BookOpen },
   { id: 'flagged', label: 'Flagged Posts', icon: Flag },
@@ -118,6 +119,7 @@ const AdminPanel = () => {
         {active === 'articles' && <ArticlesSection show={show} />}
         {active === 'myths' && <MythsSection show={show} />}
         {active === 'quizzes' && <QuizzesSection show={show} />}
+        {active === 'scores' && <ScoresSection show={show} />}
         {active === 'videos' && <VideosSection show={show} />}
         {active === 'blogs' && <BlogsSection show={show} />}
         {active === 'flagged' && <FlaggedSection show={show} />}
@@ -660,6 +662,114 @@ const VideosSection = ({ show }) => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   SCORES
+   ═══════════════════════════════════════════════════════ */
+const ScoresSection = ({ show }) => {
+  const [scores, setScores] = useState([]);
+  const [quizzes, setQuizzes] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [scoresSummary, setScoresSummary] = useState({ total: 0 });
+  const [loading, setLoading] = useState(true);
+  const [filterQuizId, setFilterQuizId] = useState('');
+
+  const fetchData = async (quizId = '') => {
+    try {
+      const qRes = await axiosInstance.get('/admin/quizzes');
+      setQuizzes(qRes.data);
+
+      const params = quizId ? `?quiz_id=${quizId}` : "";
+      const sRes = await axiosInstance.get(`/admin/quiz-scores${params}`);
+      setScores(sRes.data.scores);
+      setScoresSummary({ total: sRes.data.total });
+
+      if(!quizId) {
+        const sumRes = await axiosInstance.get("/admin/quiz-scores/summary");
+        setSummary(sumRes.data);
+      }
+    } catch {
+       show('Failed to load score data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData(filterQuizId);
+  }, [filterQuizId]);
+
+  return (
+    <>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-xl border border-gray-100 flex flex-col justify-center items-center shadow-sm">
+          <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">Total Attempts</div>
+          <div className="text-3xl font-extrabold text-[#D81B60] mt-1">{summary?.total_attempts || 0}</div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-gray-100 flex flex-col justify-center items-center shadow-sm">
+          <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">Pass Rate</div>
+          <div className="text-3xl font-extrabold text-green-500 mt-1">{summary?.overall_pass_rate || 0}%</div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-gray-100 flex flex-col justify-center items-center shadow-sm">
+          <div className="text-sm font-bold text-gray-400 uppercase tracking-wider">Avg Score</div>
+          <div className="text-3xl font-extrabold text-blue-500 mt-1">{summary?.per_quiz?.[0]?.avg_score || 0}%</div>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center mb-4">
+        <select 
+          value={filterQuizId} 
+          onChange={(e) => setFilterQuizId(e.target.value)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 focus:outline-none focus:border-[#D81B60]"
+        >
+          <option value="">All Quizzes</option>
+          {quizzes.map(q => (
+            <option key={q.id} value={q.id}>{q.title?.en || q.title || 'Untitled'}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? <p className="text-sm text-gray-400">Loading...</p> : scores.length === 0 ? <EmptyState icon={Award} text="No scores found" /> : (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                <th className="text-left px-5 py-3">Quiz</th>
+                <th className="text-left px-5 py-3">Student</th>
+                <th className="text-left px-5 py-3">Email</th>
+                <th className="text-left px-5 py-3">Score</th>
+                <th className="text-left px-5 py-3">Status</th>
+                <th className="text-left px-5 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scores.map(score => (
+                <tr key={score.id} className="border-t border-gray-50 hover:bg-gray-50/50">
+                  <td className="px-5 py-3 font-bold text-gray-800">{score.quiz_title}</td>
+                  <td className="px-5 py-3 text-gray-600">{score.user_name || "Anonymous"}</td>
+                  <td className="px-5 py-3 text-gray-500">{score.user_email || "—"}</td>
+                  <td className={`px-5 py-3 font-bold ${score.score >= 70 ? "text-green-600" : "text-red-600"}`}>
+                    {score.score}%
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-bold
+                      ${score.passed 
+                        ? "bg-green-100 text-green-700" 
+                        : "bg-red-100 text-red-700"}`}>
+                      {score.passed ? "PASS" : "FAIL"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-gray-500">{new Date(score.submitted_at).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </>

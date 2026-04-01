@@ -2,8 +2,9 @@
 ml_service.py — ML prediction bridge for Petal backend.
 
 Loads menstrual_model.joblib once at import time.
-Provides predict_next_period() and get_ml_status() for use by
-dashboard_service and tracker_service.
+Also loads risk_analysis_adaptive.csv for population-level insights.
+Provides predict_next_period(), get_ml_status(), get_population_insights(),
+and get_personalized_insights() for use by dashboard_service and friends.
 
 Feature vector (14 features, exact training order):
   1.  baseline             35.14% — rolling mean of cycle_lengths
@@ -31,6 +32,22 @@ from datetime import datetime, timedelta
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+# ── CSV loading (risk_analysis_adaptive.csv) ─────────────────────────────────
+try:
+    import pandas as pd
+    _CSV_PATH = os.path.join(
+        os.path.dirname(__file__), "..", "..", "ml", "risk_analysis_adaptive.csv"
+    )
+    risk_df = pd.read_csv(_CSV_PATH)
+    # Normalise risk_level values — strip trailing spaces
+    risk_df["risk_level"] = risk_df["risk_level"].str.strip()
+    CSV_AVAILABLE = True
+    logger.info(f"[ML] Risk analysis CSV loaded: {len(risk_df)} rows")
+except Exception as _csv_err:
+    risk_df = None
+    CSV_AVAILABLE = False
+    logger.warning(f"[ML] Warning: Could not load CSV — {_csv_err}")
 
 # ── Model loading (once at import time) ──────────────────────────────────────
 MODEL_PATH = os.path.join(
@@ -225,7 +242,212 @@ def get_ml_status() -> dict:
         "model_type": str(type(model).__name__) if model else None,
         "model_path": os.path.abspath(MODEL_PATH),
         "phases_bleeding_imputed_median": PHASES_BLEEDING_MEDIAN,
+        "csv_available": CSV_AVAILABLE,
+        "csv_rows": len(risk_df) if CSV_AVAILABLE else 0,
     }
+
+
+# ── Population insights from CSV ──────────────────────────────────────────────
+def get_population_insights() -> dict:
+    """
+    Derives aggregate insights from the risk analysis CSV.
+    Returns population-level statistics to show as context on the
+    Insights page — e.g. average cycle length, risk distribution.
+    """
+    if not CSV_AVAILABLE or risk_df is None:
+        return {"available": False}
+
+    try:
+        total = len(risk_df)
+
+        # Population average cycle length (personal_mean column)
+        pop_avg_cycle = round(float(risk_df["personal_mean"].mean()), 1)
+        pop_std_cycle = round(float(risk_df["personal_mean"].std()), 1)
+
+        # Risk level distribution
+        risk_counts = risk_df["risk_level"].value_counts().to_dict()
+        low_pct   = round(risk_counts.get("LOW",      0) / total * 100, 1)
+        mod_pct   = round(risk_counts.get("MODERATE", 0) / total * 100, 1)
+        high_pct  = round(risk_counts.get("HIGH",     0) / total * 100, 1)
+
+        # Average deviation (how much an individual cycle deviates
+        # from the person's own baseline)
+        pop_avg_deviation = round(float(risk_df["deviation"].mean()), 1)
+
+        # Percentage whose personal baseline model is used (vs population)
+        pct_using_personal = round(
+            float(risk_df["using_personal"].sum()) / total * 100, 1
+        )
+
+        # Flag frequency — which concerns appear most
+        flags_series = risk_df["flags"].dropna()
+        flag_counts: dict[str, int] = {}
+        for cell in flags_series:
+            for flag in str(cell).split(","):
+                f = flag.strip()
+                if f:
+                    flag_counts[f] = flag_counts.get(f, 0) + 1
+        top_flags = sorted(flag_counts.items(), key=lambda x: x[1], reverse=True)[:3]
+
+        return {
+            "available": True,
+            "population_size": total,
+            "avg_cycle_length": pop_avg_cycle,
+            "std_cycle_length": pop_std_cycle,
+            "avg_deviation": pop_avg_deviation,
+            "pct_low_risk": low_pct,
+            "pct_moderate_risk": mod_pct,
+            "pct_high_risk": high_pct,
+            "pct_using_personal_model": pct_using_personal,
+            "top_flags": [{"flag": f, "count": c} for f, c in top_flags],
+        }
+
+    except Exception as e:
+        logger.error(f"[ML] get_population_insights error: {e}", exc_info=True)
+        return {"available": False}
+
+
+# ── Personalised insights from CSV ────────────────────────────────────────────
+def get_personalized_insights(cycle_history: list, user: dict) -> dict:  # noqa: N802
+    """
+    Compares the user's cycle data to the population in the CSV.
+    Returns a list of insight cards rendered in the Insights page.
+
+    Each insight card has:
+      type     — slug identifying the insight
+      severity — "positive" | "info" | "warning"
+      title    — short heading
+      message  — 1–2 sentence explanation
+    """
+    if not CSV_AVAILABLE or risk_df is None or not cycle_history:
+        return {"available": bool(CSV_AVAILABLE), "insights": [], "population_size": 0}
+
+    try:
+        insights: list[dict] = []
+        total = len(risk_df)
+
+        pop_avg  = float(risk_df["personal_mean"].mean())
+        pop_std  = float(risk_df["personal_mean"].std())
+        pop_avg_dev = float(risk_df["deviation"].mean())
+
+        # ── User's average cycle length
+        cycle_lengths = [
+            c["cycle_length"] for c in cycle_history if c.get("cycle_length")
+        ]
+
+        if cycle_lengths:
+            user_avg = sum(cycle_lengths) / len(cycle_lengths)
+
+            # --- Insight 1: Cycle length vs population ---
+            if user_avg < pop_avg - pop_std:
+                insights.append({
+                    "type": "cycle_length_short",
+                    "severity": "info",
+                    "title": "Shorter cycles than average",
+                    "message": (
+                        f"Your average cycle is {user_avg:.0f} days — shorter than the "
+                        f"population average of {pop_avg:.0f} days. "
+                        "Short cycles (< 24 days) can occasionally signal hormonal changes, "
+                        "but many people naturally have shorter cycles."
+                    ),
+                })
+            elif user_avg > pop_avg + pop_std:
+                insights.append({
+                    "type": "cycle_length_long",
+                    "severity": "info",
+                    "title": "Longer cycles than average",
+                    "message": (
+                        f"Your average cycle is {user_avg:.0f} days — longer than the "
+                        f"population average of {pop_avg:.0f} days. "
+                        "Occasional long cycles are normal; consistent patterns > 35 days "
+                        "are worth mentioning to a healthcare professional."
+                    ),
+                })
+            else:
+                insights.append({
+                    "type": "cycle_length_normal",
+                    "severity": "positive",
+                    "title": "Cycle length within normal range",
+                    "message": (
+                        f"Your average cycle ({user_avg:.0f} days) is well within the "
+                        f"population range of {pop_avg - pop_std:.0f}–{pop_avg + pop_std:.0f} days. "
+                        "Keep up the great tracking!"
+                    ),
+                })
+
+            # --- Insight 2: Cycle regularity (std deviation of user's cycles) ---
+            if len(cycle_lengths) >= 3:
+                import statistics
+                user_std = statistics.stdev(cycle_lengths)
+                if user_std <= pop_avg_dev:
+                    insights.append({
+                        "type": "regularity_high",
+                        "severity": "positive",
+                        "title": "Very regular cycles",
+                        "message": (
+                            f"Your cycles vary by only ±{user_std:.1f} days — "
+                            "more consistent than most people in our dataset. "
+                            "Regular cycles make it easier to plan ahead!"
+                        ),
+                    })
+                elif user_std <= pop_avg_dev * 2.5:
+                    insights.append({
+                        "type": "regularity_moderate",
+                        "severity": "info",
+                        "title": "Moderate cycle variation",
+                        "message": (
+                            f"Your cycles vary by about ±{user_std:.1f} days, "
+                            "which is typical for most people. "
+                            "Continued tracking will sharpen the AI's predictions over time."
+                        ),
+                    })
+                else:
+                    insights.append({
+                        "type": "regularity_low",
+                        "severity": "warning",
+                        "title": "Irregular cycle pattern detected",
+                        "message": (
+                            f"Your cycles vary by ±{user_std:.1f} days, which is more "
+                            "than usual. Stress, sleep, diet, or health changes can all "
+                            "affect regularity. Consider discussing with a healthcare provider "
+                            "if this persists."
+                        ),
+                    })
+
+        # --- Insight 3: Data quality / how many cycles logged ---
+        n_logged = len(cycle_history)
+        if n_logged < 3:
+            insights.append({
+                "type": "log_more",
+                "severity": "info",
+                "title": "Log more cycles for richer insights",
+                "message": (
+                    f"You've logged {n_logged} cycle{'s' if n_logged != 1 else ''}. "
+                    "Our AI-powered insights improve significantly after 3+ cycles — "
+                    "keep tracking!"
+                ),
+            })
+        elif n_logged >= 6:
+            insights.append({
+                "type": "good_history",
+                "severity": "positive",
+                "title": "Great tracking history!",
+                "message": (
+                    f"You've logged {n_logged} cycles — that's excellent! "
+                    f"In our dataset, {round(float(risk_df['n_cycles_known'].mean())):.0f} cycles "
+                    "on average before patterns stabilise. You're ahead of the curve."
+                ),
+            })
+
+        return {
+            "available": True,
+            "insights": insights,
+            "population_size": total,
+        }
+
+    except Exception as e:
+        logger.error(f"[ML] get_personalized_insights error: {e}", exc_info=True)
+        return {"available": False, "insights": [], "population_size": 0}
 
 def assess_risk_from_cycles(cycle_history: list, user: dict) -> dict:
     """

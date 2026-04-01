@@ -5,6 +5,42 @@ from models.quiz_model import Quiz, ScoreResponse
 from database import get_db
 import traceback
 from fastapi import HTTPException
+from datetime import datetime
+
+def _resolve_title(title_field, lang: str) -> str:
+    """Handles both flat string and multilingual dict title."""
+    if isinstance(title_field, dict):
+        return title_field.get(lang) or title_field.get("en", "Unknown Quiz")
+    return title_field or "Unknown Quiz"
+
+async def save_quiz_score(
+    db,
+    quiz: dict,
+    user: dict | None,
+    score: float,
+    passed: bool,
+    correct_answers: int,
+    total_questions: int,
+    language: str = "en"
+):
+    """
+    Saves score to dedicated quiz_scores collection.
+    Called on every submission regardless of auth status.
+    """
+    record = {
+        "quiz_id": str(quiz["_id"]),
+        "quiz_title": _resolve_title(quiz.get("title"), language),
+        "user_id": str(user["_id"]) if user else None,
+        "user_name": user.get("name") if user else "Anonymous",
+        "user_email": user.get("email") if user else None,
+        "score": round(score, 2),
+        "passed": passed,
+        "total_questions": total_questions,
+        "correct_answers": correct_answers,
+        "submitted_at": datetime.utcnow(),
+        "language": language
+    }
+    await db["quiz_scores"].insert_one(record)
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +103,12 @@ class QuizService:
         score_percentage = (correct_count / total_questions * 100) if total_questions > 0 else 0
         passed = score_percentage >= 70.0
 
+        db = get_db()
+        user = None
+
         if user_id:
             try:
-                db = get_db()
+                user = await db["users"].find_one({"_id": safe_object_id(user_id)})
                 await db["users"].update_one(
                     {"_id": safe_object_id(user_id)},
                     {"$push": {
@@ -81,8 +120,24 @@ class QuizService:
                     }}
                 )
             except Exception as e:
-                logger.error(f"[ERROR] QuizService.score_quiz: {e}", exc_info=True)
+                logger.error(f"[ERROR] QuizService.score_quiz history update: {e}", exc_info=True)
                 raise HTTPException(status_code=500, detail="Internal server error")
+
+        try:
+            # We assume lang is passed or default to "en"
+            await save_quiz_score(
+                db=db,
+                quiz=quiz,
+                user=user,
+                score=score_percentage,
+                passed=passed,
+                correct_answers=correct_count,
+                total_questions=total_questions,
+                language="en"
+            )
+        except Exception as e:
+             logger.error(f"[ERROR] QuizService.score_quiz save_quiz_score: {e}", exc_info=True)
+             raise HTTPException(status_code=500, detail="Internal server error saving score")
 
         return ScoreResponse(
             score_percentage=score_percentage,

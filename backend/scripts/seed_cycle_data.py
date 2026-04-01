@@ -14,15 +14,20 @@ async def main():
     await connect_to_mongo()
     db = get_db()
     
-    # 1. Fetch an existing user
-    user = await db["users"].find_one()
+    # 1. Fetch user by EMAIL (CHANGE HERE)
+    TARGET_EMAIL = "sortepranjal1802@gmail.com"  # ← put your email here
+    user = await db["users"].find_one({"email": TARGET_EMAIL})
+    if not user:
+        print(f"❌ No user found with email: {TARGET_EMAIL}")
+        await close_mongo_connection()
+        return
     if not user:
         print("No user found in the database. Please create a user first.")
         await close_mongo_connection()
         return
         
     user_id = str(user["_id"])
-    print(f"Target User ID: {user_id} ({user.get('email', 'Unknown')})")
+    print(f"Seeding for: {user.get('email')} ({user_id})")
     
     # 2. Safety: Clear previous cycle_logs and daily_symptoms for this user
     delete_result = await db["cycle_logs"].delete_many({"user_id": user_id})

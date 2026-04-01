@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Droplets, Activity, Zap, TrendingUp, AlertCircle, CalendarDays, Smile, HelpCircle, Sparkles } from 'lucide-react';
+import { Lightbulb, Droplets, Activity, Zap, TrendingUp, AlertCircle, CalendarDays, Smile, Brain, CheckCircle, Info, AlertTriangle, HelpCircle, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 
@@ -64,9 +64,9 @@ const Insights = () => {
         );
     }
 
-    const { cycle_length_history = [], symptom_frequency = [], mood_trend = [], symptom_trend = [], top_symptom } = insights || {};
+    const { cycle_length_history = [], symptom_frequency = [], mood_trend = [], symptom_trend = [], top_symptom, ml_summary } = insights || {};
 
-    const hasData = cycle_length_history.length > 0 || symptom_frequency.length > 0 || mood_trend.length > 0 || symptom_trend.length > 0 || top_symptom;
+    const hasData = cycle_length_history.length > 0 || symptom_frequency.length > 0 || mood_trend.length > 0 || symptom_trend.length > 0 || top_symptom || ml_summary?.available;
 
     if (!hasData) {
         return (
@@ -363,6 +363,107 @@ const Insights = () => {
                     </section>
                 )}
             </div>
+
+            {/* ── AI-Powered Insights ───────────────────────────────────────── */}
+            {ml_summary?.available && (
+                <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFF0F4] to-[#FCE4EC] flex items-center justify-center text-[#D81B60] shrink-0">
+                            <Brain size={20} />
+                        </div>
+                        <div>
+                            <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">
+                                {t('insights.mlSummary.title')}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-medium">
+                                {t('insights.mlSummary.subtitle', { count: ml_summary.population_size?.toLocaleString() || ml_summary.population_insights?.population_size?.toLocaleString() || '333' })}
+                            </p>
+                        </div>
+                        {ml_summary.ml_driven && (
+                            <span className="ml-auto text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-gradient-to-r from-[#FFF0F4] to-[#FCE4EC] text-[#D81B60]">
+                                {t('insights.mlSummary.mlActive')}
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Personalised insight cards */}
+                    {ml_summary.personalized_insights?.length > 0 ? (
+                        <div className="space-y-3">
+                            {ml_summary.personalized_insights.map((insight, i) => {
+                                const cfg = {
+                                    positive: {
+                                        border: 'border-emerald-400',
+                                        bg: 'bg-emerald-50',
+                                        icon: <CheckCircle size={16} className="text-emerald-500 shrink-0 mt-0.5" />,
+                                    },
+                                    warning: {
+                                        border: 'border-amber-400',
+                                        bg: 'bg-amber-50',
+                                        icon: <AlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5" />,
+                                    },
+                                    info: {
+                                        border: 'border-blue-300',
+                                        bg: 'bg-blue-50',
+                                        icon: <Info size={16} className="text-blue-400 shrink-0 mt-0.5" />,
+                                    },
+                                }[insight.severity] || {
+                                    border: 'border-gray-200',
+                                    bg: 'bg-gray-50',
+                                    icon: <Info size={16} className="text-gray-400 shrink-0 mt-0.5" />,
+                                };
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`flex gap-3 p-4 rounded-2xl border-l-4 ${cfg.border} ${cfg.bg} transition-all hover:shadow-sm`}
+                                    >
+                                        {cfg.icon}
+                                        <div>
+                                            <p className="font-semibold text-sm text-gray-800">{insight.title}</p>
+                                            <p className="text-gray-500 text-sm mt-0.5 leading-relaxed">{insight.message}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                            <div className="text-4xl mb-3">🌱</div>
+                            <p className="text-gray-500 text-sm font-medium">
+                                {t('insights.mlSummary.emptyState')}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Population context bar */}
+                    {ml_summary.population_insights?.available && (
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                            <p className="text-[11px] font-bold tracking-widest uppercase text-gray-400 mb-3">{t('insights.mlSummary.populationSnapshot')}</p>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center">
+                                    <p className="text-2xl font-heading font-extrabold text-emerald-500">
+                                        {ml_summary.population_insights.pct_low_risk}%
+                                    </p>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5">{t('insights.mlSummary.lowRisk')}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-heading font-extrabold text-[#D81B60]">
+                                        {ml_summary.population_insights.avg_cycle_length}d
+                                    </p>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5">{t('insights.mlSummary.avgLength')}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-heading font-extrabold text-amber-500">
+                                        {ml_summary.population_insights.pct_moderate_risk}%
+                                    </p>
+                                    <p className="text-[10px] font-bold text-gray-400 mt-0.5">{t('insights.mlSummary.moderateRisk')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </section>
+            )}
         </div>
     );
 };
