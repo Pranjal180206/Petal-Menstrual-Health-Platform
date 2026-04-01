@@ -81,7 +81,6 @@ const DashboardOverview = () => {
         return (
             <div className="flex items-center justify-center h-full p-8">
                 <div className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl font-bold flex flex-col gap-2 items-center shadow-sm">
-                    <span className="text-xl">🔒</span>
                     <p>{t('dashboard.signInNeeded')}</p>
                 </div>
             </div>
@@ -213,7 +212,6 @@ const DashboardOverview = () => {
                             </div>
                             
                             <div className="flex items-center gap-3">
-                                <span className="text-2xl">🎭</span>
                                 <div>
                                     <p className="text-sm text-gray-500 font-bold">{t('dashboard.primaryMood')}</p>
                                     <p className="font-black text-gray-900 capitalize">{summary?.mood_this_week ?? '—'}</p>

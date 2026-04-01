@@ -53,7 +53,9 @@ const CycleSettings = () => {
 
             <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-card">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 bg-pink-100 rounded-2xl flex items-center justify-center text-xl">🌸</div>
+                    <div className="w-10 h-10 bg-pink-100 rounded-2xl flex items-center justify-center">
+                        <Save size={18} className="text-[#D81B60]" />
+                    </div>
                     <div>
                         <h2 className="font-heading font-bold text-lg text-[#1D1D2C]">Cycle Preferences</h2>
                         <p className="text-xs text-gray-400 font-medium tracking-tight">Used to personalize your tracking experience</p>

@@ -1,24 +1,16 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp, HelpCircle, Sparkles, Heart, CheckCircle, Activity } from 'lucide-react';
+import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp, HelpCircle, Sparkles, Heart, CheckCircle, Activity, TrendingUp, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
-// Child-friendly emoji mapping for risk levels
-const RISK_EMOJI = {
-    low: '🌟',
-    moderate: '👀',
-    high: '⚠️',
-    unknown: '📝'
-};
-
-// Colors and emojis
+// Colors and status markers
 const RISK_CONFIG = {
-  low:     { color: 'green', emoji: '🌟', bgGradient: 'from-emerald-500 to-emerald-400' },
-  moderate:{ color: 'yellow', emoji: '👀', bgGradient: 'from-amber-500 to-amber-400' },
-  high:    { color: 'red', emoji: '⚠️', bgGradient: 'from-[#FF0055] to-[#FF4081]' },
-  unknown: { color: 'gray', emoji: '📝', bgGradient: 'from-gray-500 to-gray-400' },
+  low:     { color: 'green', icon: CheckCircle, bgGradient: 'from-emerald-500 to-emerald-400' },
+  moderate:{ color: 'yellow', icon: AlertCircle, bgGradient: 'from-amber-500 to-amber-400' },
+  high:    { color: 'red', icon: AlertCircle, bgGradient: 'from-[#FF0055] to-[#FF4081]' },
+  unknown: { color: 'gray', icon: Info, bgGradient: 'from-gray-500 to-gray-400' },
 };
 
 // Child-friendly explanation card
@@ -34,17 +26,18 @@ const ExplainCard = ({ text, className = "" }) => (
 // Tips card based on risk level
 const TipsCard = ({ riskLevel, t }) => {
     const tips = {
-        low: { emoji: '💪', title: t('riskAnalysis.whatToDo.lowTitle'), text: t('riskAnalysis.whatToDo.lowTips'), bg: 'bg-emerald-50', border: 'border-emerald-200', text_color: 'text-emerald-700' },
-        moderate: { emoji: '📋', title: t('riskAnalysis.whatToDo.moderateTitle'), text: t('riskAnalysis.whatToDo.moderateTips'), bg: 'bg-amber-50', border: 'border-amber-200', text_color: 'text-amber-700' },
-        high: { emoji: '💬', title: t('riskAnalysis.whatToDo.highTitle'), text: t('riskAnalysis.whatToDo.highTips'), bg: 'bg-pink-50', border: 'border-pink-200', text_color: 'text-pink-700' }
+        low: { icon: CheckCircle, title: t('riskAnalysis.whatToDo.lowTitle'), text: t('riskAnalysis.whatToDo.lowTips'), bg: 'bg-emerald-50', border: 'border-emerald-200', text_color: 'text-emerald-700' },
+        moderate: { icon: AlertCircle, title: t('riskAnalysis.whatToDo.moderateTitle'), text: t('riskAnalysis.whatToDo.moderateTips'), bg: 'bg-amber-50', border: 'border-amber-200', text_color: 'text-amber-700' },
+        high: { icon: AlertCircle, title: t('riskAnalysis.whatToDo.highTitle'), text: t('riskAnalysis.whatToDo.highTips'), bg: 'bg-pink-50', border: 'border-pink-200', text_color: 'text-pink-700' }
     };
     
     const tip = tips[riskLevel] || tips.moderate;
+    const TipIcon = tip.icon;
     
     return (
         <div className={`${tip.bg} ${tip.border} border rounded-2xl p-5 mt-6`}>
             <div className="flex items-start gap-3">
-                <span className="text-2xl">{tip.emoji}</span>
+                <TipIcon className={tip.text_color} size={20} />
                 <div>
                     <h4 className={`font-bold ${tip.text_color} mb-1`}>{tip.title}</h4>
                     <p className="text-sm text-gray-600 leading-relaxed">{tip.text}</p>
@@ -158,9 +151,9 @@ const RiskAnalysis = () => {
             <div className="p-8 max-w-5xl mx-auto pb-24 relative flex flex-col">
                 {/* Friendly banner for insufficient data */}
                 <div className="bg-gradient-to-r from-purple-500 to-pink-400 rounded-[1.5rem] p-8 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-lg w-full">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">📝</div>
-                    <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10 text-4xl">
-                        🌱
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">ℹ️</div>
+                    <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10">
+                        <Info size={30} />
                     </div>
                     <div className="flex-1 z-10">
                         <h2 className="text-2xl font-heading font-extrabold mb-2">{t('riskAnalysis.analysisUnavailable')}</h2>
@@ -171,13 +164,6 @@ const RiskAnalysis = () => {
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-[1.5rem] p-10 shadow-sm flex flex-col items-center justify-center text-center py-16 w-full">
-                    <div className="flex gap-4 text-5xl mb-6">
-                        <span>📅</span>
-                        <span>➡️</span>
-                        <span>📊</span>
-                        <span>➡️</span>
-                        <span>🌟</span>
-                    </div>
                     <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-3">
                         {t('riskAnalysis.logMore')}
                     </h2>
@@ -207,6 +193,7 @@ const RiskAnalysis = () => {
         label:   t(`riskAnalysis.risk.${displayKey}`),
         message: t(`riskAnalysis.risk.${displayKey}Msg`),
     };
+    const ActiveRiskIcon = activeRisk.icon || Info;
 
     const generatePath = (data, key) => {
         if (!data || data.length === 0) return '';
@@ -247,7 +234,7 @@ const RiskAnalysis = () => {
                                     : 'bg-white border border-gray-200 text-[#1D1D2C] hover:bg-pink-50 hover:border-pink-200'
                             }`}
                         >
-                            {activePeriod === f.value && <span>✓</span>}
+                            {activePeriod === f.value && <CheckCircle size={12} />}
                             {f.label}
                         </button>
                     ))}
@@ -263,12 +250,12 @@ const RiskAnalysis = () => {
 
             {/* Main Risk Banner - Child Friendly */}
             <div className={`bg-gradient-to-r ${activeRisk.bgGradient} rounded-[1.5rem] p-6 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-lg`}>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">
-                    {activeRisk.emoji}
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
+                    <ActiveRiskIcon size={96} />
                 </div>
 
-                <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10 text-4xl">
-                    {activeRisk.emoji}
+                <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10">
+                    <ActiveRiskIcon size={28} />
                 </div>
 
                 <div className="flex-1 z-10">
@@ -295,7 +282,7 @@ const RiskAnalysis = () => {
                 {/* Cycle Consistency Card */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">🎯</span>
+                        <Activity className="text-pink-500" size={18} />
                         <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.cycleConsistency')}</p>
                     </div>
                     <div className="flex justify-between items-end mb-3">
@@ -305,7 +292,7 @@ const RiskAnalysis = () => {
                             (cycle_consistency ?? 0) >= 60 ? 'bg-yellow-100 text-yellow-600' : 
                             'bg-pink-100 text-pink-600'
                         }`}>
-                            {(cycle_consistency ?? 0) >= 80 ? '👍 Great!' : (cycle_consistency ?? 0) >= 60 ? '👌 Good' : '📈 Building'}
+                            {(cycle_consistency ?? 0) >= 80 ? 'Great' : (cycle_consistency ?? 0) >= 60 ? 'Good' : 'Building'}
                         </span>
                     </div>
                     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -324,15 +311,12 @@ const RiskAnalysis = () => {
                 {/* Symptom Intensity Card */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">📊</span>
+                        <TrendingUp className="text-pink-500" size={18} />
                         <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.symptomIntensity')}</p>
                     </div>
                     <div className="flex items-center gap-3 mb-1">
                         <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C] capitalize">{symptom_intensity ?? '—'}</h3>
-                        <span className="text-2xl">
-                            {symptom_intensity?.toLowerCase() === 'decreasing' ? '📉' : 
-                             symptom_intensity?.toLowerCase() === 'increasing' ? '📈' : '➡️'}
-                        </span>
+                        <TrendingUp className="text-pink-500" size={20} />
                     </div>
                     <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.basedOnData')}</p>
                     <ExplainCard text={t('riskAnalysis.symptomIntensityExplain')} />
@@ -341,7 +325,7 @@ const RiskAnalysis = () => {
                 {/* Average Cycle Length Card */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">📅</span>
+                        <Calendar size={18} className="text-pink-500" />
                         <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.avgCycleLength')}</p>
                     </div>
                     <div className="flex justify-between items-end mb-3">
@@ -354,8 +338,8 @@ const RiskAnalysis = () => {
                             : 'bg-yellow-100 text-yellow-600'
                         }`}>
                             {(average_cycle_length ?? 28) >= 21 && (average_cycle_length ?? 28) <= 35 
-                            ? '✅ Normal range!' 
-                            : '👀 A bit different'}
+                            ? 'Normal range' 
+                            : 'A bit different'}
                         </span>
                     </div>
                     <ExplainCard text={t('riskAnalysis.avgCycleLengthExplain')} />
@@ -370,15 +354,15 @@ const RiskAnalysis = () => {
                 <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl">📈</span>
+                            <TrendingUp className="text-pink-500" size={20} />
                             <div>
                                 <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.symptomTrendsTitle')}</h3>
                                 <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.symptomTrendsExplain')}</p>
                             </div>
                         </div>
                         <div className="flex gap-3 text-[10px] font-extrabold tracking-widest uppercase text-gray-500">
-                            <span className="flex items-center gap-1.5"><span className="text-lg">😣</span> Cramps</span>
-                            <span className="flex items-center gap-1.5"><span className="text-lg">😴</span> Fatigue</span>
+                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#FF0055]" /> Cramps</span>
+                            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#A855F7]" /> Fatigue</span>
                         </div>
                     </div>
 
@@ -405,7 +389,7 @@ const RiskAnalysis = () => {
                 <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
                     <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl">🌈</span>
+                            <Activity className="text-pink-500" size={20} />
                             <div>
                                 <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.hormonalVariationTitle')}</h3>
                                 <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.hormonalVariationExplain')}</p>
@@ -422,18 +406,19 @@ const RiskAnalysis = () => {
 
                     <div className="flex-1 space-y-5">
                         {cycle_comparison.map((row, idx) => {
-                            const highlight = row.intensity?.toLowerCase() === 'heavy' || row.intensity?.toLowerCase() === 'high';
+                            const intensity = (row?.intensity || '').toLowerCase();
+                            const highlight = intensity === 'heavy' || intensity === 'high';
                             const color = highlight ? '#FF0055' : '#EC4899';
-                            const emoji = idx === 0 ? '🆕' : idx === 1 ? '📆' : '📊';
+                            const labelTag = idx === 0 ? 'New' : idx === 1 ? 'Prev' : 'Avg';
                             return (
-                            <div key={row.label}>
+                            <div key={row?.label || `row-${idx}`}>
                                 <div className={`flex justify-between text-sm font-bold mb-2 ${highlight ? 'text-[#1D1D2C]' : 'text-gray-600'}`}>
                                     <span className="flex items-center gap-2">
-                                        <span>{emoji}</span>
-                                        {row.label}
+                                        <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{labelTag}</span>
+                                        {row?.label || 'Cycle'}
                                     </span>
                                     <span className={`px-2 py-0.5 rounded-lg ${highlight ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}>
-                                        {row.length} days
+                                        {row?.length ?? '—'} days
                                     </span>
                                 </div>
                                 <div className="h-8 w-full rounded-xl flex overflow-hidden shadow-inner bg-gray-100">
@@ -447,7 +432,7 @@ const RiskAnalysis = () => {
                     </div>
 
                     <div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 flex gap-3 items-start border border-blue-100">
-                        <span className="text-xl">💡</span>
+                        <Lightbulb className="text-blue-500 shrink-0 mt-0.5" size={18} />
                         <p className="text-xs font-medium text-gray-600 leading-relaxed">
                             {t('riskAnalysis.moreDataNeeded')}
                         </p>
@@ -459,48 +444,44 @@ const RiskAnalysis = () => {
             {/* Risk Factors List - Child Friendly */}
             <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-6">
-                    <span className="text-2xl">🔍</span>
+                    <Info className="text-pink-500" size={20} />
                     <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.specificRiskFactors')}</h3>
                 </div>
 
                 {visibleFactors.length === 0 ? (
                     <div className="text-center py-8">
-                        <span className="text-4xl mb-4 block">✨</span>
                         <p className="text-gray-500 font-medium">Everything looks good! No concerns to show.</p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {visibleFactors.map((factor, i) => (
+                        {visibleFactors.map((factor, i) => {
+                            const iconType = (factor?.icon_type || '').toLowerCase();
+                            return (
                             <div
-                                key={factor.title || i}
+                                key={factor?.title || i}
                                 className={`flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors`}
                             >
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-2xl" style={{ background: factor.bg_color || '#FFF0F4' }}>
-                                    {factor.icon_type?.toLowerCase().includes('check') ? '✅' :
-                                     factor.icon_type?.toLowerCase().includes('calendar') ? '📅' :
-                                     factor.icon_type?.toLowerCase().includes('droplet') ? '💧' :
-                                     factor.icon_type?.toLowerCase().includes('frown') ? '😟' :
-                                     factor.icon_type?.toLowerCase().includes('activity') ? '📈' :
-                                     factor.icon_type?.toLowerCase().includes('info') ? 'ℹ️' : '⚠️'}
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: factor.bg_color || '#FFF0F4' }}>
+                                    {getIcon(iconType, factor.badge_color || '#FF0055')}
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
-                                        <h4 className="font-bold text-[#1D1D2C] text-base">{factor.title}</h4>
+                                        <h4 className="font-bold text-[#1D1D2C] text-base">{factor?.title || 'Risk factor'}</h4>
                                         <span
                                             className="text-[10px] font-extrabold tracking-wider px-3 py-1.5 rounded-lg uppercase"
                                             style={{ background: factor.badge_bg || '#FFF0F4', color: factor.badge_color || '#FF0055' }}
                                         >
-                                            {factor.badge_text === 'High Priority' ? '⚡ Important' : 
-                                             factor.badge_text === 'Monitor' ? '👀 Watch' :
-                                             factor.badge_text === 'Moderate' ? '📋 Note' :
-                                             factor.badge_text === 'Good' ? '✨ Great' :
-                                             factor.badge_text === 'Low' ? '👍 Good' : factor.badge_text}
+                                            {factor.badge_text === 'High Priority' ? 'Important' : 
+                                             factor.badge_text === 'Monitor' ? 'Watch' :
+                                             factor.badge_text === 'Moderate' ? 'Moderate' :
+                                             factor.badge_text === 'Good' ? 'Good' :
+                                             factor.badge_text === 'Low' ? 'Low' : factor.badge_text}
                                         </span>
                                     </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed">{factor.description}</p>
+                                    <p className="text-gray-600 text-sm leading-relaxed">{factor?.description || 'No additional details provided.'}</p>
                                 </div>
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
 
@@ -524,7 +505,7 @@ const RiskAnalysis = () => {
                 className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full shadow-lg flex items-center justify-center text-white hover:from-pink-600 hover:to-pink-700 hover:scale-110 transition-all z-50"
                 title="Chat with someone"
             >
-                <span className="text-2xl">💬</span>
+                <MessageSquare size={24} />
             </button>
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

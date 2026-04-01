@@ -31,6 +31,17 @@ const EmptyState = ({ icon: Icon, text }) => (
   </div>
 );
 
+const toText = (value) => {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object') {
+    return value.en || value.hi || value.mr || Object.values(value).find(v => typeof v === 'string') || '';
+  }
+  return '';
+};
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+const toTagsText = (value) => (Array.isArray(value) ? value.join(', ') : (typeof value === 'string' ? value : ''));
+
 const sections = [
   { id: 'users', label: 'Users', icon: Users },
   { id: 'articles', label: 'Articles', icon: FileText },
@@ -231,7 +242,13 @@ const ArticlesSection = ({ show }) => {
   const [confirm, setConfirm] = useState(null);
 
   const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/articles'); setItems(r.data); } catch { show('Failed to load articles', 'error'); } finally { setLoading(false); }
+    try {
+      const r = await axiosInstance.get('/admin/articles');
+      setItems(toArray(r.data));
+    } catch {
+      show('Failed to load articles', 'error');
+      setItems([]);
+    } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -255,16 +272,16 @@ const ArticlesSection = ({ show }) => {
       <button onClick={() => setForm({ title: '', content: '', category: 'general' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Article</button>
       {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={FileText} text="No articles yet" /> : (
         <div className="grid gap-3">
-          {items.map(a => (
-            <div key={a.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+          {items.map((a, idx) => (
+            <div key={a.id || `article-${idx}`} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex-1 min-w-0 mr-4">
-                <h3 className="font-bold text-gray-800 text-sm truncate">{a.title}</h3>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{a.content?.substring(0, 100)}</p>
+                <h3 className="font-bold text-gray-800 text-sm truncate">{toText(a.title) || 'Untitled'}</h3>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{toText(a.content).substring(0, 100)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge color={a.category === 'general' ? 'gray' : 'pink'}>{a.category || 'general'}</Badge>
-                <button onClick={() => setForm({ id: a.id, title: a.title, content: a.content, category: a.category || 'general' })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
-                <button onClick={() => setConfirm({ msg: `Delete "${a.title}"?`, fn: () => del(a.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
+                <button onClick={() => setForm({ id: a.id, title: toText(a.title), content: toText(a.content), category: a.category || 'general' })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
+                <button onClick={() => setConfirm({ msg: `Delete "${toText(a.title) || 'this article'}"?`, fn: () => del(a.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
               </div>
             </div>
           ))}
@@ -284,7 +301,13 @@ const MythsSection = ({ show }) => {
   const [confirm, setConfirm] = useState(null);
 
   const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/myths'); setItems(r.data); } catch { show('Failed to load myths', 'error'); } finally { setLoading(false); }
+    try {
+      const r = await axiosInstance.get('/admin/myths');
+      setItems(toArray(r.data));
+    } catch {
+      show('Failed to load myths', 'error');
+      setItems([]);
+    } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -308,17 +331,17 @@ const MythsSection = ({ show }) => {
       <button onClick={() => setForm({ myth: '', fact: '' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Myth/Fact</button>
       {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={HelpCircle} text="No myths yet" /> : (
         <div className="grid gap-3">
-          {items.map(m => (
-            <div key={m.id} className="bg-white rounded-xl border border-gray-100 p-4">
+          {items.map((m, idx) => (
+            <div key={m.id || `myth-${idx}`} className="bg-white rounded-xl border border-gray-100 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 mr-4">
                   <p className="text-xs font-bold text-pink-500 uppercase tracking-wider mb-1">Myth</p>
-                  <p className="text-sm font-bold text-gray-800">{m.myth}</p>
+                  <p className="text-sm font-bold text-gray-800">{toText(m.myth)}</p>
                   <p className="text-xs font-bold text-green-600 uppercase tracking-wider mt-2 mb-1">Fact</p>
-                  <p className="text-sm text-gray-600">{m.fact}</p>
+                  <p className="text-sm text-gray-600">{toText(m.fact)}</p>
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={() => setForm({ id: m.id, myth: m.myth, fact: m.fact })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
+                  <button onClick={() => setForm({ id: m.id, myth: toText(m.myth), fact: toText(m.fact) })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
                   <button onClick={() => setConfirm({ msg: 'Delete this myth/fact?', fn: () => del(m.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
                 </div>
               </div>
@@ -355,10 +378,10 @@ const quizToForm = (q) => ({
   id: q.id,
   title: typeof q.title === 'object' ? q.title : { en: q.title || '' },
   description: typeof q.description === 'object' ? q.description : { en: q.description || '' },
-  questions: (q.questions || []).map(qu => ({
+  questions: toArray(q.questions).map(qu => ({
     ...qu,
     text: typeof qu.text === 'object' ? qu.text : { en: qu.text || '' },
-    options: (qu.options || []).map(o => ({ ...o, text: typeof o.text === 'object' ? o.text : { en: o.text || '' } })),
+    options: toArray(qu.options).map((o, idx) => ({ id: o?.id || String.fromCharCode(97 + idx), ...o, text: typeof o?.text === 'object' ? o.text : { en: o?.text || '' } })),
     explanation: typeof qu.explanation === 'object' ? qu.explanation : { en: qu.explanation || '' },
   })),
   is_published: q.is_published ?? false,
@@ -498,7 +521,13 @@ const QuizzesSection = ({ show }) => {
   const [quizForm, setQuizForm] = useState(null); // null=closed, object=open
 
   const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/quizzes'); setItems(r.data); } catch { show('Failed to load quizzes', 'error'); } finally { setLoading(false); }
+    try {
+      const r = await axiosInstance.get('/admin/quizzes');
+      setItems(toArray(r.data));
+    } catch {
+      show('Failed to load quizzes', 'error');
+      setItems([]);
+    } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -574,13 +603,17 @@ const VideosSection = ({ show }) => {
   const [backendReady, setBackendReady] = useState(true);
 
   const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/videos'); setItems(r.data); }
+    try { const r = await axiosInstance.get('/admin/videos'); setItems(toArray(r.data)); }
     catch (err) { if (err.response?.status === 404 || err.response?.status === 405) { setBackendReady(false); } else { show('Failed to load videos', 'error'); } }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  const extractYtId = (url) => { const m = url?.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/); return m ? m[1] : null; };
+  const extractYtId = (url) => {
+    const input = typeof url === 'string' ? url : '';
+    const m = input.match(/(?:youtu\.be\/|v=)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
 
   const save = async (data) => {
     try {
@@ -611,17 +644,17 @@ const VideosSection = ({ show }) => {
       <button onClick={() => setForm({ title: '', youtube_url: '', description: '', category: 'basics', tags: '' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> Add Video</button>
       {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={Video} text="No videos yet" /> : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {items.map(v => (
-            <div key={v.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {items.map((v, idx) => (
+            <div key={v.id || `video-${idx}`} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
               {extractYtId(v.youtube_url) && <img src={`https://img.youtube.com/vi/${extractYtId(v.youtube_url)}/hqdefault.jpg`} alt="" className="w-full h-36 object-cover" />}
               <div className="p-4">
-                <h3 className="font-bold text-sm text-gray-800 truncate">{v.title}</h3>
-                <p className="text-xs text-gray-400 mt-1 truncate">{v.description}</p>
+                <h3 className="font-bold text-sm text-gray-800 truncate">{toText(v.title) || 'Untitled'}</h3>
+                <p className="text-xs text-gray-400 mt-1 truncate">{toText(v.description)}</p>
                 <div className="flex items-center justify-between mt-3">
-                  <Badge color="blue">{v.category}</Badge>
+                  <Badge color="blue">{v.category || 'general'}</Badge>
                   <div className="flex gap-1">
-                    <button onClick={() => setForm({ id: v.id, title: v.title, youtube_url: v.youtube_url, description: v.description || '', category: v.category || 'basics', tags: v.tags?.join(', ') || '' })} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={14} /></button>
-                    <button onClick={() => setConfirm({ msg: `Delete "${v.title}"?`, fn: () => del(v.id) })} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={14} /></button>
+                    <button onClick={() => setForm({ id: v.id, title: toText(v.title), youtube_url: typeof v.youtube_url === 'string' ? v.youtube_url : '', description: toText(v.description), category: v.category || 'basics', tags: toTagsText(v.tags) })} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={14} /></button>
+                    <button onClick={() => setConfirm({ msg: `Delete "${toText(v.title) || 'this video'}"?`, fn: () => del(v.id) })} className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={14} /></button>
                   </div>
                 </div>
               </div>
@@ -644,7 +677,7 @@ const BlogsSection = ({ show }) => {
   const [backendReady, setBackendReady] = useState(true);
 
   const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/blogs'); setItems(r.data); }
+    try { const r = await axiosInstance.get('/admin/blogs'); setItems(toArray(r.data)); }
     catch (err) { if (err.response?.status === 404 || err.response?.status === 405) { setBackendReady(false); } else { show('Failed to load blogs', 'error'); } }
     finally { setLoading(false); }
   }, []);
@@ -679,11 +712,11 @@ const BlogsSection = ({ show }) => {
       <button onClick={() => setForm({ title: '', summary: '', content: '', category: 'general', author_name: 'Petal Team', tags: '' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Blog Post</button>
       {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={BookOpen} text="No blog posts yet" /> : (
         <div className="grid gap-3">
-          {items.map(b => (
-            <div key={b.id} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+          {items.map((b, idx) => (
+            <div key={b.id || `blog-${idx}`} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex-1 min-w-0 mr-4">
-                <h3 className="font-bold text-gray-800 text-sm truncate">{b.title}</h3>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{b.summary || b.content?.substring(0, 100)}</p>
+                <h3 className="font-bold text-gray-800 text-sm truncate">{toText(b.title) || 'Untitled'}</h3>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{toText(b.summary) || toText(b.content).substring(0, 100)}</p>
                 <div className="flex gap-2 mt-2">
                   <Badge color="pink">{b.category || 'general'}</Badge>
                   {b.is_featured && <Badge color="amber">Featured</Badge>}
@@ -691,8 +724,8 @@ const BlogsSection = ({ show }) => {
                 </div>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => setForm({ id: b.id, title: b.title, summary: b.summary || '', content: b.content, category: b.category || 'general', author_name: b.author_name || 'Petal Team', tags: b.tags?.join(', ') || '' })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
-                <button onClick={() => setConfirm({ msg: `Delete "${b.title}"?`, fn: () => del(b.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
+                <button onClick={() => setForm({ id: b.id, title: toText(b.title), summary: toText(b.summary), content: toText(b.content), category: b.category || 'general', author_name: toText(b.author_name) || 'Petal Team', tags: toTagsText(b.tags) })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
+                <button onClick={() => setConfirm({ msg: `Delete "${toText(b.title) || 'this blog'}"?`, fn: () => del(b.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
               </div>
             </div>
           ))}

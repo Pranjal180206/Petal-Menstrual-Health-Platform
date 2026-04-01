@@ -3,21 +3,12 @@ import { Lightbulb, Droplets, Activity, Zap, TrendingUp, AlertCircle, CalendarDa
 import { useTranslation } from 'react-i18next';
 import axiosInstance from '../api/axiosInstance';
 
-// Emoji mapping for symptoms
-const SYMPTOM_EMOJI = {
-    cramps: '😣',
-    fatigue: '😴',
-    bloating: '🎈',
-    headache: '🤕',
-    acne: '😤',
-    nausea: '🤢',
-    backache: '🦴',
-    'mood swings': '🎭',
-    default: '💫'
-};
-
-const getSymptomEmoji = (symptom) => {
-    return SYMPTOM_EMOJI[symptom?.toLowerCase()] || SYMPTOM_EMOJI.default;
+const getSymptomIcon = (symptom) => {
+    const key = (symptom || '').toLowerCase();
+    if (key === 'cramps') return Activity;
+    if (key === 'fatigue') return Zap;
+    if (key === 'headache') return AlertCircle;
+    return Droplets;
 };
 
 // Child-friendly explanation card component
@@ -58,7 +49,6 @@ const Insights = () => {
         return (
             <div className="flex items-center justify-center p-8 h-[70vh]">
                 <div className="bg-pink-50 border border-pink-200 text-pink-600 px-8 py-6 rounded-2xl font-bold flex flex-col gap-3 items-center shadow-sm max-w-sm text-center">
-                    <span className="text-4xl">🔒</span>
                     <p className="text-lg">{t('insights.signInNeeded')}</p>
                 </div>
             </div>
@@ -69,7 +59,7 @@ const Insights = () => {
         return (
             <div className="flex flex-col justify-center items-center py-32 gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D81B60]"></div>
-                <p className="text-gray-500 font-medium animate-pulse">Loading your insights... ✨</p>
+                <p className="text-gray-500 font-medium animate-pulse">Loading your insights...</p>
             </div>
         );
     }
@@ -93,32 +83,28 @@ const Insights = () => {
                     </div>
                 </header>
                 <div className="bg-white rounded-[2rem] p-12 shadow-card border border-gray-100 flex flex-col items-center justify-center text-center">
-                    <div className="text-7xl mb-6 animate-bounce">🌱</div>
+                    <div className="w-16 h-16 mb-6 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                        <Sparkles className="text-pink-500" size={28} />
+                    </div>
                     <h2 className="text-2xl font-heading font-extrabold text-[#1D1D2C] mb-3">{t('insights.noInsights')}</h2>
                     <p className="text-base text-gray-500 font-medium max-w-md leading-relaxed">
                         {t('insights.noInsightsDesc')}
                     </p>
-                    <div className="mt-8 flex gap-3">
-                        <span className="text-3xl">📝</span>
-                        <span className="text-3xl">➡️</span>
-                        <span className="text-3xl">📊</span>
-                    </div>
                 </div>
             </div>
         );
     }
 
     const moodMap = {
-        happy: { score: 3, emoji: '😊', label: 'Happy' },
-        neutral: { score: 2, emoji: '😐', label: 'Okay' },
-        sad: { score: 1, emoji: '😢', label: 'Sad' },
-        irritated: { score: 0, emoji: '😤', label: 'Irritated' }
+        happy: { score: 3, label: 'Happy' },
+        neutral: { score: 2, label: 'Okay' },
+        sad: { score: 1, label: 'Sad' },
+        irritated: { score: 0, label: 'Irritated' }
     };
 
     const processedMoodTrend = mood_trend.map(t => ({
         ...t,
         mood_score: t.mood ? (moodMap[t.mood.toLowerCase()]?.score ?? 2) : 2,
-        mood_emoji: t.mood ? (moodMap[t.mood.toLowerCase()]?.emoji ?? '😐') : '😐',
         mood_label: t.mood ? (moodMap[t.mood.toLowerCase()]?.label ?? 'Unknown') : 'Unknown'
     }));
 
@@ -141,11 +127,17 @@ const Insights = () => {
             {top_symptom && (
                 <section>
                     <div className="rounded-[1.5rem] p-6 text-white bg-gradient-to-r from-[#D81B60] to-[#F06292] shadow-lg flex items-center gap-6 relative overflow-hidden">
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">
-                            {getSymptomEmoji(top_symptom)}
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 pointer-events-none">
+                            {(() => {
+                                const SymptomIcon = getSymptomIcon(top_symptom);
+                                return <SymptomIcon size={96} />;
+                            })()}
                         </div>
-                        <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm z-10 shrink-0 text-3xl">
-                            {getSymptomEmoji(top_symptom)}
+                        <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm z-10 shrink-0">
+                            {(() => {
+                                const SymptomIcon = getSymptomIcon(top_symptom);
+                                return <SymptomIcon size={28} />;
+                            })()}
                         </div>
                         <div className="z-10">
                             <p className="text-white/80 text-xs font-bold tracking-widest uppercase mb-1">{t('insights.mostFrequentSymptom')}</p>
@@ -169,10 +161,10 @@ const Insights = () => {
                         </div>
                         <div className="flex gap-3 text-[10px] font-extrabold tracking-widest uppercase text-gray-500">
                             <span className="flex items-center gap-1.5">
-                                <span className="text-lg">😣</span> Cramps
+                                <span className="w-2 h-2 rounded-full bg-[#FF0055]" /> Cramps
                             </span>
                             <span className="flex items-center gap-1.5">
-                                <span className="text-lg">😴</span> Fatigue
+                                <span className="w-2 h-2 rounded-full bg-[#A855F7]" /> Fatigue
                             </span>
                         </div>
                     </div>
@@ -260,7 +252,7 @@ const Insights = () => {
                 {cycle_length_history.length > 0 && (
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col">
                         <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
-                            <span className="text-2xl">📅</span>
+                            <CalendarDays className="text-pink-500" size={20} />
                             {t('insights.cycleLengthHistory')}
                         </h3>
                         <div className="flex-1 flex items-end gap-3 h-48 border-b border-gray-100 pb-2">
@@ -282,7 +274,7 @@ const Insights = () => {
                                             </span>
                                         </div>
                                         <span className={`text-[10px] font-bold mt-2 truncate max-w-full ${isAIPredicted ? 'text-purple-500' : 'text-gray-400'}`}>
-                                            {isAIPredicted ? '🤖 AI' : cycle.cycle.replace('Cycle ', 'C')}
+                                            {isAIPredicted ? 'AI' : cycle.cycle.replace('Cycle ', 'C')}
                                         </span>
                                     </div>
                                 );
@@ -296,16 +288,19 @@ const Insights = () => {
                 {symptom_frequency.length > 0 && (
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col">
                         <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
-                            <span className="text-2xl">🎯</span>
+                            <Activity className="text-pink-500" size={20} />
                             {t('insights.symptomFrequency')}
                         </h3>
                         <div className="flex-1 flex flex-col justify-center space-y-4">
                             {symptom_frequency.slice(0, 5).map((item, i) => {
                                 const maxCount = symptom_frequency[0].count || 1;
                                 const widthPercent = (item.count / maxCount) * 100;
-                                return (
+                                    return (
                                     <div key={i} className="flex items-center gap-4 group">
-                                        <span className="text-xl">{getSymptomEmoji(item.symptom)}</span>
+                                        {(() => {
+                                            const SymptomIcon = getSymptomIcon(item.symptom);
+                                            return <SymptomIcon size={18} className="text-pink-500" />;
+                                        })()}
                                         <span className="text-sm font-bold text-gray-700 w-20 truncate capitalize">{item.symptom}</span>
                                         <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                                             <div
@@ -326,22 +321,22 @@ const Insights = () => {
                 {processedMoodTrend.length > 0 && (
                     <section className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col lg:col-span-2">
                         <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
-                            <span className="text-2xl">😊</span>
+                            <Smile className="text-pink-500" size={20} />
                             {t('insights.moodTrend')}
                         </h3>
                         
                         {/* Mood legend */}
                         <div className="flex gap-4 mb-6 text-sm">
-                            <span className="flex items-center gap-1">😊 Happy</span>
-                            <span className="flex items-center gap-1">😐 Okay</span>
-                            <span className="flex items-center gap-1">😢 Sad</span>
-                            <span className="flex items-center gap-1">😤 Irritated</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Happy</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500" /> Okay</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500" /> Sad</span>
+                            <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-red-500" /> Irritated</span>
                         </div>
 
                         <div className="flex-1 flex flex-col justify-end h-48 border-b-2 border-l-2 border-gray-100 pb-2 pl-4 pr-2 pt-8 relative">
                             {/* Y-axis labels */}
-                            <div className="absolute left-[-10px] bottom-2 text-lg">😢</div>
-                            <div className="absolute left-[-10px] top-6 text-lg">😊</div>
+                            <div className="absolute left-[-15px] bottom-2 text-xs font-bold text-gray-500">Low</div>
+                            <div className="absolute left-[-15px] top-6 text-xs font-bold text-gray-500">High</div>
 
                             <div className="flex items-end justify-between h-full w-full gap-2">
                                 {processedMoodTrend.slice(-7).map((trend, i) => {
@@ -349,11 +344,10 @@ const Insights = () => {
                                     return (
                                         <div key={i} className="flex flex-col items-center justify-end group flex-1 h-full relative">
                                             <div
-                                                className="w-full max-w-16 rounded-t-2xl bg-gradient-to-t from-[#FFF0F4] to-[#D81B60] shadow-sm relative flex justify-center items-start pt-2 transition-all group-hover:scale-105"
+                                                className="w-full max-w-16 rounded-t-2xl bg-gradient-to-t from-[#FFF0F4] to-[#D81B60] shadow-sm relative flex justify-center items-center transition-all group-hover:scale-105"
                                                 style={{ height: `${Math.max(15, heightPercent)}%` }}
                                             >
-                                                <span className="text-xl">{trend.mood_emoji}</span>
-                                                <span className="absolute -top-8 text-xs font-bold text-[#D81B60] bg-pink-50 px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 shadow-sm">
+                                                <span className="text-xs font-bold text-[#D81B60] opacity-0 group-hover:opacity-100 transition-opacity">
                                                     {trend.mood_label}
                                                 </span>
                                             </div>
