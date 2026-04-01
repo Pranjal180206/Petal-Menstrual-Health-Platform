@@ -38,7 +38,7 @@ class UserRegister(BaseModel):
     email: str
     password: str
     gender: str
-    age: int
+    age: int = Field(..., ge=7, le=120, description="Age must be between 7 and 120")
     is_menstruating: bool
 
     @field_validator("email", mode="before")

@@ -50,13 +50,24 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// ── Tracker Guard — redirects "Boy" users away from tracker ──
+// ── Tracker Guard — Allows logged-in female users and anyone who menstruates ──
 const TrackerGuard = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user && !user.is_menstruating && user.gender === 'Boy') {
+  
+  // If not logged in, redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Allow access if user is female OR is menstruating
+  const hasAccess = user.gender === 'female' || user.is_menstruating;
+  
+  // If user doesn't have access, redirect to restricted page
+  if (!hasAccess) {
     return <Navigate to="/tracker-restricted" replace />;
   }
+  
   return children;
 };
 

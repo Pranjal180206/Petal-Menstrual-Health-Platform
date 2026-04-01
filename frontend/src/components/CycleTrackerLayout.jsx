@@ -19,10 +19,10 @@ const CycleTrackerLayout = () => {
 
 
     const isMenstruating = user?.is_menstruating;
-    const isBoy = user?.gender === 'Boy';
+    const isFemale = user?.gender === 'female';
 
     const allNavLinks = [
-        { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: isBoy ? 'sidebar.overview' : 'sidebar.dashboard' },
+        { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: 'sidebar.dashboard' },
         { to: '/cycle-tracker/tracker', icon: <CalendarDays size={18} />, labelKey: 'sidebar.cycleAndMood', restricted: true },
         { to: '/cycle-tracker/risk', icon: <TrendingUp size={18} />, labelKey: 'sidebar.riskAnalysis', restricted: true },
         { to: '/cycle-tracker/report', icon: <FileText size={18} />, labelKey: 'sidebar.reportGenerator', restricted: true },
@@ -30,7 +30,8 @@ const CycleTrackerLayout = () => {
     ];
 
     const navLinks = allNavLinks.filter(link => {
-        if (!isMenstruating && link.restricted) return false;
+        // Show restricted links only if user is female or is menstruating
+        if (link.restricted && !isFemale && !isMenstruating) return false;
         return true;
     });
 

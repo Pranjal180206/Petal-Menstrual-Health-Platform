@@ -244,8 +244,14 @@ const Login = () => {
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-[#1D1D2C] ml-1">{t('login.ageLabel')}</label>
                                         <input
-                                            type="number" name="age" required min="10" max="100"
-                                            value={formData.age} onChange={handleChange}
+                                            type="number" 
+                                            name="age" 
+                                            required 
+                                            min="7" 
+                                            max="120"
+                                            placeholder="Enter age"
+                                            value={formData.age} 
+                                            onChange={handleChange}
                                             className="w-full bg-[#F8F9FA] border border-transparent focus:border-[#FF6B9A] focus:bg-white rounded-xl px-4 py-2.5 text-sm outline-none transition-all font-medium text-[#1D1D2C]"
                                         />
                                     </div>

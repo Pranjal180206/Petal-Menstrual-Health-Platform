@@ -32,7 +32,7 @@ const Navbar = ({ isHome = false }) => {
             >
                 <Link to="/education" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">{t('nav.education')}</Link>
                 <Link to="/community" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">{t('nav.community')}</Link>
-                {(!user || user.is_menstruating) && (
+                {user && (user.gender === 'female' || user.is_menstruating) && (
                     <Link to="/cycle-tracker/tracker" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">{t('nav.tracker')}</Link>
                 )}
             </div>

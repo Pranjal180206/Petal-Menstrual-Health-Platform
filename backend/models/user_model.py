@@ -84,7 +84,7 @@ class UserProfileNestedUpdate(BaseModel):
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
-    age: Optional[int] = None
+    age: Optional[int] = Field(None, ge=7, le=120, description="Age must be between 7 and 120")
     height: Optional[float] = Field(None, ge=100, le=250)
     weight: Optional[float] = Field(None, ge=30,  le=250)
     breastfeeding: Optional[bool]  = None

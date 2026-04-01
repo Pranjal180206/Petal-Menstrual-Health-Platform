@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, Info, Lightbulb, TrendingDown, Activity, CalendarDays, MessageSquare, Zap } from 'lucide-react';
+import { Bell, Info, Lightbulb, TrendingDown, Activity, CalendarDays, MessageSquare, Zap, BookOpen, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
 const DashboardOverview = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { user } = useAuth();
 
     const MOODS = [
         { emoji: '🙂', labelKey: 'dashboard.moods.fine',     apiLabel: 'Fine' },
@@ -86,7 +88,10 @@ const DashboardOverview = () => {
         );
     }
 
-    if (!user?.is_menstruating) {
+    // Show alternate dashboard for non-female users who are not menstruating
+    // Female users (even if not menstruating yet) should see the full dashboard
+    const isFemale = user?.gender === 'female';
+    if (!isFemale && !user?.is_menstruating) {
         return (
             <div className="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
                 <header className="mb-10">

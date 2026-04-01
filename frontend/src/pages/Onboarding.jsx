@@ -43,11 +43,11 @@ const Onboarding = () => {
         { id: 'q10', type: 'select', category: 'flow', questionKey: 'q10', optionsKey: 'q10_opts' },
         { id: 'q11', type: 'select', category: 'pattern', headerKey: 'q11Header', questionKey: 'q11', optionsKey: 'q11_opts' },
         { id: 'q12', type: 'select', category: 'unusual', headerKey: 'q12Header', questionKey: 'q12', optionsKey: 'q12_opts' },
-        { id: 'q13', type: 'select', category: 'about', headerKey: 'q13Header', questionKey: 'q13', optionsKey: 'age_opts' },
+        { id: 'q13', type: 'age', category: 'about', headerKey: 'q13Header', questionKey: 'q13' },
     ];
 
     const boyQuestions = [
-        { id: 'bq1', type: 'select', category: 'about', headerKey: 'q1Header', questionKey: 'q1', optionsKey: 'age_opts' },
+        { id: 'bq1', type: 'age', category: 'about', headerKey: 'q1Header', questionKey: 'q1' },
         { id: 'bq2', type: 'select', category: 'awareness', headerKey: 'q2Header', questionKey: 'q2', optionsKey: 'q2_opts' },
         { id: 'bq3', type: 'select', category: 'awareness', questionKey: 'q3', optionsKey: 'q3_opts' },
         { id: 'bq4', type: 'select', category: 'attitute', headerKey: 'q4Header', questionKey: 'q4', optionsKey: 'q4_opts' },
@@ -66,7 +66,19 @@ const Onboarding = () => {
     };
 
     const handleAnswer = (answer) => {
-        setResponses(prev => ({ ...prev, [activeQuestions[currentQuestion].id]: answer }));
+        const currentQuestion_obj = activeQuestions[currentQuestion];
+        
+        // Age validation: only proceed if age is within valid range
+        if (currentQuestion_obj.type === 'age') {
+            const age = parseInt(answer);
+            if (isNaN(age) || age < 10 || age > 120) {
+                // Just update the state without proceeding
+                setResponses(prev => ({ ...prev, [currentQuestion_obj.id]: answer }));
+                return;
+            }
+        }
+        
+        setResponses(prev => ({ ...prev, [currentQuestion_obj.id]: answer }));
         
         // Skip logic: If girl says "Haven't started yet" (Q1), jump to Age (Q13)
         if (gender === 'Girl' && currentQuestion === 0 && answer === 'NOT_STARTED') {
@@ -99,8 +111,11 @@ const Onboarding = () => {
             // A girl is only "menstruating" if she didn't select 'NOT_STARTED' or 'MALE' path
             const isMenstruating = gender === 'Girl' && responses['q1'] !== 'NOT_STARTED';
             
+            // Map onboarding gender to database gender values
+            const genderValue = gender === 'Girl' ? 'female' : 'male';
+            
             const updateData = {
-                gender: gender,
+                gender: genderValue,
                 is_menstruating: isMenstruating,
                 onboarding_complete: true,
                 // We add the age from the questionnaire if available
@@ -176,6 +191,38 @@ const Onboarding = () => {
                         {t('onboarding.girlPath.q1_hint', 'Don\'t worry if you don\'t remember the exact date, an estimate is fine!')}
                     </p>
                 </div>
+            </div>
+        );
+    };
+
+    const renderAgeInput = (question) => {
+        const currentValue = responses[question.id] || '';
+        const isValid = currentValue && parseInt(currentValue) >= 10 && parseInt(currentValue) <= 120;
+        
+        return (
+            <div className="mt-8">
+                <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-400" size={24} />
+                    <input 
+                        type="number"
+                        min="7"
+                        max="120"
+                        placeholder="Enter your age (7-120)"
+                        className={`w-full pl-14 pr-6 py-4 rounded-2xl border-2 outline-none text-lg font-medium transition-all ${
+                            isValid || !currentValue
+                            ? 'border-pink-100 focus:border-pink-400 text-gray-700'
+                            : 'border-red-400 bg-red-50 text-red-700 focus:border-red-500'
+                        }`}
+                        onChange={(e) => handleAnswer(e.target.value)}
+                        value={currentValue}
+                    />
+                </div>
+                {currentValue && !isValid && (
+                    <p className="mt-3 text-sm text-red-600 font-medium">⚠️ Age must be between 7 and 120</p>
+                )}
+                <p className="mt-4 text-sm text-gray-500">
+                    Please enter a valid age to continue.
+                </p>
             </div>
         );
     };
@@ -279,28 +326,67 @@ const Onboarding = () => {
                                 <div className="flex-1">
                                     {activeQuestions[currentQuestion].type === 'date' 
                                         ? renderDatePicker(activeQuestions[currentQuestion])
+                                        : activeQuestions[currentQuestion].type === 'age'
+                                        ? renderAgeInput(activeQuestions[currentQuestion])
                                         : renderSelection(activeQuestions[currentQuestion])
                                     }
                                 </div>
 
                                 {/* Finish Button (Only shown on last question) */}
-                                {currentQuestion === activeQuestions.length - 1 && responses[activeQuestions[currentQuestion].id] && (
-                                    <motion.button
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        onClick={handleFinish}
-                                        disabled={submitting}
-                                        className={`mt-10 w-full py-5 rounded-2xl bg-gradient-to-r from-pink-500 to-pink-600 text-white font-black text-lg shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] active:scale-[0.98] ${submitting ? 'opacity-70' : ''}`}
-                                    >
-                                        {submitting ? (
-                                            <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                                        ) : (
-                                            <>
-                                                {t('onboarding.finish')}
-                                                <ArrowRight size={20} />
-                                            </>
-                                        )}
-                                    </motion.button>
+                                {currentQuestion === activeQuestions.length - 1 && (
+                                    (() => {
+                                        const currentQ = activeQuestions[currentQuestion];
+                                        const responseValue = responses[currentQ.id];
+                                        
+                                        // For age type, validate age range
+                                        if (currentQ.type === 'age') {
+                                            const age = parseInt(responseValue);
+                                            const isValidAge = !isNaN(age) && age >= 7 && age <= 120;
+                                            
+                                            return (
+                                                <motion.button
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    onClick={handleFinish}
+                                                    disabled={submitting || !isValidAge}
+                                                    className={`mt-10 w-full py-5 rounded-2xl text-white font-black text-lg shadow-lg flex items-center justify-center gap-3 transition-transform ${
+                                                        isValidAge 
+                                                        ? 'bg-gradient-to-r from-pink-500 to-pink-600 hover:scale-[1.02] active:scale-[0.98]' 
+                                                        : 'bg-gray-300 cursor-not-allowed'
+                                                    } ${submitting ? 'opacity-70' : ''}`}
+                                                >
+                                                    {submitting ? (
+                                                        <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            {t('onboarding.finish')}
+                                                            <ArrowRight size={20} />
+                                                        </>
+                                                    )}
+                                                </motion.button>
+                                            );
+                                        }
+                                        
+                                        // For other types, just check if response exists
+                                        return responseValue && (
+                                            <motion.button
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                onClick={handleFinish}
+                                                disabled={submitting}
+                                                className={`mt-10 w-full py-5 rounded-2xl bg-gradient-to-r from-pink-500 to-pink-600 text-white font-black text-lg shadow-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] active:scale-[0.98] ${submitting ? 'opacity-70' : ''}`}
+                                            >
+                                                {submitting ? (
+                                                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        {t('onboarding.finish')}
+                                                        <ArrowRight size={20} />
+                                                    </>
+                                                )}
+                                            </motion.button>
+                                        );
+                                    })()
                                 )}
                             </motion.div>
                         )}
