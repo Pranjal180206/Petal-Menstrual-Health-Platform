@@ -120,7 +120,12 @@ const Onboarding = () => {
                 is_menstruating: isMenstruating,
                 onboarding_complete: true,
                 // We add the age from the questionnaire if available
-                age: parseInt(responses[gender === 'Girl' ? 'q13' : 'bq1']) || user.age || 0
+                age: parseInt(responses[gender === 'Girl' ? 'q13' : 'bq1']) || user.age || 0,
+                // Persist all questionnaire responses to DB
+                onboarding_data: {
+                    gender_path: gender,
+                    responses: responses
+                }
             };
 
             await authApi.updateProfile(updateData);

@@ -68,16 +68,20 @@ class UserService:
         # Convert Pydantic model to dict if needed, excluding unset/none
         data_dict = update_data.model_dump(exclude_unset=True) if hasattr(update_data, "model_dump") else update_data
         
+        # Fields that are stored as whole sub-documents (not dot-notation flattened)
+        WHOLE_DICT_FIELDS = {"onboarding_data"}
+
         payload = {}
         for k, v in data_dict.items():
             if v is not None:
-                if isinstance(v, dict):
+                if isinstance(v, dict) and k not in WHOLE_DICT_FIELDS:
                     # Flatten nested dicts for Mongo $set so we don't overwrite the entire object
                     for sub_k, sub_v in v.items():
                         if sub_v is not None:
                             payload[f"{k}.{sub_k}"] = sub_v
                 else:
                     payload[k] = v
+
                     
         if not payload:
             return await db["users"].find_one({"_id": oid})

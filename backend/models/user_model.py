@@ -52,6 +52,7 @@ class User(BaseModel):
 
     is_menstruating: bool
     onboarding_complete: bool = False
+    onboarding_data: Optional[dict] = None
 
     profile: Optional[UserProfile]
 
@@ -90,4 +91,5 @@ class UserProfileUpdate(BaseModel):
     breastfeeding: Optional[bool]  = None
     is_menstruating: Optional[bool] = None
     onboarding_complete: Optional[bool] = None
+    onboarding_data: Optional[dict] = None
     profile: Optional[UserProfileNestedUpdate] = None

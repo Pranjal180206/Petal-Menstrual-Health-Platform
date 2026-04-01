@@ -30,6 +30,10 @@ async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depe
     user_id = current_user["_id"]
     
     update_data = body.model_dump(exclude_unset=True)
+    print(f"📥 [PROFILE UPDATE] user_id={user_id} | payload keys={list(update_data.keys())}")
+    if "onboarding_data" in update_data:
+        print(f"📝 [ONBOARDING DATA] gender_path={update_data['onboarding_data'].get('gender_path')} | responses keys={list((update_data['onboarding_data'].get('responses') or {}).keys())}")
+
     height = update_data.get("height")
     weight = update_data.get("weight")
 
@@ -45,9 +49,11 @@ async def update_user_profile(body: UserProfileUpdate, current_user: dict = Depe
         is_admin = user.get("is_admin", False)
         sanitized = sanitize_user(user)
         sanitized["is_admin"] = is_admin
+        print(f"✅ [PROFILE UPDATE] Success for user_id={user_id} | onboarding_complete={sanitized.get('onboarding_complete')}")
         return sanitized
     
     return await get_user_profile(current_user)
+
 
 @router.patch("/settings")
 async def update_user_settings(body: UserSettingsUpdate, current_user: dict = Depends(get_current_user)):
