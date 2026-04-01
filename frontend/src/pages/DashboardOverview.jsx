@@ -168,7 +168,7 @@ const DashboardOverview = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
             {/* Top Header Row */}
-            <header className="flex justify-between items-center mb-10">
+            <header className="flex justify-between items-center mb-10" data-tour-id="dashboard-header">
                 <div>
                     <h1 className="text-3xl font-heading font-extrabold mb-1">{t('dashboard.title')}</h1>
                     <p className="text-gray-500 font-medium text-sm">

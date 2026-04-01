@@ -209,7 +209,7 @@ const Education = () => {
                 <main className="max-w-[1400px] mx-auto w-full px-6 py-10">
                     
                     {/* Hero */}
-                    <div ref={heroRef} className="flex flex-col items-start gap-6 mb-12 px-4 max-w-2xl">
+                    <div ref={heroRef} className="flex flex-col items-start gap-6 mb-12 px-4 max-w-2xl" data-tour-id="education-hero">
                         <span
                             className="inline-block px-5 py-2 rounded-full text-base font-black uppercase tracking-widest"
                             style={{

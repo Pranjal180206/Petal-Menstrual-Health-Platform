@@ -4,6 +4,7 @@ import { Droplet, Sparkles, Lock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const Login = () => {
     const { login, register } = useAuth();
@@ -17,6 +18,7 @@ const Login = () => {
         is_menstruating: true
     });
     const [error, setError] = useState('');
+    const [showSignupPreloader, setShowSignupPreloader] = useState(false);
 
     const mouseX = useMotionValue(0);
     const mouseY = useMotionValue(0);
@@ -64,10 +66,15 @@ const Login = () => {
         try {
             if (isLogin) {
                 await login({ email: formData.email, password: formData.password });
+                navigate('/');
             } else {
                 await register(formData);
+                setShowSignupPreloader(true);
+                window.setTimeout(() => {
+                    navigate('/onboarding', { replace: true });
+                }, 1000);
+                return;
             }
-            navigate('/');
         } catch (err) {
             setError(err.response?.data?.detail || 'Authentication failed');
         }
@@ -76,6 +83,17 @@ const Login = () => {
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
+    if (showSignupPreloader) {
+        return (
+            <div className="h-screen bg-white flex items-center justify-center font-sans text-[#1D1D2C]">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 rounded-full border-4 border-pink-100 border-t-[#FF6B9A] animate-spin" />
+                    <p className="text-base font-semibold text-gray-600">Getting your questionnaire ready...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="h-screen overflow-hidden bg-white flex flex-col font-sans text-[#1D1D2C]">
@@ -128,7 +146,11 @@ const Login = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
                     className="w-full max-w-md shrink-0 overflow-y-auto max-h-[80vh] scrollbar-hide pb-4"
+                    data-tour-id="login-form-card"
                 >
+                    <div className="flex justify-end mb-3">
+                        <LanguageSelector />
+                    </div>
                     <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-gray-100/50">
                         <div className="text-center mb-6">
                             <h2 className="text-2xl font-heading font-extrabold mb-2">

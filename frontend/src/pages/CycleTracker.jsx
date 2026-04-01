@@ -310,7 +310,7 @@ const CycleTracker = () => {
             </div>
 
             {/* Right Column — Daily Log Panel */}
-            <div className="w-full lg:w-[420px] bg-white rounded-[2rem] shadow-card border border-gray-100 p-8 flex flex-col">
+            <div className="w-full lg:w-[420px] bg-white rounded-[2rem] shadow-card border border-gray-100 p-8 flex flex-col" data-tour-id="tracker-daily-log">
 
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-heading font-extrabold">{t('cycleTracker.dailyLog')}</h2>

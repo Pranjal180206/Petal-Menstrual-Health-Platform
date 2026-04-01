@@ -56,9 +56,61 @@
   "tour": {
     "skip": "Skip Tour",
     "promptTitle": "New here? ✨",
-    "promptDesc": "Want a quick 1-minute tour to see how Petal works? It's super fast, promise!",
+    "promptDesc": "Want a quick and fun mini tour? We'll show you what to click next!",
     "takeTour": "Take a Tour",
-    "maybeLater": "Maybe Later"
+    "maybeLater": "Maybe Later",
+    "steps": {
+      "welcome": {
+        "title": "Hi there, explorer!",
+        "content": "Welcome! This tiny tour will help you find the coolest parts of the app.",
+        "next": "Start"
+      },
+      "navbar": {
+        "title": "Main Menu",
+        "content": "Use these buttons to switch between learning, community, and tracking.",
+        "next": "Next"
+      },
+      "education": {
+        "title": "Learning Zone",
+        "content": "Read easy articles, videos, and myths to learn about health safely.",
+        "next": "Next"
+      },
+      "community": {
+        "title": "Community Space",
+        "content": "Share and read stories in a kind, supportive space.",
+        "next": "Next"
+      },
+      "login": {
+        "title": "Sign In Here",
+        "content": "Create or sign in to save your progress and unlock your personal tools.",
+        "next": "Finish"
+      },
+      "dashboard": {
+        "title": "Your Tracker Home",
+        "content": "This shows your cycle summary and updates in one place.",
+        "next": "Next"
+      },
+      "tracker": {
+        "title": "Daily Log",
+        "content": "Tap here to log flow, symptoms, mood, and notes each day.",
+        "next": "Next"
+      },
+      "risk": {
+        "title": "Risk Check",
+        "content": "See easy-to-read health signals based on your logs.",
+        "next": "Next"
+      },
+      "insights": {
+        "title": "Insights",
+        "content": "Find patterns and trends to understand your body better.",
+        "next": "Next"
+      },
+      "profile": {
+        "title": "Profile Settings",
+        "content": "Update your basic info and account settings here.",
+        "next": "Finish"
+      }
+    }
   },
   "sidebar": {
     "tagline": "Cycle Tracker",

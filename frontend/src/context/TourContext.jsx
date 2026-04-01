@@ -1,74 +1,61 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const TourContext = createContext(null);
 
-// Tour step definitions — title/content/nextLabel will be translated at render time in TourOverlay
-export const TOUR_STEPS = [
-    {
-        id: 'welcome',
-        path: '/',
-        selector: 'hero-title',
-        title: "Hey! Welcome to Petal 🌸",
-        content: "I'm Petal Pal! I'll show you how to vibe with your cycle. Ready for a 1-minute tour?",
-        nextLabel: "Let's go! ✨",
-    },
-    {
-        id: 'navbar',
-        path: '/',
-        selector: 'navbar-main',
-        title: "The Big Basics",
-        content: "Here's where you find the community, education, and your trackers. Everything Petal has to offer!",
-        nextLabel: "Cool! Next →",
-    },
-    {
-        id: 'goto-tracker',
-        path: '/',
-        selector: 'hero-get-started',
-        title: "Your Private Space",
-        content: "Let's dive into your actual tracker. Click next and I'll fly us there!",
-        nextLabel: "Take me there! 🚀",
-        action: (navigate) => navigate('/cycle-tracker'),
-    },
-    {
-        id: 'dashboard-status',
-        path: '/cycle-tracker',
-        selector: 'dashboard-status-card',
-        title: "Your Cycle at a Glance",
-        content: "This bar shows exactly where you are in your cycle. No more guessing games!",
-        nextLabel: "Got it! ✅",
-    },
-    {
-        id: 'dashboard-mood',
-        path: '/cycle-tracker',
-        selector: 'dashboard-mood-logger',
-        title: "How's your vibe today?",
-        content: "Log how you feel here. The more you log, the smarter Petal gets about your body!",
-        nextLabel: "Love it! ✨",
-    },
-    {
-        id: 'sidebar-insights',
-        path: '/cycle-tracker',
-        selector: 'nav-item-insights',
-        title: "The AI Magic 🪄",
-        content: "Check this section for personalized patterns we find in your data. It's like a crystal ball for your health!",
-        nextLabel: "Mind blown! 🤯",
-    },
-    {
-        id: 'final',
-        path: '/cycle-tracker',
-        selector: 'petal-logo-sidebar',
-        title: "You're all set! 🎉",
-        content: "You're officially a Petal pro. Go explore and stay sparkling!",
-        nextLabel: "Finish Tour",
+const getTourSteps = (user) => {
+    const commonStart = [
+        { id: 'welcome', path: '/', selector: 'hero-title', titleKey: 'tour.steps.welcome.title', contentKey: 'tour.steps.welcome.content', nextLabelKey: 'tour.steps.welcome.next' },
+        { id: 'navbar', path: '/', selector: 'navbar-main', titleKey: 'tour.steps.navbar.title', contentKey: 'tour.steps.navbar.content', nextLabelKey: 'tour.steps.navbar.next' },
+    ];
+
+    if (!user) {
+        return [
+            ...commonStart,
+            { id: 'education', path: '/education', selector: 'education-hero', titleKey: 'tour.steps.education.title', contentKey: 'tour.steps.education.content', nextLabelKey: 'tour.steps.education.next' },
+            { id: 'community', path: '/community', selector: 'community-hero', titleKey: 'tour.steps.community.title', contentKey: 'tour.steps.community.content', nextLabelKey: 'tour.steps.community.next' },
+            { id: 'login', path: '/login', selector: 'login-form-card', titleKey: 'tour.steps.login.title', contentKey: 'tour.steps.login.content', nextLabelKey: 'tour.steps.login.next' },
+        ];
     }
-];
+
+    const normalizedGender = (user?.gender || '').toLowerCase();
+    const isFemale = normalizedGender === 'female';
+    const isMaleLike = Boolean(user) && !isFemale;
+
+    if (isMaleLike) {
+        return [
+            ...commonStart,
+            { id: 'community', path: '/community', selector: 'community-hero', titleKey: 'tour.steps.community.title', contentKey: 'tour.steps.community.content', nextLabelKey: 'tour.steps.community.next' },
+            { id: 'profile', path: '/profile', selector: 'profile-settings-card', titleKey: 'tour.steps.profile.title', contentKey: 'tour.steps.profile.content', nextLabelKey: 'tour.steps.profile.next' },
+            { id: 'education', path: '/education', selector: 'education-hero', titleKey: 'tour.steps.education.title', contentKey: 'tour.steps.education.content', nextLabelKey: 'tour.steps.education.next' },
+        ];
+    }
+
+    if (isFemale) {
+        return [
+            ...commonStart,
+            { id: 'education', path: '/education', selector: 'education-hero', titleKey: 'tour.steps.education.title', contentKey: 'tour.steps.education.content', nextLabelKey: 'tour.steps.education.next' },
+            { id: 'community', path: '/community', selector: 'community-hero', titleKey: 'tour.steps.community.title', contentKey: 'tour.steps.community.content', nextLabelKey: 'tour.steps.community.next' },
+            { id: 'dashboard', path: '/cycle-tracker', selector: 'dashboard-header', titleKey: 'tour.steps.dashboard.title', contentKey: 'tour.steps.dashboard.content', nextLabelKey: 'tour.steps.dashboard.next' },
+            { id: 'tracker', path: '/cycle-tracker/tracker', selector: 'tracker-daily-log', titleKey: 'tour.steps.tracker.title', contentKey: 'tour.steps.tracker.content', nextLabelKey: 'tour.steps.tracker.next' },
+            { id: 'risk', path: '/cycle-tracker/risk', selector: 'risk-header', titleKey: 'tour.steps.risk.title', contentKey: 'tour.steps.risk.content', nextLabelKey: 'tour.steps.risk.next' },
+            { id: 'insights', path: '/cycle-tracker/insights', selector: 'insights-header', titleKey: 'tour.steps.insights.title', contentKey: 'tour.steps.insights.content', nextLabelKey: 'tour.steps.insights.next' },
+            { id: 'profile', path: '/profile', selector: 'profile-settings-card', titleKey: 'tour.steps.profile.title', contentKey: 'tour.steps.profile.content', nextLabelKey: 'tour.steps.profile.next' },
+            { id: 'education', path: '/education', selector: 'education-hero', titleKey: 'tour.steps.education.title', contentKey: 'tour.steps.education.content', nextLabelKey: 'tour.steps.education.next' },
+        ];
+    }
+
+    return commonStart;
+};
 
 export const TourProvider = ({ children }) => {
     const [currentStepIndex, setCurrentStepIndex] = useState(-1); // -1 means tour is closed
     const [isTourActive, setIsTourActive] = useState(false);
+    const [tourSteps, setTourSteps] = useState([]);
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
 
     // Check for first-time user
     useEffect(() => {
@@ -82,21 +69,28 @@ export const TourProvider = ({ children }) => {
     }, []);
 
     const startTour = () => {
+        const steps = getTourSteps(user);
+        if (!steps.length) return;
+        setTourSteps(steps);
         setCurrentStepIndex(0);
         setIsTourActive(true);
-        if (location.pathname !== '/') {
-            navigate('/');
+        if (location.pathname !== steps[0].path) {
+            navigate(steps[0].path);
         }
     };
 
     const nextStep = () => {
+        if (!tourSteps.length) {
+            endTour();
+            return;
+        }
         const nextIdx = currentStepIndex + 1;
-        if (nextIdx >= TOUR_STEPS.length) {
+        if (nextIdx >= tourSteps.length) {
             endTour();
             return;
         }
 
-        const nextStepData = TOUR_STEPS[nextIdx];
+        const nextStepData = tourSteps[nextIdx];
         
         // Execute special action if exists (like navigating)
         if (nextStepData.action) {
@@ -111,10 +105,11 @@ export const TourProvider = ({ children }) => {
     const endTour = () => {
         setIsTourActive(false);
         setCurrentStepIndex(-1);
+        setTourSteps([]);
         localStorage.setItem('petal_tour_completed', 'true');
     };
 
-    const currentStep = TOUR_STEPS[currentStepIndex] || null;
+    const currentStep = tourSteps[currentStepIndex] || null;
 
     return (
         <TourContext.Provider value={{ 
@@ -123,7 +118,8 @@ export const TourProvider = ({ children }) => {
             startTour, 
             nextStep, 
             endTour,
-            currentStepIndex 
+            currentStepIndex,
+            totalSteps: tourSteps.length,
         }}>
             {children}
         </TourContext.Provider>

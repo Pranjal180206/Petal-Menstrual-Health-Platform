@@ -3,7 +3,6 @@ import {
     LayoutDashboard,
     CalendarDays,
     TrendingUp,
-    FileText,
     Lightbulb,
     Settings,
 } from 'lucide-react';
@@ -25,7 +24,6 @@ const CycleTrackerLayout = () => {
         { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: 'sidebar.dashboard' },
         { to: '/cycle-tracker/tracker', icon: <CalendarDays size={18} />, labelKey: 'sidebar.cycleAndMood', restricted: true },
         { to: '/cycle-tracker/risk', icon: <TrendingUp size={18} />, labelKey: 'sidebar.riskAnalysis', restricted: true },
-        { to: '/cycle-tracker/report', icon: <FileText size={18} />, labelKey: 'sidebar.reportGenerator', restricted: true },
         { to: '/cycle-tracker/insights', icon: <Lightbulb size={18} />, labelKey: 'sidebar.insights', tourId: 'nav-item-insights' },
     ];
 

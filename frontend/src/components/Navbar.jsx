@@ -22,7 +22,7 @@ const Navbar = ({ isHome = false }) => {
             {/* Desktop Links */}
             <div
                 data-tour-id="navbar-main"
-                className="hidden md:flex items-center gap-6 lg:gap-10 text-sm px-6 lg:px-8 bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md"
+                className={`hidden md:flex items-center gap-6 lg:gap-10 text-sm px-6 lg:px-8 bg-gray-50/80 backdrop-blur-md py-4 md:py-5 rounded-full border border-gray-100 shadow-md ${isHome ? 'md:absolute md:left-1/2 md:-translate-x-1/2' : ''}`}
             >
                 <Link to="/education" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">{t('nav.education')}</Link>
                 <Link to="/community" className="font-bold text-brand-gray hover:text-brand-pink transition-colors">{t('nav.community')}</Link>

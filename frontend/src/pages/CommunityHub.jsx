@@ -722,7 +722,7 @@ const CommunityHub = () => {
                         {/* Hero header */}
                         <div className="mb-8">
                             <div className="flex items-start justify-between">
-                                <div>
+                                <div data-tour-id="community-hero">
                                     <p className="text-xs font-bold tracking-widest text-[#FF6B9A] uppercase mb-2">✦ Safe &amp; Anonymous</p>
                                     <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-[#1D1D2C] leading-tight mb-2">
                                         Community Hub

@@ -111,7 +111,7 @@ const Insights = () => {
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-8">
             {/* Header */}
-            <header className="mb-8">
+            <header className="mb-8" data-tour-id="insights-header">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                         <Sparkles className="text-pink-500" size={24} />

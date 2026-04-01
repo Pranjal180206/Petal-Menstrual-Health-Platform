@@ -145,7 +145,7 @@ const UserProfile = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 space-y-5">
+                <div className="bg-white rounded-[2rem] p-6 shadow-card border border-gray-100 space-y-5" data-tour-id="profile-settings-card">
                     <h3 className="font-heading font-extrabold text-xl text-brand-dark">Profile Settings</h3>
                     <div className="space-y-2">
                         <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Name</label>

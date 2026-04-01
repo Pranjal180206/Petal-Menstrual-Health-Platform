@@ -7,18 +7,9 @@ const Hero = () => {
     const tourContext = useTour();
     const { t } = useTranslation();
 
-    // Debug the tour context
-    console.log('Tour context:', tourContext);
-
     const handleTourClick = () => {
-        console.log('Tour button clicked!');
-        alert('Button clicked! Checking tour context...');
         if (tourContext && tourContext.startTour && typeof tourContext.startTour === 'function') {
-            console.log('Calling startTour...');
             tourContext.startTour();
-        } else {
-            console.error('Tour context or startTour is not available:', tourContext);
-            alert('Tour context is not available. Check console for details.');
         }
     };
 

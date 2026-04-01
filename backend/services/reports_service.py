@@ -7,8 +7,6 @@ from services.cycle_history import (
     get_parsed_cycle_history
 )
 from services.ml_service import assess_risk_from_cycles, ML_AVAILABLE
-from fpdf import FPDF
-from datetime import datetime
 
 class ReportsService:
     @staticmethod
@@ -211,63 +209,5 @@ class ReportsService:
             cycle_comparison=cycle_comparison,
             overall_risk=overall_risk
         )
-
-    @staticmethod
-    async def generate_pdf_report(analysis_result: RiskAnalysisResult, user_name: str) -> bytes:
-        pdf = FPDF()
-        pdf.add_page()
-        
-        # Header
-        pdf.set_font("helvetica", "B", 16)
-        pdf.cell(0, 10, "PETAL HEALTH PLATFORM - RISK ANALYSIS REPORT", ln=True, align="C")
-        
-        # User details
-        pdf.set_font("helvetica", "", 12)
-        pdf.cell(0, 10, f"User: {user_name}", ln=True)
-        pdf.cell(0, 10, f"Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC", ln=True)
-        pdf.ln(5)
-        
-        if analysis_result.data_insufficient:
-            pdf.set_font("helvetica", "B", 14)
-            pdf.cell(0, 10, "Data Insufficient", ln=True)
-            pdf.set_font("helvetica", "", 12)
-            pdf.cell(0, 10, f"You have logged {analysis_result.cycles_logged} cycles.", ln=True)
-            pdf.cell(0, 10, "Please log at least 3 cycles before a full risk report can be generated.", ln=True)
-            return pdf.output()
-            
-        RISK_DISPLAY = {
-            "low": "Low Risk",
-            "moderate": "Moderate Risk",
-            "high": "High Risk",
-            "unknown": "Unable to Assess"
-        }
-        risk_display = RISK_DISPLAY.get(analysis_result.overall_risk, "Unable to Assess")
-
-        # Overall Risk Summary
-        pdf.set_font("helvetica", "B", 14)
-        pdf.cell(0, 10, "Summary", ln=True)
-        pdf.set_font("helvetica", "", 12)
-        pdf.cell(0, 8, f"Overall Risk Level: {risk_display}", ln=True)
-        pdf.cell(0, 8, f"Cycle Consistency: {analysis_result.cycle_consistency}%", ln=True)
-        pdf.cell(0, 8, f"Average Cycle Length: {analysis_result.average_cycle_length} Days", ln=True)
-        pdf.cell(0, 8, f"Symptom Intensity Trend: {analysis_result.symptom_intensity}", ln=True)
-        pdf.ln(5)
-        
-        # Risk Factors
-        pdf.set_font("helvetica", "B", 14)
-        pdf.cell(0, 10, "Detected Risk Factors", ln=True)
-        
-        if not analysis_result.factors:
-            pdf.set_font("helvetica", "I", 12)
-            pdf.cell(0, 10, "No elevated risks detected.", ln=True)
-        else:
-            for factor in analysis_result.factors:
-                pdf.set_font("helvetica", "B", 12)
-                pdf.cell(0, 8, f"[{factor.badge_text}] {factor.title}", ln=True)
-                pdf.set_font("helvetica", "", 11)
-                pdf.multi_cell(0, 6, factor.description)
-                pdf.ln(3)
-                
-        return pdf.output()
 
 reports_service = ReportsService()

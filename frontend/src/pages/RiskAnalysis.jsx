@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp, HelpCircle, Sparkles, Heart, CheckCircle, Activity, TrendingUp, Lightbulb } from 'lucide-react';
+import { Calendar, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp, HelpCircle, Sparkles, Heart, CheckCircle, Activity, TrendingUp, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
@@ -109,30 +109,6 @@ const RiskAnalysis = () => {
         fetchAnalysis(activePeriod);
     }, []);
 
-    const handleExportPDF = async () => {
-        try {
-            const res = await axiosInstance.get('/reports/export', { responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([res.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            
-            const disposition = res.headers['content-disposition'];
-            let fileName = 'petal_risk_report.pdf';
-            if (disposition && disposition.indexOf('filename=') !== -1) {
-                fileName = disposition.split('filename=')[1].replace(/"/g, '');
-            }
-            
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-            showToast('Export downloaded successfully.', 'success');
-        } catch (err) {
-            console.error("Export failed:", err);
-            showToast('Failed to export report.', 'error');
-        }
-    };
-
     const handleConsultSpecialist = () => {
         navigate('/community');
     };
@@ -210,7 +186,7 @@ const RiskAnalysis = () => {
         <div className="p-8 max-w-5xl mx-auto pb-24 relative">
 
             {/* Header Row - Child Friendly */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 relative z-10 gap-4">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 relative z-10 gap-4" data-tour-id="risk-header">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
                         <Sparkles className="text-pink-500" size={24} />
@@ -238,13 +214,6 @@ const RiskAnalysis = () => {
                             {f.label}
                         </button>
                     ))}
-                    <button
-                        onClick={handleExportPDF}
-                        className="flex items-center gap-2 bg-white border-2 border-pink-200 hover:bg-pink-50 text-pink-600 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105"
-                    >
-                        <Download size={14} />
-                        {t('riskAnalysis.downloadPDF')}
-                    </button>
                 </div>
             </header>
 

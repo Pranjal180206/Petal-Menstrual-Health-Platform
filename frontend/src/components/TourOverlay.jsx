@@ -5,7 +5,7 @@ import { useTour } from '../context/TourContext';
 import { useTranslation } from 'react-i18next';
 
 const TourOverlay = () => {
-    const { isTourActive, currentStep, nextStep, endTour, currentStepIndex } = useTour();
+    const { isTourActive, currentStep, nextStep, endTour, currentStepIndex, totalSteps } = useTour();
     const { t } = useTranslation();
     const [bounds, setBounds] = useState({ top: 0, left: 0, width: 0, height: 0 });
 
@@ -100,13 +100,13 @@ const TourOverlay = () => {
                         <div className="flex items-center justify-center gap-2 mb-2">
                             <Sparkles size={16} className="text-[#D81B60]" />
                             <h3 className="text-xl font-heading font-extrabold text-[#1D1D2C]">
-                                {currentStep.title}
+                                {t(currentStep.titleKey)}
                             </h3>
                             <Sparkles size={16} className="text-[#D81B60]" />
                         </div>
                         
                         <p className="text-sm font-medium text-gray-500 leading-relaxed mb-8">
-                            {currentStep.content}
+                            {t(currentStep.contentKey)}
                         </p>
 
                         <div className="flex items-center gap-3">
@@ -120,14 +120,14 @@ const TourOverlay = () => {
                                 onClick={nextStep}
                                 className="flex-[2] py-3 px-4 rounded-xl bg-[#D81B60] hover:bg-[#C2185B] text-white font-bold text-sm shadow-soft transition-all hover:scale-105 flex items-center justify-center gap-2"
                             >
-                                {currentStep.nextLabel}
+                                {t(currentStep.nextLabelKey)}
                                 <ChevronRight size={18} />
                             </button>
                         </div>
 
                         {/* Progress */}
                         <div className="flex justify-center gap-1.5 mt-8">
-                            {Array.from({ length: 7 }).map((_, i) => (
+                            {Array.from({ length: totalSteps || 0 }).map((_, i) => (
                                 <div 
                                     key={i} 
                                     className={`h-1 rounded-full transition-all duration-300 ${

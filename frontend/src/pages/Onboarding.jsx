@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth.api';
+import LanguageSelector from '../components/LanguageSelector';
 import { 
     ChevronRight, 
     ChevronLeft, 
@@ -230,6 +231,9 @@ const Onboarding = () => {
     return (
         <div className="min-h-screen bg-[#FFF0F4] flex items-center justify-center p-6 font-sans">
             <div className="w-full max-w-xl bg-white rounded-[2.5rem] shadow-xl overflow-hidden relative border border-pink-50">
+                <div className="absolute top-4 right-4 z-20">
+                    <LanguageSelector />
+                </div>
                 
                 {/* Progress Bar */}
                 {step === 1 && (

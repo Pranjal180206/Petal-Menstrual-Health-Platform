@@ -25,7 +25,6 @@ import CycleTrackerLayout from './components/CycleTrackerLayout';
 import DashboardOverview from './pages/DashboardOverview';
 import CycleTracker from './pages/CycleTracker';
 import RiskAnalysis from './pages/RiskAnalysis';
-import ReportGenerator from './pages/ReportGenerator';
 import Insights from './pages/Insights';
 import CycleSettings from './pages/CycleSettings';
 
@@ -192,7 +191,6 @@ const AnimatedRoutes = () => {
             <Route index element={<DashboardOverview />} />
             <Route path="tracker" element={<CycleTracker />} />
             <Route path="risk" element={<RiskAnalysis />} />
-            <Route path="report" element={<ReportGenerator />} />
             <Route path="insights" element={<Insights />} />
             <Route path="settings" element={<FemaleCycleSettingsGuard><CycleSettings /></FemaleCycleSettingsGuard>} />
           </Route>
