@@ -118,12 +118,12 @@ const SimpleInfoPage = ({ title, children }) => (
 );
 
 const ContactPage = () => (
-  <SimpleInfoPage title="Contact & Help Center 🌸">
-    <p>We're here for you! For questions, support, or feedback, reach out to us at:</p>
-    <p className="font-bold text-[#D81B60]">support@petal-health.app</p>
-    <p>Our team responds within 24–48 hours. For urgent health concerns, please consult a healthcare professional.</p>
+  <SimpleInfoPage title="Upay Contact & Help Center">
+    <p>Need support or have feedback? Reach out to the Upay team at:</p>
+    <p className="font-bold text-[#D81B60]">support@upay.org (placeholder)</p>
+    <p>Our team usually responds within 24–48 hours. For urgent health concerns, please contact a qualified healthcare professional.</p>
     <p className="font-bold">Parent/Guardian Inquiries:</p>
-    <p>If you're a parent or guardian with questions about Petal, email us at <span className="text-[#D81B60] font-bold">parents@petal-health.app</span></p>
+    <p>If you're a parent or guardian and need guidance, contact us at <span className="text-[#D81B60] font-bold">parents@upay.org (placeholder)</span></p>
   </SimpleInfoPage>
 );
 

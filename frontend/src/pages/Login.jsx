@@ -3,7 +3,6 @@ import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Droplet, Sparkles, Lock } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import PetalIcon from '../components/PetalIcon';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -89,16 +88,11 @@ const Login = () => {
 
             {/* Header */}
             <header className="w-full px-8 py-3 flex justify-between items-center relative z-10 shrink-0">
-                <Link to="/" className="flex flex-col">
-                    <div className="flex items-center gap-3">
-                        <div className="text-[#FF6B9A]">
-                            <PetalIcon size={28} />
-                        </div>
-                        <span className="font-heading font-extrabold text-2xl tracking-tight">Petal</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1 ml-10">
-                        <span className="text-[15px] text-gray-500 font-medium whitespace-nowrap">by Upay</span>
-                        <img src="/upay-logo.png" alt="Upay Logo" className="h-[33px] w-auto object-contain" />
+                <Link to="/" className="flex items-center gap-3">
+                    <img src="/upay-logo.png" alt="Upay Logo" className="h-[42px] md:h-[46px] w-auto object-contain" />
+                    <div className="flex flex-col leading-none">
+                        <span className="font-heading font-extrabold text-2xl tracking-tight text-[#1D1D2C]">Petal</span>
+                        <span className="text-xs text-gray-500 font-medium mt-1">by Upay</span>
                     </div>
                 </Link>
                 <div className="text-sm font-semibold text-gray-500">
@@ -237,32 +231,8 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <p className="text-center text-[10px] text-gray-400 font-medium mt-4 max-w-xs mx-auto leading-relaxed">
-                        {t('login.privacyNotice')}{' '}
-                        <Link to="/privacy" className="underline">{t('login.privacyPolicy')}</Link>
-                        {' '}{t('login.and')}{' '}
-                        <Link to="/terms" className="underline">{t('login.termsOfService')}</Link>.
-                    </p>
                 </motion.div>
             </main>
-
-            {/* Footer */}
-            <footer className="w-full border-t border-gray-100 bg-white/50 py-3 px-8 relative z-10 flex flex-col md:flex-row justify-between items-center gap-2 text-xs font-bold text-gray-400 shrink-0">
-                <div className="flex items-center gap-2">
-                    <div className="bg-[#FF6B9A] p-1 rounded-md text-white">
-                        <Lock size={12} />
-                    </div>
-                    <span>{t('login.safeSpace')}</span>
-                </div>
-
-                <div className="flex gap-6">
-                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">{t('login.helpCenter')}</Link>
-                    <Link to="/contact" className="hover:text-[#FF6B9A] transition-colors">{t('login.contact')}</Link>
-                    <Link to="/education" className="hover:text-[#FF6B9A] transition-colors">{t('login.parentGuide')}</Link>
-                </div>
-
-                <div>{t('login.copyright')}</div>
-            </footer>
         </div>
     );
 };
