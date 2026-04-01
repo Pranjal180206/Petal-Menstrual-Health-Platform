@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, Field
 from database import get_db
 from services.auth_service import get_admin_user
@@ -10,14 +10,14 @@ router = APIRouter()
 
 
 class ArticleCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=300)
-    content: str = Field(..., min_length=1, max_length=50000)
+    title: Union[dict, str] = Field(..., min_length=1, max_length=300)
+    content: Union[dict, str] = Field(..., min_length=1, max_length=50000)
     category: Optional[str] = "general"
 
 
 class ArticleUpdate(BaseModel):
-    title: Optional[str] = Field(None, max_length=300)
-    content: Optional[str] = Field(None, max_length=50000)
+    title: Optional[Union[dict, str]] = Field(None, max_length=300)
+    content: Optional[Union[dict, str]] = Field(None, max_length=50000)
     category: Optional[str] = None
     is_published: Optional[bool] = None
 
@@ -31,7 +31,7 @@ async def list_articles(request: Request, db=Depends(get_db), _=Depends(get_admi
 @router.post("/articles", status_code=201)
 @limiter.limit("30/minute")
 async def create_article(request: Request, body: ArticleCreate, db=Depends(get_db), _=Depends(get_admin_user)):
-    return await admin_service.create_article(db, body.title, body.content, body.category)
+    return await admin_service.create_article(db, body.model_dump(exclude_unset=True))
 
 
 @router.patch("/articles/{article_id}")

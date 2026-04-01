@@ -1,9 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Any, Optional
 from models.quiz_model import ScoreRequest, ScoreResponse
 from services.quiz_service import quiz_service
 from services.auth_service import get_current_user
 import logging
+from utils.i18n import resolve_lang, translate_field
+
+def translate_quiz(quiz: dict, lang: str) -> dict:
+    for field in ["title", "description"]:
+        if field in quiz:
+            quiz[field] = translate_field(quiz[field], lang)
+    for q in quiz.get("questions", []):
+        if "text" in q:
+            q["text"] = translate_field(q["text"], lang)
+        if "explanation" in q:
+            q["explanation"] = translate_field(q["explanation"], lang)
+        for opt in q.get("options", []):
+            if "text" in opt:
+                opt["text"] = translate_field(opt["text"], lang)
+    return quiz
 
 logger = logging.getLogger(__name__)
 
@@ -39,16 +54,18 @@ def clean_quiz_for_public(quiz: dict) -> dict:
     return quiz
 
 @router.get("/")
-async def list_quizzes():
+async def list_quizzes(lang: str = Query("en")):
+    resolved = resolve_lang(lang)
     quizzes = await quiz_service.get_published_quizzes()
-    return [clean_quiz_for_public(q) for q in quizzes]
+    return [translate_quiz(clean_quiz_for_public(q), resolved) for q in quizzes]
 
 @router.get("/{quiz_id}")
-async def get_quiz(quiz_id: str):
+async def get_quiz(quiz_id: str, lang: str = Query("en")):
+    resolved = resolve_lang(lang)
     quiz = await quiz_service.get_quiz(quiz_id)
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
-    return clean_quiz_for_public(quiz)
+    return translate_quiz(clean_quiz_for_public(quiz), resolved)
 
 @router.post("/{quiz_id}/submit", response_model=ScoreResponse)
 async def submit_quiz(quiz_id: str, request: ScoreRequest, current_user: Optional[dict] = Depends(get_optional_user)):

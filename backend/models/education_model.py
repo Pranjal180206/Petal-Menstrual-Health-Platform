@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Union
 from datetime import datetime
 from bson import ObjectId
 from database import PyObjectId
@@ -9,7 +9,7 @@ class EducationContent(BaseModel):
 
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
-    title: str
+    title: Union[dict, str]
 
     category: str
 
@@ -17,7 +17,7 @@ class EducationContent(BaseModel):
 
     age_group: str
 
-    content: str
+    content: Union[dict, str]
 
     media: List[str]
 

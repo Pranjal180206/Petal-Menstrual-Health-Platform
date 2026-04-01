@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, Field
 from database import get_db
 from services.auth_service import get_admin_user
@@ -10,13 +10,13 @@ router = APIRouter()
 
 
 class MythCreate(BaseModel):
-    myth: str = Field(..., min_length=1, max_length=1000)
-    fact: str = Field(..., min_length=1, max_length=1000)
+    myth: Union[dict, str] = Field(..., min_length=1, max_length=1000)
+    fact: Union[dict, str] = Field(..., min_length=1, max_length=1000)
 
 
 class MythUpdate(BaseModel):
-    myth: Optional[str] = Field(None, max_length=1000)
-    fact: Optional[str] = Field(None, max_length=1000)
+    myth: Optional[Union[dict, str]] = Field(None, max_length=1000)
+    fact: Optional[Union[dict, str]] = Field(None, max_length=1000)
 
 
 @router.get("/myths")
@@ -28,7 +28,7 @@ async def list_myths(request: Request, db=Depends(get_db), _=Depends(get_admin_u
 @router.post("/myths", status_code=201)
 @limiter.limit("30/minute")
 async def create_myth(request: Request, body: MythCreate, db=Depends(get_db), _=Depends(get_admin_user)):
-    return await admin_service.create_myth(db, body.myth, body.fact)
+    return await admin_service.create_myth(db, body.model_dump(exclude_unset=True))
 
 
 @router.patch("/myths/{myth_id}")

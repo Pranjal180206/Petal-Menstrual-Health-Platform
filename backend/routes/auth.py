@@ -103,7 +103,12 @@ async def register(request: Request, user_in: UserRegister):
     # Generate token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(created_user["_id"]), "is_admin": created_user.get("is_admin", False)}, expires_delta=access_token_expires
+        data={
+            "sub": str(created_user["_id"]),
+            "email": created_user.get("email"),
+            "is_admin": created_user.get("is_admin", False)
+        },
+        expires_delta=access_token_expires
     )
     
     # Strip sensitive info
@@ -137,7 +142,12 @@ async def google_auth(request: Request, body: GoogleAuthRequest):
     
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user["_id"]), "is_admin": user.get("is_admin", False)}, expires_delta=access_token_expires
+        data={
+            "sub": str(user["_id"]),
+            "email": user.get("email"),
+            "is_admin": user.get("is_admin", False)
+        },
+        expires_delta=access_token_expires
     )
     
     await db["users"].update_one(
@@ -182,7 +192,12 @@ async def login(request: Request, user_in: UserLogin):
         
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user["_id"]), "is_admin": user.get("is_admin", False)}, expires_delta=access_token_expires
+        data={
+            "sub": str(user["_id"]),
+            "email": user.get("email"),
+            "is_admin": user.get("is_admin", False)
+        },
+        expires_delta=access_token_expires
     )
     
     
