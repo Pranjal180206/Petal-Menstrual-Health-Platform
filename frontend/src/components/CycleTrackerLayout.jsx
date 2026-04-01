@@ -18,13 +18,21 @@ const CycleTrackerLayout = () => {
     const { t } = useTranslation();
 
 
-    const navLinks = [
-        { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: 'sidebar.dashboard' },
-        { to: '/cycle-tracker/tracker', icon: <CalendarDays size={18} />, labelKey: 'sidebar.cycleAndMood' },
-        { to: '/cycle-tracker/risk', icon: <TrendingUp size={18} />, labelKey: 'sidebar.riskAnalysis' },
-        { to: '/cycle-tracker/report', icon: <FileText size={18} />, labelKey: 'sidebar.reportGenerator' },
+    const isMenstruating = user?.is_menstruating;
+    const isBoy = user?.gender === 'Boy';
+
+    const allNavLinks = [
+        { to: '/cycle-tracker', end: true, icon: <LayoutDashboard size={18} />, labelKey: isBoy ? 'sidebar.overview' : 'sidebar.dashboard' },
+        { to: '/cycle-tracker/tracker', icon: <CalendarDays size={18} />, labelKey: 'sidebar.cycleAndMood', restricted: true },
+        { to: '/cycle-tracker/risk', icon: <TrendingUp size={18} />, labelKey: 'sidebar.riskAnalysis', restricted: true },
+        { to: '/cycle-tracker/report', icon: <FileText size={18} />, labelKey: 'sidebar.reportGenerator', restricted: true },
         { to: '/cycle-tracker/insights', icon: <Lightbulb size={18} />, labelKey: 'sidebar.insights', tourId: 'nav-item-insights' },
     ];
+
+    const navLinks = allNavLinks.filter(link => {
+        if (!isMenstruating && link.restricted) return false;
+        return true;
+    });
 
     const linkClass = ({ isActive }) =>
         `flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${

@@ -86,6 +86,81 @@ const DashboardOverview = () => {
         );
     }
 
+    if (!user?.is_menstruating) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
+                <header className="mb-10">
+                    <h1 className="text-3xl font-heading font-extrabold mb-1">
+                        {t('boyDashboard.title', { name: user?.name || 'Friend' })}
+                    </h1>
+                    <p className="text-gray-500 font-medium text-sm">
+                        {t('boyDashboard.subtitle')}
+                    </p>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col items-center text-center">
+                        <MessageSquare className="text-blue-500 mb-4" size={32} />
+                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{t('boyDashboard.communityStats')}</h4>
+                        <p className="text-4xl font-black text-gray-900">{summary?.community_posts_count ?? '0'}</p>
+                    </div>
+                    
+                    <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col items-center text-center">
+                        <BookOpen className="text-green-500 mb-4" size={32} />
+                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{t('boyDashboard.educationStats')}</h4>
+                        <p className="text-4xl font-black text-gray-900">12</p>
+                    </div>
+
+                    <div className="bg-white rounded-[2rem] p-8 shadow-card border border-gray-100 flex flex-col items-center text-center">
+                        <Zap className="text-yellow-500 mb-4" size={32} />
+                        <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Weekly Streak</h4>
+                        <p className="text-4xl font-black text-gray-900">5</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-card border border-gray-100">
+                        <h3 className="text-xl font-black mb-6 flex items-center gap-3">
+                            <Lightbulb className="text-yellow-500" />
+                            {t('boyDashboard.didYouKnow')}
+                        </h3>
+                        <div className="p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
+                            <p className="text-yellow-800 font-medium leading-relaxed">
+                                "The menstrual cycle is more than just a period. It's a complex hormone cycle that affects energy, mood, and health every single day!"
+                            </p>
+                        </div>
+                        <button 
+                            onClick={() => navigate('/education')}
+                            className="mt-8 w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                        >
+                            <BookOpen size={20} />
+                            {t('boyDashboard.viewEducation')}
+                        </button>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[2.5rem] p-10 shadow-lg text-white">
+                        <h3 className="text-xl font-black mb-6 flex items-center gap-3">
+                            <Heart className="fill-white" />
+                            {t('boyDashboard.supportTip')}
+                        </h3>
+                        <p className="text-blue-50 font-medium leading-relaxed mb-10">
+                            "Being a supportive friend means listening without judgment. Sometimes a small act of kindness or just being there makes a huge difference."
+                        </p>
+                        <div className="flex items-center gap-4 p-4 bg-white/10 rounded-2xl backdrop-blur-sm">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                                <MessageSquare size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-widest text-blue-200">New Discussion</p>
+                                <p className="font-bold text-sm">How to be an ally?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
             {/* Top Header Row */}

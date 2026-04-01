@@ -51,6 +51,7 @@ class User(BaseModel):
     is_active: bool = True
 
     is_menstruating: bool
+    onboarding_complete: bool = False
 
     profile: Optional[UserProfile]
 
@@ -88,4 +89,5 @@ class UserProfileUpdate(BaseModel):
     weight: Optional[float] = Field(None, ge=30,  le=250)
     breastfeeding: Optional[bool]  = None
     is_menstruating: Optional[bool] = None
+    onboarding_complete: Optional[bool] = None
     profile: Optional[UserProfileNestedUpdate] = None

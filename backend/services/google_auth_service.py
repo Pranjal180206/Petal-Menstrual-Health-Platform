@@ -120,6 +120,7 @@ async def get_or_create_user(db, profile: dict) -> dict:
         "gender": "prefer not to say", # default required fields for petal dataset
         "age": 0,
         "is_menstruating": False,
+        "onboarding_complete": False,
         "created_at": datetime.utcnow(),
         "profile": {"language_preference": "en"},
         "consent": {
