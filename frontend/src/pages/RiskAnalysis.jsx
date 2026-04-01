@@ -1,23 +1,71 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Download, AlertCircle, Info, MessageSquare, Droplet, CalendarX, Frown, ChevronDown, ChevronUp, HelpCircle, Sparkles, Heart, CheckCircle, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Toast from '../components/Toast';
 import axiosInstance from '../api/axiosInstance';
 
-// Colors only — labels/messages come from i18n
+// Child-friendly emoji mapping for risk levels
+const RISK_EMOJI = {
+    low: '🌟',
+    moderate: '👀',
+    high: '⚠️',
+    unknown: '📝'
+};
+
+// Colors and emojis
 const RISK_CONFIG = {
-  low:     { color: 'green'  },
-  moderate:{ color: 'yellow' },
-  high:    { color: 'red'    },
-  unknown: { color: 'gray'   },
+  low:     { color: 'green', emoji: '🌟', bgGradient: 'from-emerald-500 to-emerald-400' },
+  moderate:{ color: 'yellow', emoji: '👀', bgGradient: 'from-amber-500 to-amber-400' },
+  high:    { color: 'red', emoji: '⚠️', bgGradient: 'from-[#FF0055] to-[#FF4081]' },
+  unknown: { color: 'gray', emoji: '📝', bgGradient: 'from-gray-500 to-gray-400' },
+};
+
+// Child-friendly explanation card
+const ExplainCard = ({ text, className = "" }) => (
+    <div className={`bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-3 mt-3 border border-blue-100 ${className}`}>
+        <div className="flex items-start gap-2">
+            <HelpCircle className="text-blue-400 shrink-0 mt-0.5" size={14} />
+            <p className="text-xs text-gray-600 font-medium leading-relaxed">{text}</p>
+        </div>
+    </div>
+);
+
+// Tips card based on risk level
+const TipsCard = ({ riskLevel, t }) => {
+    const tips = {
+        low: { emoji: '💪', title: t('riskAnalysis.whatToDo.lowTitle'), text: t('riskAnalysis.whatToDo.lowTips'), bg: 'bg-emerald-50', border: 'border-emerald-200', text_color: 'text-emerald-700' },
+        moderate: { emoji: '📋', title: t('riskAnalysis.whatToDo.moderateTitle'), text: t('riskAnalysis.whatToDo.moderateTips'), bg: 'bg-amber-50', border: 'border-amber-200', text_color: 'text-amber-700' },
+        high: { emoji: '💬', title: t('riskAnalysis.whatToDo.highTitle'), text: t('riskAnalysis.whatToDo.highTips'), bg: 'bg-pink-50', border: 'border-pink-200', text_color: 'text-pink-700' }
+    };
+    
+    const tip = tips[riskLevel] || tips.moderate;
+    
+    return (
+        <div className={`${tip.bg} ${tip.border} border rounded-2xl p-5 mt-6`}>
+            <div className="flex items-start gap-3">
+                <span className="text-2xl">{tip.emoji}</span>
+                <div>
+                    <h4 className={`font-bold ${tip.text_color} mb-1`}>{tip.title}</h4>
+                    <p className="text-sm text-gray-600 leading-relaxed">{tip.text}</p>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 const getIcon = (type, color) => {
-    switch (type) {
+    switch (type?.toLowerCase()) {
+        case 'calendarx':
         case 'calendar_x': return <CalendarX size={20} style={{ color }} />;
         case 'droplet': return <Droplet size={20} style={{ color }} />;
         case 'frown': return <Frown size={20} style={{ color }} />;
+        case 'checkcircle':
+        case 'check_circle': return <CheckCircle size={20} style={{ color }} />;
+        case 'activity': return <Activity size={20} style={{ color }} />;
+        case 'alerttriangle':
+        case 'alert_triangle': return <AlertCircle size={20} style={{ color }} />;
+        case 'info': return <Info size={20} style={{ color }} />;
         case 'alert_circle':
         default: return <AlertCircle size={20} style={{ color }} />;
     }
@@ -98,8 +146,9 @@ const RiskAnalysis = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen border-t">
-                <p className="text-gray-400 font-bold">{t('riskAnalysis.analyzingRisks')}</p>
+            <div className="flex flex-col justify-center items-center h-screen border-t gap-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+                <p className="text-gray-500 font-bold animate-pulse">{t('riskAnalysis.analyzingRisks')}</p>
             </div>
         );
     }
@@ -107,27 +156,39 @@ const RiskAnalysis = () => {
     if (!analysisResult || analysisResult.data_insufficient) {
         return (
             <div className="p-8 max-w-5xl mx-auto pb-24 relative flex flex-col">
-                <div className="bg-gradient-to-r from-gray-500 to-gray-400 rounded-[1.5rem] p-6 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-md w-full">
-                    <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-10 text-[180px] font-extrabold italic pointer-events-none">!</div>
-                    <div className="w-14 h-14 shrink-0 rounded-full bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10">
-                        <AlertCircle size={28} fill="currentColor" className="text-gray-600" strokeWidth={1} />
+                {/* Friendly banner for insufficient data */}
+                <div className="bg-gradient-to-r from-purple-500 to-pink-400 rounded-[1.5rem] p-8 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-lg w-full">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">📝</div>
+                    <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10 text-4xl">
+                        🌱
                     </div>
                     <div className="flex-1 z-10">
-                        <h2 className="text-xl font-heading font-extrabold mb-1">{t('riskAnalysis.analysisUnavailable')}</h2>
-                        <p className="text-white/90 text-sm font-medium leading-relaxed max-w-2xl">
+                        <h2 className="text-2xl font-heading font-extrabold mb-2">{t('riskAnalysis.analysisUnavailable')}</h2>
+                        <p className="text-white/90 text-base font-medium leading-relaxed max-w-xl">
                             {t('riskAnalysis.notEnoughData')}
                         </p>
                     </div>
                 </div>
 
                 <div className="bg-white border border-gray-200 rounded-[1.5rem] p-10 shadow-sm flex flex-col items-center justify-center text-center py-16 w-full">
-                    <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-2">
+                    <div className="flex gap-4 text-5xl mb-6">
+                        <span>📅</span>
+                        <span>➡️</span>
+                        <span>📊</span>
+                        <span>➡️</span>
+                        <span>🌟</span>
+                    </div>
+                    <h2 className="text-xl font-heading font-extrabold text-[#1D1D2C] mb-3">
                         {t('riskAnalysis.logMore')}
                     </h2>
+                    <p className="text-gray-500 max-w-md mb-6">
+                        Keep tracking your cycles in the Cycle Tracker. After 3 cycles, we'll show you your personalized health check-up!
+                    </p>
                     <button
                         onClick={() => navigate('/cycle-tracker/tracker')}
-                        className="mt-6 bg-[#FF0055] hover:bg-[#D80048] text-white px-6 py-3 rounded-lg font-bold shadow-sm transition-colors cursor-pointer"
+                        className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all hover:scale-105 cursor-pointer flex items-center gap-2"
                     >
+                        <Calendar size={20} />
                         {t('riskAnalysis.goToTracker')}
                     </button>
                 </div>
@@ -146,16 +207,6 @@ const RiskAnalysis = () => {
         label:   t(`riskAnalysis.risk.${displayKey}`),
         message: t(`riskAnalysis.risk.${displayKey}Msg`),
     };
-    const getBannerStyles = (color) => {
-        switch (color) {
-            case 'green': return { bg: 'from-emerald-500 to-emerald-400', iconText: 'text-emerald-600', btnText: 'text-emerald-600' };
-            case 'yellow': return { bg: 'from-amber-500 to-amber-400', iconText: 'text-amber-600', btnText: 'text-amber-600' };
-            case 'gray': return { bg: 'from-gray-500 to-gray-400', iconText: 'text-gray-600', btnText: 'text-gray-600' };
-            case 'red':
-            default: return { bg: 'from-[#FF0055] to-[#FF4081]', iconText: 'text-[#FF0055]', btnText: 'text-[#FF0055]' };
-        }
-    };
-    const bannerStyle = getBannerStyles(activeRisk.color);
 
     const generatePath = (data, key) => {
         if (!data || data.length === 0) return '';
@@ -171,13 +222,18 @@ const RiskAnalysis = () => {
     return (
         <div className="p-8 max-w-5xl mx-auto pb-24 relative">
 
-            {/* Header Row */}
-            <header className="flex justify-between items-end mb-8 relative z-10">
-                <div>
-                    <h1 className="text-2xl font-heading font-extrabold mb-1 text-[#1D1D2C]">{t('riskAnalysis.title')}</h1>
-                    <p className="text-gray-500 font-medium text-sm">{t('riskAnalysis.showingData')} <strong>{DATE_FILTERS.find(f => f.value === activePeriod)?.label}</strong></p>
+            {/* Header Row - Child Friendly */}
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 relative z-10 gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
+                        <Sparkles className="text-pink-500" size={24} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-heading font-extrabold text-[#1D1D2C]">{t('riskAnalysis.title')}</h1>
+                        <p className="text-gray-500 font-medium text-sm">{t('riskAnalysis.showingData')} <strong>{DATE_FILTERS.find(f => f.value === activePeriod)?.label}</strong></p>
+                    </div>
                 </div>
-                <div className="flex gap-3 flex-wrap justify-end">
+                <div className="flex gap-2 flex-wrap">
                     {DATE_FILTERS.map(f => (
                         <button
                             key={f.value}
@@ -185,19 +241,19 @@ const RiskAnalysis = () => {
                                 setActivePeriod(f.value);
                                 fetchAnalysis(f.value);
                             }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                                 activePeriod === f.value
-                                    ? 'bg-[#D81B60] text-white shadow-sm'
-                                    : 'bg-white border border-gray-200 text-[#1D1D2C] hover:bg-gray-50'
+                                    ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-md scale-105'
+                                    : 'bg-white border border-gray-200 text-[#1D1D2C] hover:bg-pink-50 hover:border-pink-200'
                             }`}
                         >
-                            {activePeriod === f.value && <Calendar size={14} />}
+                            {activePeriod === f.value && <span>✓</span>}
                             {f.label}
                         </button>
                     ))}
                     <button
                         onClick={handleExportPDF}
-                        className="flex items-center gap-2 bg-[#FF0055] hover:bg-[#D80048] text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-colors"
+                        className="flex items-center gap-2 bg-white border-2 border-pink-200 hover:bg-pink-50 text-pink-600 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105"
                     >
                         <Download size={14} />
                         {t('riskAnalysis.downloadPDF')}
@@ -205,192 +261,270 @@ const RiskAnalysis = () => {
                 </div>
             </header>
 
-            {/* Alert Banner */}
-            <div className={`bg-gradient-to-r ${bannerStyle.bg} rounded-[1.5rem] p-6 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-md`}>
-                <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-10 text-[180px] font-extrabold italic pointer-events-none">!</div>
+            {/* Main Risk Banner - Child Friendly */}
+            <div className={`bg-gradient-to-r ${activeRisk.bgGradient} rounded-[1.5rem] p-6 text-white mb-8 flex items-center gap-6 relative overflow-hidden shadow-lg`}>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-8xl opacity-20 pointer-events-none">
+                    {activeRisk.emoji}
+                </div>
 
-                <div className="w-14 h-14 shrink-0 rounded-full bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10">
-                    <AlertCircle size={28} fill="currentColor" className={bannerStyle.iconText} strokeWidth={1} />
+                <div className="w-16 h-16 shrink-0 rounded-2xl bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm z-10 text-4xl">
+                    {activeRisk.emoji}
                 </div>
 
                 <div className="flex-1 z-10">
-                    <h2 className="text-xl font-heading font-extrabold mb-1">{activeRisk.label}</h2>
-                    <p className="text-white/90 text-sm font-medium leading-relaxed max-w-2xl">
+                    <h2 className="text-2xl font-heading font-extrabold mb-2">{activeRisk.label}</h2>
+                    <p className="text-white/90 text-base font-medium leading-relaxed max-w-xl">
                         {activeRisk.message}
                     </p>
                 </div>
 
                 <button
                     onClick={handleConsultSpecialist}
-                    className={`hidden md:block bg-white ${bannerStyle.btnText} hover:bg-pink-50 px-5 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors z-10 whitespace-nowrap`}
+                    className="hidden md:flex items-center gap-2 bg-white text-pink-600 hover:bg-pink-50 px-5 py-3 rounded-xl text-sm font-bold shadow-md transition-all hover:scale-105 z-10"
                 >
+                    <MessageSquare size={16} />
                     {t('riskAnalysis.consultSpecialist')}
                 </button>
             </div>
-                    {/* KPI Cards Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.cycleConsistency')}</p>
-                            <div className="flex justify-between items-end mb-3">
-                                <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{cycle_consistency ?? '—'}%</h3>
-                            </div>
-                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-[#FF0055] rounded-full" style={{ width: `${cycle_consistency ?? 0}%` }} />
+
+            {/* Tips Card based on risk level */}
+            {displayKey !== 'unknown' && <TipsCard riskLevel={displayKey} t={t} />}
+
+            {/* KPI Cards Row - Child Friendly */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
+                {/* Cycle Consistency Card */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">🎯</span>
+                        <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.cycleConsistency')}</p>
+                    </div>
+                    <div className="flex justify-between items-end mb-3">
+                        <h3 className="text-4xl font-heading font-extrabold text-[#1D1D2C]">{cycle_consistency ?? '—'}%</h3>
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                            (cycle_consistency ?? 0) >= 80 ? 'bg-green-100 text-green-600' : 
+                            (cycle_consistency ?? 0) >= 60 ? 'bg-yellow-100 text-yellow-600' : 
+                            'bg-pink-100 text-pink-600'
+                        }`}>
+                            {(cycle_consistency ?? 0) >= 80 ? '👍 Great!' : (cycle_consistency ?? 0) >= 60 ? '👌 Good' : '📈 Building'}
+                        </span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                            className={`h-full rounded-full transition-all ${
+                                (cycle_consistency ?? 0) >= 80 ? 'bg-green-400' : 
+                                (cycle_consistency ?? 0) >= 60 ? 'bg-yellow-400' : 
+                                'bg-pink-400'
+                            }`} 
+                            style={{ width: `${cycle_consistency ?? 0}%` }} 
+                        />
+                    </div>
+                    <ExplainCard text={t('riskAnalysis.cycleConsistencyExplain')} />
+                </div>
+
+                {/* Symptom Intensity Card */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">📊</span>
+                        <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.symptomIntensity')}</p>
+                    </div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C] capitalize">{symptom_intensity ?? '—'}</h3>
+                        <span className="text-2xl">
+                            {symptom_intensity?.toLowerCase() === 'decreasing' ? '📉' : 
+                             symptom_intensity?.toLowerCase() === 'increasing' ? '📈' : '➡️'}
+                        </span>
+                    </div>
+                    <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.basedOnData')}</p>
+                    <ExplainCard text={t('riskAnalysis.symptomIntensityExplain')} />
+                </div>
+
+                {/* Average Cycle Length Card */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.02]">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xl">📅</span>
+                        <p className="text-sm font-bold text-gray-600">{t('riskAnalysis.avgCycleLength')}</p>
+                    </div>
+                    <div className="flex justify-between items-end mb-3">
+                        <h3 className="text-4xl font-heading font-extrabold text-[#1D1D2C]">{average_cycle_length ?? '—'} <span className="text-lg text-gray-400">days</span></h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className={`px-2 py-1 rounded-lg ${
+                            (average_cycle_length ?? 28) >= 21 && (average_cycle_length ?? 28) <= 35 
+                            ? 'bg-green-100 text-green-600' 
+                            : 'bg-yellow-100 text-yellow-600'
+                        }`}>
+                            {(average_cycle_length ?? 28) >= 21 && (average_cycle_length ?? 28) <= 35 
+                            ? '✅ Normal range!' 
+                            : '👀 A bit different'}
+                        </span>
+                    </div>
+                    <ExplainCard text={t('riskAnalysis.avgCycleLengthExplain')} />
+                </div>
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+                {/* Symptom Trends Line Chart - Child Friendly */}
+                {(symptom_trend && symptom_trend.length > 0) && (
+                <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">📈</span>
+                            <div>
+                                <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.symptomTrendsTitle')}</h3>
+                                <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.symptomTrendsExplain')}</p>
                             </div>
                         </div>
-
-                        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.symptomIntensity')}</p>
-                            <div className="flex justify-between items-end mb-1">
-                                <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C] capitalize">{symptom_intensity ?? '—'}</h3>
-                            </div>
-                            <p className="text-[10px] italic text-gray-400 font-medium">{t('riskAnalysis.basedOnData')}</p>
-                        </div>
-
-                        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-500 mb-1">{t('riskAnalysis.avgCycleLength')}</p>
-                            <div className="flex justify-between items-end mb-3">
-                                <h3 className="text-3xl font-heading font-extrabold text-[#1D1D2C]">{average_cycle_length ?? '—'} {t('cycleTracker.days')}</h3>
-                                <span className="text-xs font-bold text-gray-400">{t('riskAnalysis.stable')}</span>
-                            </div>
-                            <div className="flex gap-1 h-1.5 items-end">
-                                {[100, 80, 80, 100, 60].map((h, i) => (
-                                    <div key={i} className="flex-1 bg-pink-300 rounded-full" style={{ height: `${h}%`, background: i === 3 ? '#FF0055' : undefined }} />
-                                ))}
-                            </div>
+                        <div className="flex gap-3 text-[10px] font-extrabold tracking-widest uppercase text-gray-500">
+                            <span className="flex items-center gap-1.5"><span className="text-lg">😣</span> Cramps</span>
+                            <span className="flex items-center gap-1.5"><span className="text-lg">😴</span> Fatigue</span>
                         </div>
                     </div>
 
-                    {/* Charts Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-                        {/* Line Chart */}
-                        {(symptom_trend && symptom_trend.length > 0) && (
-                        <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col h-80">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">Symptom Intensity Trends</h3>
-                            <p className="text-xs text-gray-400 font-medium">Tracking daily severity across 30 days</p>
-                        </div>
-                        <div className="flex gap-3 text-[9px] font-extrabold tracking-widest uppercase text-gray-500">
-                            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FF0055]" /> Cramps</span>
-                            <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-pink-200" /> Fatigue</span>
-                        </div>
-                    </div>
-
-                    <div className="flex-1 relative border-l border-b border-gray-100 pb-2">
+                    <div className="flex-1 relative border-l border-b border-gray-100 pb-2 h-48">
                         <div className="absolute inset-0 flex flex-col justify-between pt-4">
                             {[...Array(4)].map((_, i) => <div key={i} className="border-b border-gray-50 w-full" />)}
                         </div>
                         <svg viewBox="-5 -5 110 60" preserveAspectRatio="none" className="absolute inset-0 w-full h-[90%] overflow-visible mt-auto transform translate-y-2">
-                            <path d={generatePath(symptom_trend, 'cramps')} fill="none" stroke="#FF0055" strokeWidth="2" strokeLinecap="round" />
+                            <path d={generatePath(symptom_trend, 'cramps')} fill="none" stroke="#FF0055" strokeWidth="2.5" strokeLinecap="round" />
                         </svg>
                         <svg viewBox="-5 -5 110 60" preserveAspectRatio="none" className="absolute inset-0 w-full h-[80%] overflow-visible mt-auto transform translate-y-6">
-                            <path d={generatePath(symptom_trend, 'fatigue')} fill="none" stroke="#FBCFE8" strokeWidth="1.5" strokeDasharray="3,3" strokeLinecap="round" />
+                            <path d={generatePath(symptom_trend, 'fatigue')} fill="none" stroke="#A855F7" strokeWidth="2" strokeDasharray="5,5" strokeLinecap="round" />
                         </svg>
                     </div>
 
-                            <div className="flex justify-between text-[10px] font-bold text-gray-400 mt-3 px-2">
-                                {symptom_trend.map((t, i) => <span key={i}>{t.week}</span>)}
+                    <div className="flex justify-between text-[10px] font-bold text-gray-400 mt-3 px-2">
+                        {symptom_trend.map((t, i) => <span key={i}>{t.week}</span>)}
+                    </div>
+                </div>
+                )}
+
+                {/* Cycle Comparison Bar Chart - Child Friendly */}
+                {(cycle_comparison && cycle_comparison.length > 0) && (
+                <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🌈</span>
+                            <div>
+                                <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.hormonalVariationTitle')}</h3>
+                                <p className="text-xs text-gray-400 font-medium">{t('riskAnalysis.hormonalVariationExplain')}</p>
                             </div>
                         </div>
-                        )}
-
-                        {/* Bar Chart */}
-                        {(cycle_comparison && cycle_comparison.length > 0) && (
-                        <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm flex flex-col h-80">
-                    <div className="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">Hormonal Variation</h3>
-                            <p className="text-xs text-gray-400 font-medium">Correlation between cycles</p>
-                        </div>
                         <button
-                            onClick={() => showToast('Legend: Pink = Follicular, Hot pink = Luteal, Light = Period', 'info')}
-                            className="text-[10px] font-extrabold tracking-widest text-[#FF0055] uppercase hover:underline"
+                            onClick={() => showToast('Light pink = Period days, Dark pink = Middle of cycle, Light = End of cycle', 'info')}
+                            className="text-[10px] font-extrabold tracking-widest text-[#FF0055] uppercase hover:underline flex items-center gap-1"
                         >
-                            View Legend
+                            <HelpCircle size={12} />
+                            {t('riskAnalysis.viewLegend')}
                         </button>
                     </div>
 
-                        <div className="flex-1 space-y-5">
-                            {cycle_comparison.map(row => {
-                                const highlight = row.intensity?.toLowerCase() === 'heavy' || row.intensity?.toLowerCase() === 'high';
-                                const color = highlight ? '#FF0055' : '#C62A47';
-                                const days = `${row.length} Days`;
-                                return (
-                                <div key={row.label}>
-                                    <div className={`flex justify-between text-[11px] font-bold mb-1.5 ${highlight ? 'text-[#1D1D2C]' : 'text-gray-500'}`}>
-                                        <span>{row.label}</span>
-                                        <span className={highlight ? 'text-[#FF0055]' : ''}>{days}</span>
-                                    </div>
-                                    <div className="h-6 w-full rounded-md flex overflow-hidden">
-                                        <div className="h-full bg-pink-200" style={{ width: '20%' }} />
-                                        <div className="h-full" style={{ width: '50%', backgroundColor: color }} />
-                                        <div className="h-full bg-pink-200" style={{ width: '30%' }} />
-                                    </div>
+                    <div className="flex-1 space-y-5">
+                        {cycle_comparison.map((row, idx) => {
+                            const highlight = row.intensity?.toLowerCase() === 'heavy' || row.intensity?.toLowerCase() === 'high';
+                            const color = highlight ? '#FF0055' : '#EC4899';
+                            const emoji = idx === 0 ? '🆕' : idx === 1 ? '📆' : '📊';
+                            return (
+                            <div key={row.label}>
+                                <div className={`flex justify-between text-sm font-bold mb-2 ${highlight ? 'text-[#1D1D2C]' : 'text-gray-600'}`}>
+                                    <span className="flex items-center gap-2">
+                                        <span>{emoji}</span>
+                                        {row.label}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded-lg ${highlight ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}`}>
+                                        {row.length} days
+                                    </span>
                                 </div>
-                                );
-                            })}
-                        </div>
+                                <div className="h-8 w-full rounded-xl flex overflow-hidden shadow-inner bg-gray-100">
+                                    <div className="h-full bg-pink-200 transition-all" style={{ width: '20%' }} />
+                                    <div className="h-full transition-all" style={{ width: '50%', backgroundColor: color }} />
+                                    <div className="h-full bg-pink-200 transition-all" style={{ width: '30%' }} />
+                                </div>
+                            </div>
+                            );
+                        })}
+                    </div>
 
-                    <div className="mt-4 bg-[#FFFBF0] rounded-lg p-3 flex gap-3 items-start border border-yellow-100">
-                        <Info size={16} fill="#F59E0B" className="shrink-0 text-white mt-0.5" />
-                        <p className="text-[11px] font-medium text-gray-600 leading-tight">
-                            More data will help us analyze intensity deviations.
+                    <div className="mt-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 flex gap-3 items-start border border-blue-100">
+                        <span className="text-xl">💡</span>
+                        <p className="text-xs font-medium text-gray-600 leading-relaxed">
+                            {t('riskAnalysis.moreDataNeeded')}
                         </p>
                     </div>
                 </div>
                 )}
             </div>
 
-            {/* Risk Factors List */}
+            {/* Risk Factors List - Child Friendly */}
             <div className="bg-white border border-gray-200 rounded-[1.5rem] p-6 shadow-sm">
-                <h3 className="font-heading font-bold text-lg text-[#1D1D2C] mb-6">{t('riskAnalysis.specificRiskFactors')}</h3>
-
-                <div className="space-y-0 text-sm font-medium">
-                    {visibleFactors.map((factor, i) => (
-                        <div
-                            key={factor.title}
-                            className={`flex items-start gap-4 py-4 ${i < visibleFactors.length - 1 ? 'border-b border-gray-100' : ''}`}
-                        >
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: factor.bg_color }}>
-                                {getIcon(factor.icon_type, factor.badge_color)}
-                            </div>
-                            <div className="flex-1">
-                                <div className="flex justify-between items-center mb-1">
-                                    <h4 className="font-bold text-[#1D1D2C]">{factor.title}</h4>
-                                    <span
-                                        className="text-[9px] font-extrabold tracking-widest px-2 py-1 rounded uppercase"
-                                        style={{ background: factor.badge_bg, color: factor.badge_color }}
-                                    >
-                                        {factor.badge_text}
-                                    </span>
-                                </div>
-                                <p className="text-gray-500 text-xs">{factor.description}</p>
-                            </div>
-                        </div>
-                    ))}
+                <div className="flex items-center gap-2 mb-6">
+                    <span className="text-2xl">🔍</span>
+                    <h3 className="font-heading font-bold text-lg text-[#1D1D2C]">{t('riskAnalysis.specificRiskFactors')}</h3>
                 </div>
 
-                <button
-                    onClick={() => setShowAllFactors(v => !v)}
-                    className="w-full mt-2 py-3 text-xs font-bold text-[#FF0055] hover:bg-pink-50 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                    {showAllFactors ? (
-                        <><ChevronUp size={14} /> {t('riskAnalysis.showLess')}</>
-                    ) : (
-                        <><ChevronDown size={14} /> {t('riskAnalysis.viewAllFactors')} ({factors?.length ?? 0})</>
-                    )}
-                </button>
+                {visibleFactors.length === 0 ? (
+                    <div className="text-center py-8">
+                        <span className="text-4xl mb-4 block">✨</span>
+                        <p className="text-gray-500 font-medium">Everything looks good! No concerns to show.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {visibleFactors.map((factor, i) => (
+                            <div
+                                key={factor.title || i}
+                                className={`flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors`}
+                            >
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-2xl" style={{ background: factor.bg_color || '#FFF0F4' }}>
+                                    {factor.icon_type?.toLowerCase().includes('check') ? '✅' :
+                                     factor.icon_type?.toLowerCase().includes('calendar') ? '📅' :
+                                     factor.icon_type?.toLowerCase().includes('droplet') ? '💧' :
+                                     factor.icon_type?.toLowerCase().includes('frown') ? '😟' :
+                                     factor.icon_type?.toLowerCase().includes('activity') ? '📈' :
+                                     factor.icon_type?.toLowerCase().includes('info') ? 'ℹ️' : '⚠️'}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                                        <h4 className="font-bold text-[#1D1D2C] text-base">{factor.title}</h4>
+                                        <span
+                                            className="text-[10px] font-extrabold tracking-wider px-3 py-1.5 rounded-lg uppercase"
+                                            style={{ background: factor.badge_bg || '#FFF0F4', color: factor.badge_color || '#FF0055' }}
+                                        >
+                                            {factor.badge_text === 'High Priority' ? '⚡ Important' : 
+                                             factor.badge_text === 'Monitor' ? '👀 Watch' :
+                                             factor.badge_text === 'Moderate' ? '📋 Note' :
+                                             factor.badge_text === 'Good' ? '✨ Great' :
+                                             factor.badge_text === 'Low' ? '👍 Good' : factor.badge_text}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-600 text-sm leading-relaxed">{factor.description}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {factors.length > 3 && (
+                    <button
+                        onClick={() => setShowAllFactors(v => !v)}
+                        className="w-full mt-4 py-3 text-sm font-bold text-pink-600 hover:bg-pink-50 rounded-xl transition-colors flex items-center justify-center gap-2 border border-pink-200"
+                    >
+                        {showAllFactors ? (
+                            <><ChevronUp size={16} /> {t('riskAnalysis.showLess')}</>
+                        ) : (
+                            <><ChevronDown size={16} /> {t('riskAnalysis.viewAllFactors')} ({factors?.length ?? 0})</>
+                        )}
+                    </button>
+                )}
             </div>
 
-            {/* Floating Chat Button */}
+            {/* Floating Chat Button - More friendly */}
             <button
                 onClick={() => navigate('/community')}
-                className="fixed bottom-8 right-8 w-14 h-14 bg-[#FF0055] rounded-full shadow-lg flex items-center justify-center text-white hover:bg-[#D80048] hover:scale-105 transition-all z-50"
-                title="Chat with a specialist"
+                className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-pink-500 to-pink-600 rounded-full shadow-lg flex items-center justify-center text-white hover:from-pink-600 hover:to-pink-700 hover:scale-110 transition-all z-50"
+                title="Chat with someone"
             >
-                <MessageSquare size={24} />
+                <span className="text-2xl">💬</span>
             </button>
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
