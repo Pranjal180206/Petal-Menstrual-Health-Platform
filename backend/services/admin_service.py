@@ -20,11 +20,9 @@ async def get_articles(db) -> list:
         d["id"] = str(d.pop("_id", ""))
     return docs
 
-async def create_article(db, title: str, content: str, category: str = "general") -> dict:
+async def create_article(db, data: dict) -> dict:
     doc = {
-        "title": title,
-        "content": content,
-        "category": category,
+        **data,
         "is_published": False,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
@@ -64,10 +62,9 @@ async def get_myths(db) -> list:
         d["id"] = str(d.pop("_id", ""))
     return docs
 
-async def create_myth(db, myth: str, fact: str) -> dict:
+async def create_myth(db, data: dict) -> dict:
     doc = {
-        "myth": myth,
-        "fact": fact,
+        **data,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }
