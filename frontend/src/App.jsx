@@ -128,9 +128,9 @@ const ContactPage = () => (
 );
 
 const PrivacyPage = () => (
-  <SimpleInfoPage title="Teen Privacy Policy 🔒">
-    <p className="font-bold">Last updated: March 2024</p>
-    <p>Petal is built with your privacy as the top priority. All health data you log is encrypted, stored securely, and never sold to third parties.</p>
+  <SimpleInfoPage title="Teen Privacy Policy">
+    <p className="font-bold">Last updated: 2026</p>
+    <p>Upay designed this platform with privacy as a top priority. All health data you log is encrypted, stored securely, and never sold to third parties.</p>
     <p className="font-bold">What we collect:</p>
     <ul className="list-disc ml-5 space-y-1">
       <li>Cycle dates and flow intensity (only what you log)</li>
@@ -143,19 +143,19 @@ const PrivacyPage = () => (
       <li>Share identifiable health data with third parties</li>
       <li>Use your data for purposes other than improving your experience</li>
     </ul>
-    <p>Full privacy policy available at launch. Questions? Email <span className="text-[#D81B60] font-bold">privacy@petal-health.app</span></p>
+    <p>Full privacy policy available at launch. Questions? Email <span className="text-[#D81B60] font-bold">privacy@upay.org (placeholder)</span></p>
   </SimpleInfoPage>
 );
 
 const TermsPage = () => (
-  <SimpleInfoPage title="Terms of Service 📋">
-    <p className="font-bold">Last updated: March 2024</p>
-    <p>By using Petal, you agree to these terms. Petal is an informational health platform designed for educational purposes.</p>
+  <SimpleInfoPage title="Terms of Service">
+    <p className="font-bold">Last updated: 2026</p>
+    <p>By using this Upay platform, you agree to these terms. This is an informational health platform designed for educational purposes.</p>
     <p className="font-bold">Medical Disclaimer:</p>
     <p>Petal does not provide medical advice. Information on this platform is for educational purposes only. Always consult a qualified healthcare provider for medical concerns.</p>
     <p className="font-bold">Age:</p>
-    <p>Petal is designed for users aged 13 and above. Users under 18 should have parental awareness of using this platform.</p>
-    <p>For the full terms, contact <span className="text-[#D81B60] font-bold">legal@petal-health.app</span></p>
+    <p>The platform is designed for users aged 13 and above. Users under 18 should have parental awareness while using this platform.</p>
+    <p>For the full terms, contact <span className="text-[#D81B60] font-bold">legal@upay.org (placeholder)</span></p>
   </SimpleInfoPage>
 );
 

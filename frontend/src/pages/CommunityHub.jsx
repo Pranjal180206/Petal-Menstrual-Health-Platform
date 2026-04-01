@@ -660,11 +660,6 @@ const CommunityHub = () => {
     return (
         <>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@400;500;600;700&display=swap');
-
-                .community-root { font-family: 'DM Sans', sans-serif; }
-                .font-display { font-family: 'Fraunces', serif; }
-
                 @keyframes fadeSlideIn {
                     from { opacity: 0; transform: translateY(16px); }
                     to { opacity: 1; transform: translateY(0); }
@@ -729,7 +724,7 @@ const CommunityHub = () => {
                             <div className="flex items-start justify-between">
                                 <div>
                                     <p className="text-xs font-bold tracking-widest text-[#FF6B9A] uppercase mb-2">✦ Safe &amp; Anonymous</p>
-                                    <h1 className="font-display text-4xl md:text-5xl font-black text-[#1D1D2C] leading-tight mb-2">
+                                    <h1 className="font-heading text-4xl md:text-5xl font-extrabold text-[#1D1D2C] leading-tight mb-2">
                                         Community Hub
                                     </h1>
                                     <p className="text-gray-400 font-medium text-sm mt-2 max-w-xs leading-relaxed">
@@ -777,7 +772,7 @@ const CommunityHub = () => {
                             ) : displayedPosts.length === 0 ? (
                                 <div className="empty-state flex flex-col items-center justify-center py-40 text-center">
                                     <div className="text-5xl mb-4">🌸</div>
-                                    <h3 className="font-display font-bold text-xl text-[#1D1D2C] mb-2">No posts yet</h3>
+                                    <h3 className="font-heading font-bold text-xl text-[#1D1D2C] mb-2">No posts yet</h3>
                                     <p className="text-gray-400 text-sm max-w-xs">Be the first to share your story in this space!</p>
                                     <button
                                         onClick={() => setShowModal(true)}
@@ -815,7 +810,7 @@ const CommunityHub = () => {
                             ].map(s => (
                                 <div key={s.label} className="bg-white rounded-2xl p-3 text-center border border-gray-100" style={{ boxShadow: '0 2px 12px rgba(255,107,154,0.06)' }}>
                                     <div className="text-lg mb-1">{s.emoji}</div>
-                                    <div className="font-display font-black text-base text-[#1D1D2C]">{s.count}</div>
+                                    <div className="font-heading font-extrabold text-base text-[#1D1D2C]">{s.count}</div>
                                     <div className="text-[10px] text-gray-400 font-semibold">{s.label}</div>
                                 </div>
                             ))}
@@ -823,7 +818,7 @@ const CommunityHub = () => {
 
                         {/* Mood check */}
                         <div className="bg-white rounded-3xl p-5 border border-gray-100" style={{ boxShadow: '0 4px 24px rgba(255,107,154,0.06)' }}>
-                            <h3 className="font-display font-bold text-base text-[#1D1D2C] mb-1">How are you today?</h3>
+                            <h3 className="font-heading font-bold text-base text-[#1D1D2C] mb-1">How are you today?</h3>
                             <p className="text-xs text-gray-400 font-medium mb-4">No pressure — just checking in 🤍</p>
                             <div className="grid grid-cols-5 gap-1.5">
                                 {moodEmojis.map((emoji, i) => (
@@ -849,7 +844,7 @@ const CommunityHub = () => {
                             className="rounded-3xl p-5 border border-dashed border-pink-200"
                             style={{ background: 'linear-gradient(135deg, #FFF0F4, #FDF7F9)' }}
                         >
-                            <p className="font-display text-sm font-bold text-[#E11D48] italic leading-relaxed">
+                            <p className="font-sans text-sm font-bold text-[#E11D48] italic leading-relaxed">
                                 "{getDailyAffirmation(currentLang)}"
                             </p>
                             <p className="text-xs text-gray-400 font-medium mt-2">Daily affirmation</p>

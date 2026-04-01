@@ -45,7 +45,7 @@ const HowItWorks = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: 0.1 }}
-                        className="text-brand-gray text-lg"
+                        className="text-brand-gray text-xl"
                     >
                         {t('howItWorks.subheading')}
                     </motion.p>
@@ -65,8 +65,8 @@ const HowItWorks = () => {
                             <div className={`w-16 h-16 rounded-2xl ${step.iconBg} flex items-center justify-center mb-8`}>
                                 {step.icon}
                             </div>
-                            <h3 className="text-xl font-heading font-bold text-brand-dark mb-4">{step.title}</h3>
-                            <p className="text-brand-gray leading-relaxed text-sm">
+                            <h3 className="text-2xl font-heading font-bold text-brand-dark mb-4">{step.title}</h3>
+                            <p className="text-brand-gray leading-relaxed text-base">
                                 {step.description}
                             </p>
                         </motion.div>

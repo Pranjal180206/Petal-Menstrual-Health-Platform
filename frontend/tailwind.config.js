@@ -31,7 +31,11 @@ export default {
       boxShadow: {
         'soft': '0 10px 40px -10px rgba(255,107,154,0.15)',
         'card': '0 8px 30px rgba(0,0,0,0.04)',
-      }
+      },
+      fontSize: {
+        xs: ['0.9375rem', { lineHeight: '1.25rem' }],
+        sm: ['1.09375rem', { lineHeight: '1.625rem' }],
+      },
     },
   },
   plugins: [],
