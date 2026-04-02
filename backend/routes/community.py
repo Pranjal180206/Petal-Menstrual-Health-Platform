@@ -57,7 +57,12 @@ async def flag_post(post_id: str, current_user: dict = Depends(get_current_user)
         raise HTTPException(status_code=404, detail="Post not found")
 
     if result.get("already_flagged"):
-        raise HTTPException(status_code=409, detail="already flagged by this user")
+        return {
+            "message": "Already flagged by this user",
+            "flag_count": result["flag_count"],
+            "is_flagged": result["is_flagged"],
+        }
+        
     return {
         "message": "Post flagged",
         "flag_count": result["flag_count"],

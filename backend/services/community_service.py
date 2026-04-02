@@ -151,7 +151,7 @@ class CommunityService:
         )
         return _format_post(updated)
 
-    FLAG_THRESHOLD = 3
+    FLAG_THRESHOLD = 1
 
     @staticmethod
     async def flag_post(post_id: str, user_id: str) -> Optional[dict]:
@@ -183,8 +183,7 @@ class CommunityService:
             return None
 
         # User already flagged this post (set was not modified)
-        if result.modified_count == 0:
-            return {"already_flagged": True}
+        already_flagged = (result.modified_count == 0)
 
         # Fetch updated document to get the current flag count
         post = await db["community_posts"].find_one(
@@ -195,14 +194,14 @@ class CommunityService:
         is_flagged = flag_count >= CommunityService.FLAG_THRESHOLD
 
         # Promote is_flagged once threshold is crossed
-        if is_flagged:
+        if is_flagged and not post.get("is_flagged", False):
             await db["community_posts"].update_one(
                 {"_id": post_oid},
                 {"$set": {"is_flagged": True}}
             )
 
         return {
-            "already_flagged": False,
+            "already_flagged": already_flagged,
             "flag_count": flag_count,
             "is_flagged": is_flagged,
         }

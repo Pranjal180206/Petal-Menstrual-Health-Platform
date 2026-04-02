@@ -175,11 +175,10 @@ async def toggle_publish(db, quiz_id: str) -> dict:
 # ─── COMMUNITY ─────────────────────────────────────────────────────────────────
 
 async def get_flagged_posts(db) -> list:
+    from services.community_service import _format_post
     cursor = db["community_posts"].find({"is_flagged": True}).sort("created_at", -1)
     docs = await cursor.to_list(length=100)
-    for d in docs:
-        d["id"] = str(d.pop("_id", ""))
-    return docs
+    return [_format_post(d) for d in docs]
 
 async def delete_post(db, post_id: str) -> bool:
     oid = safe_object_id(post_id)
@@ -189,6 +188,7 @@ async def delete_post(db, post_id: str) -> bool:
     return True
 
 async def clear_flag(db, post_id: str) -> dict:
+    from services.community_service import _format_post
     oid = safe_object_id(post_id)
     updated = await db["community_posts"].find_one_and_update(
         {"_id": oid},
@@ -197,8 +197,7 @@ async def clear_flag(db, post_id: str) -> dict:
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Post not found")
-    updated["id"] = str(updated.pop("_id", ""))
-    return updated
+    return _format_post(updated)
 
 
 # ─── USERS ─────────────────────────────────────────────────────────────────────
