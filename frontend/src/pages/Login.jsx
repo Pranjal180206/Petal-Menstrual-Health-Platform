@@ -197,13 +197,6 @@ const Login = () => {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-3 ml-1 pt-2">
-                                <div className="w-5 h-5 rounded border-2 border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#FF6B9A]">
-                                    {/* Custom checkbox empty state */}
-                                </div>
-                                <span className="text-sm font-semibold text-[#4A4A5C]">{t('login.keepLoggedIn')}</span>
-                            </div>
-
                             <div className="pt-2">
                                 <button type="submit" className="w-full bg-[#FF6B9A] hover:bg-[#FF8A8A] text-white rounded-xl py-3 font-bold text-base transition-all shadow-[0_4px_14px_-4px_rgba(255,107,154,0.4)] hover:-translate-y-0.5">
                                     {isLogin ? t('login.submit') : t('login.signUp')}

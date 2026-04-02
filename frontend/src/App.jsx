@@ -20,6 +20,7 @@ import TrackerRestrictionPage from './pages/TrackerRestrictionPage';
 import FloatingBackground from './components/FloatingBackground';
 import AdminPanel from './pages/AdminPanel';
 import AboutUpay from './pages/AboutUpay';
+import NotFound from './pages/NotFound';
 
 // Cycle Tracker parent layout + all sub-pages
 import CycleTrackerLayout from './components/CycleTrackerLayout';
@@ -205,6 +206,9 @@ const AnimatedRoutes = () => {
           
           <Route path="/blogs" element={<Navigate to="/education" replace />} />
           <Route path="/blogs/:slug" element={<Navigate to="/education" replace />} />
+          
+          {/* 404 Catch-All Route */}
+          <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
         </Routes>
       </OnboardingRedirect>
     </AnimatePresence>

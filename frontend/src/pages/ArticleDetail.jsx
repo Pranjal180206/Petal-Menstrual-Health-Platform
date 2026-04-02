@@ -33,6 +33,24 @@ const ArticleDetail = () => {
     fetchArticle();
   }, [slug, id]);
 
+  // Helper function to check if content is a URL
+  const isURL = (str) => {
+    if (!str) return false;
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    const trimmedStr = str.trim();
+    return urlPattern.test(trimmedStr) || trimmedStr.startsWith('http://') || trimmedStr.startsWith('https://');
+  };
+
+  const getArticleContent = () => {
+    const content = getLocalizedText(article.content, lang);
+    return content;
+  };
+
+  const isContentURL = () => {
+    const content = getArticleContent();
+    return isURL(content);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (!article) return <div>Article not found</div>;
 
@@ -59,9 +77,32 @@ const ArticleDetail = () => {
            </div>
         </div>
 
-        <div className="prose prose-lg max-w-none prose-p:font-medium prose-p:text-slate-600 prose-headings:font-black prose-headings:text-slate-900 whitespace-pre-wrap">
-           {getLocalizedText(article.content, lang)}
-        </div>
+        {/* Content or Link Button */}
+        {isContentURL() ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <p className="text-lg text-slate-600 mb-6 font-medium">
+              This article contains an external resource
+            </p>
+            <a
+              href={getArticleContent().startsWith('http') ? getArticleContent() : `https://${getArticleContent()}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold rounded-full hover:from-pink-600 hover:to-pink-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              <span className="text-lg">Visit Resource</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+              </svg>
+            </a>
+            <p className="text-sm text-slate-400 mt-4 font-medium">
+              {getArticleContent()}
+            </p>
+          </div>
+        ) : (
+          <div className="prose prose-lg max-w-none prose-p:font-medium prose-p:text-slate-600 prose-headings:font-black prose-headings:text-slate-900 whitespace-pre-wrap">
+             {getArticleContent()}
+          </div>
+        )}
 
         {/* Tags */}
         {article.tags && article.tags.length > 0 && (
