@@ -5,9 +5,13 @@ async def get_articles(db) -> list:
     results = []
     async for doc in cursor:
         results.append({
+            "_id": str(doc["_id"]),
             "id": str(doc["_id"]),
             "title": doc.get("title", ""),
             "content": doc.get("content", ""),
+            "summary": doc.get("summary", ""),
+            "slug": doc.get("slug", ""),
+            "author_name": doc.get("author_name", ""),
             "category": doc.get("category", "General")
         })
     return results

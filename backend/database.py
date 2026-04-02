@@ -50,6 +50,9 @@ async def ensure_indexes():
 
     # education_content
     await db["education_content"].create_index([("_id", 1)])
+    await db["education_content"].create_index("slug", unique=True, sparse=True)
+    await db["education_content"].create_index("is_featured")
+    await db["education_content"].create_index("tags")
 
     # quizzes
     await db["quizzes"].create_index([("is_published", 1)])

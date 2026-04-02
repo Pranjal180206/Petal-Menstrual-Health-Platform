@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { X, Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Eye, Flag, Users, FileText, HelpCircle, Video, BookOpen, Shield, ChevronLeft, Search, ToggleLeft, ToggleRight, Award } from 'lucide-react';
+import { X, Plus, Trash2, Edit3, CheckCircle2, AlertCircle, Eye, Flag, Users, FileText, HelpCircle, Video, Shield, ChevronLeft, Search, ToggleLeft, ToggleRight, Award } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import Toast from '../components/Toast';
 
@@ -48,7 +48,6 @@ const sections = [
   { id: 'quizzes', label: 'Quizzes', icon: CheckCircle2 },
   { id: 'scores', label: 'Scores', icon: Award },
   { id: 'videos', label: 'Videos', icon: Video },
-  { id: 'blogs', label: 'Blogs', icon: BookOpen },
   { id: 'flagged', label: 'Flagged Posts', icon: Flag },
 ];
 
@@ -117,7 +116,6 @@ const AdminPanel = () => {
         {active === 'quizzes' && <QuizzesSection show={show} />}
         {active === 'scores' && <ScoresSection show={show} />}
         {active === 'videos' && <VideosSection show={show} />}
-        {active === 'blogs' && <BlogsSection show={show} />}
         {active === 'flagged' && <FlaggedSection show={show} />}
       </main>
     </div>
@@ -252,8 +250,16 @@ const ArticlesSection = ({ show }) => {
 
   const save = async (data) => {
     try {
-      if (data.id) { await axiosInstance.patch(`/admin/articles/${data.id}`, { title: data.title, content: data.content, category: data.category }); show('Article updated'); }
-      else { await axiosInstance.post('/admin/articles', { title: data.title, content: data.content, category: data.category }); show('Article created'); }
+      const payload = { 
+        title: data.title, 
+        summary: data.summary, 
+        content: data.content, 
+        category: data.category,
+        author_name: data.author_name || 'Petal Team',
+        tags: data.tags?.split(',').map(t => t.trim()).filter(Boolean) || []
+      };
+      if (data.id) { await axiosInstance.patch(`/admin/articles/${data.id}`, payload); show('Article updated'); }
+      else { await axiosInstance.post('/admin/articles', payload); show('Article created'); }
       setForm(null); load();
     } catch { show('Failed to save', 'error'); }
   };
@@ -266,19 +272,20 @@ const ArticlesSection = ({ show }) => {
   return (
     <>
       {confirm && <Confirm message={confirm.msg} onYes={confirm.fn} onNo={() => setConfirm(null)} />}
-      {form !== null && <ContentForm title={form.id ? 'Edit Article' : 'New Article'} fields={['title', 'content', 'category']} initial={form} onSave={save} onClose={() => setForm(null)} />}
-      <button onClick={() => setForm({ title: '', content: '', category: 'general' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Article</button>
+      {form !== null && <ContentForm title={form.id ? 'Edit Article' : 'New Article'} fields={['title', 'summary', 'content', 'category', 'author_name', 'tags']} initial={form} onSave={save} onClose={() => setForm(null)} />}
+      <button onClick={() => setForm({ title: '', summary: '', content: '', category: 'general', author_name: 'Petal Team', tags: '' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Article</button>
       {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={FileText} text="No articles yet" /> : (
         <div className="grid gap-3">
           {items.map((a, idx) => (
             <div key={a.id || `article-${idx}`} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
               <div className="flex-1 min-w-0 mr-4">
                 <h3 className="font-bold text-gray-800 text-sm truncate">{toText(a.title) || 'Untitled'}</h3>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{toText(a.content).substring(0, 100)}</p>
+                <p className="text-xs text-gray-400 mt-0.5 truncate">{toText(a.summary) || toText(a.content).substring(0, 100)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge color={a.category === 'general' ? 'gray' : 'pink'}>{a.category || 'general'}</Badge>
-                <button onClick={() => setForm({ id: a.id, title: toText(a.title), content: toText(a.content), category: a.category || 'general' })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
+                {a.is_featured && <Badge color="amber">Featured</Badge>}
+                <button onClick={() => setForm({ id: a.id, title: toText(a.title), summary: toText(a.summary), content: toText(a.content), category: a.category || 'general', author_name: toText(a.author_name) || 'Petal Team', tags: toTagsText(a.tags) })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
                 <button onClick={() => setConfirm({ msg: `Delete "${toText(a.title) || 'this article'}"?`, fn: () => del(a.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
               </div>
             </div>
@@ -772,74 +779,7 @@ const ScoresSection = ({ show }) => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════
-   BLOGS (New — backend pending)
-   ═══════════════════════════════════════════════════════ */
-const BlogsSection = ({ show }) => {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState(null);
-  const [confirm, setConfirm] = useState(null);
-  const [backendReady, setBackendReady] = useState(true);
-
-  const load = useCallback(async () => {
-    try { const r = await axiosInstance.get('/admin/blogs'); setItems(toArray(r.data)); }
-    catch (err) { if (err.response?.status === 404 || err.response?.status === 405) { setBackendReady(false); } else { show('Failed to load blogs', 'error'); } }
-    finally { setLoading(false); }
-  }, []);
-  useEffect(() => { load(); }, [load]);
-
-  const save = async (data) => {
-    try {
-      const payload = { title: data.title, summary: data.summary, content: data.content, category: data.category, author_name: data.author_name || 'Petal Team', tags: data.tags?.split(',').map(t => t.trim()).filter(Boolean) || [] };
-      if (data.id) { await axiosInstance.patch(`/admin/blogs/${data.id}`, payload); show('Blog updated'); }
-      else { await axiosInstance.post('/admin/blogs', payload); show('Blog created'); }
-      setForm(null); load();
-    } catch { show('Failed to save', 'error'); }
-  };
-
-  const del = async (id) => {
-    try { await axiosInstance.delete(`/admin/blogs/${id}`); show('Blog deleted'); load(); } catch { show('Failed to delete', 'error'); }
-    setConfirm(null);
-  };
-
-  if (!backendReady) return (
-    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
-      <BookOpen size={36} className="mx-auto text-amber-400 mb-3" />
-      <h3 className="font-bold text-amber-800 mb-1">Backend Not Ready</h3>
-      <p className="text-sm text-amber-600">The <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">/api/admin/blogs</code> endpoints haven't been created yet. See the backend handoff document.</p>
-    </div>
-  );
-
-  return (
-    <>
-      {confirm && <Confirm message={confirm.msg} onYes={confirm.fn} onNo={() => setConfirm(null)} />}
-      {form !== null && <ContentForm title={form.id ? 'Edit Blog' : 'New Blog Post'} fields={['title', 'summary', 'content', 'category', 'author_name', 'tags']} initial={form} onSave={save} onClose={() => setForm(null)} />}
-      <button onClick={() => setForm({ title: '', summary: '', content: '', category: 'general', author_name: 'Petal Team', tags: '' })} className="mb-4 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D81B60] text-white text-sm font-bold hover:bg-[#C2185B]"><Plus size={16} /> New Blog Post</button>
-      {loading ? <p className="text-sm text-gray-400">Loading...</p> : items.length === 0 ? <EmptyState icon={BookOpen} text="No blog posts yet" /> : (
-        <div className="grid gap-3">
-          {items.map((b, idx) => (
-            <div key={b.id || `blog-${idx}`} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between">
-              <div className="flex-1 min-w-0 mr-4">
-                <h3 className="font-bold text-gray-800 text-sm truncate">{toText(b.title) || 'Untitled'}</h3>
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{toText(b.summary) || toText(b.content).substring(0, 100)}</p>
-                <div className="flex gap-2 mt-2">
-                  <Badge color="pink">{b.category || 'general'}</Badge>
-                  {b.is_featured && <Badge color="amber">Featured</Badge>}
-                  <Badge color={b.is_published !== false ? 'green' : 'gray'}>{b.is_published !== false ? 'Published' : 'Draft'}</Badge>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => setForm({ id: b.id, title: toText(b.title), summary: toText(b.summary), content: toText(b.content), category: b.category || 'general', author_name: toText(b.author_name) || 'Petal Team', tags: toTagsText(b.tags) })} className="p-2 rounded-lg hover:bg-gray-100 text-gray-400"><Edit3 size={15} /></button>
-                <button onClick={() => setConfirm({ msg: `Delete "${toText(b.title) || 'this blog'}"?`, fn: () => del(b.id) })} className="p-2 rounded-lg hover:bg-red-50 text-red-400"><Trash2 size={15} /></button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
-  );
-};
+/* DEPRECATED BLOCKS DELETED */
 
 /* ═══════════════════════════════════════════════════════
    FLAGGED POSTS

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Union
+from typing import List, Union, Optional
 from datetime import datetime
 from bson import ObjectId
 from database import PyObjectId
@@ -25,7 +25,15 @@ class EducationContent(BaseModel):
 
     created_by: str
 
+    summary: Optional[Union[dict, str]] = None
+    author_name: Optional[str] = None
+    tags: Optional[List[str]] = []
+    is_featured: Optional[bool] = False
+    slug: Optional[str] = None
+    is_published: Optional[bool] = True
+
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         allow_population_by_field_name = True

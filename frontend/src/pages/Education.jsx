@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import axiosInstance from '../api/axiosInstance';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { getLocalizedText, formatContentWithLanguageInfo, getLanguageName, translateArticle, detectLanguage } from '../utils/translation';
 
 const getEmbedUrl = (url) => {
@@ -31,6 +32,10 @@ const Education = () => {
     const [originalArticles, setOriginalArticles] = useState([]); // Keep original for re-translation
     const [isArticlesLoading, setIsArticlesLoading] = useState(true);
     const [isTranslating, setIsTranslating] = useState(false);
+    const [featured, setFeatured] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState("all");
+    const [searchQuery, setSearchQuery] = useState("");
+    const navigate = useNavigate();
 
     const [myths, setMyths] = useState([
         {
@@ -80,9 +85,13 @@ const Education = () => {
 
         const fetchArticles = async () => {
             try {
-                const res = await axiosInstance.get('/education/articles');
-                setOriginalArticles(res.data); // Store originals
-                setArticles(res.data);
+                const [articlesRes, featuredRes] = await Promise.all([
+                    axiosInstance.get('/education/articles'),
+                    axiosInstance.get('/education/articles/featured').catch(() => ({ data: [] }))
+                ]);
+                setOriginalArticles(articlesRes.data);
+                setArticles(articlesRes.data);
+                setFeatured(featuredRes.data);
             } catch (err) {
                 console.error("Error fetching articles:", err);
             } finally {
@@ -253,67 +262,145 @@ const Education = () => {
 
                     <div className="min-h-[400px]">
                         {/* ARTICLES SECTION */}
-                        {activeTab === 'articles' && (
-                            <div>
-                                {isTranslating && (
-                                    <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span className="text-sm font-medium text-blue-700">{t('education.translating')}</span>
-                                    </div>
-                                )}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {isArticlesLoading ? (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.loadingArticles')}</p>
-                                ) : articles.length > 0 ? (
-                                    articles.map(a => {
-                                        const isTranslatedArticle = a._translated;
-                                        
-                                        return (
-                                        <div key={a.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-pink-100'} shadow-sm flex flex-col h-full`}>
-                                            <div className="flex items-start justify-between mb-3">
-                                                <h3 className={`text-xl font-black flex-1 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>
-                                                    {getLocalizedText(a.title, lang)}
-                                                </h3>
-                                                {isTranslatedArticle && (
-                                                    <span className="ml-2 px-2 py-1 text-xs font-bold rounded-full bg-green-100 text-green-600">
-                                                        {t('education.translated')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className={`text-sm leading-relaxed mb-6 line-clamp-4 flex-grow ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                                                {getLocalizedText(a.content, lang)}
-                                            </p>
-                                            <button 
-                                                onClick={() => setActiveArticle({
-                                                    title: getLocalizedText(a.title, lang),
-                                                    content: getLocalizedText(a.content, lang),
-                                                    category: a.category || "General",
-                                                    sourceLang: a._sourceLang,
-                                                    isTranslated: isTranslatedArticle
-                                                })}
-                                                className={`w-full py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
-                                                    darkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-pink-50 text-pink-600 hover:bg-pink-100 border border-pink-100'
-                                                }`}
-                                            >
-                                                {t('education.readMore', 'Read Article')}
-                                            </button>
-                                            {isTranslatedArticle && a._sourceLang && (
-                                                <p className="mt-2 text-xs italic text-slate-400">
-                                                    {t('education.originalLanguage')}: {getLanguageName(a._sourceLang)}
-                                                </p>
-                                            )}
+                        {activeTab === 'articles' && (() => {
+                            const categories = [
+                                "all",
+                                ...new Set(articles.map(a => a.category).filter(Boolean))
+                            ];
+
+                            const filteredArticles = articles
+                                .filter(a => selectedCategory === "all" || a.category === selectedCategory)
+                                .filter(a => {
+                                    if (!searchQuery) return true;
+                                    const titleStr = typeof a.title === 'string' ? a.title : getLocalizedText(a.title, lang) || "";
+                                    const summaryStr = typeof a.summary === 'string' ? a.summary : getLocalizedText(a.summary, lang) || "";
+                                    return titleStr.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                           summaryStr.toLowerCase().includes(searchQuery.toLowerCase());
+                                });
+
+                            return (
+                                <div>
+                                    {isTranslating && (
+                                        <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span className="text-sm font-medium text-blue-700">{t('education.translating')}</span>
                                         </div>
-                                        );
-                                    })
-                                ) : (
-                                    <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.noArticles')}</p>
-                                )}
+                                    )}
+
+                                    {/* Featured articles */}
+                                    {featured.length > 0 && !isArticlesLoading && (
+                                    <div className="mb-8">
+                                        <h2 className={`text-lg font-black uppercase tracking-widest mb-4 ${darkMode ? 'text-yellow-400' : 'text-amber-500'}`}>
+                                        ⭐ {t('education.featured', 'Featured')}
+                                        </h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {featured.map(article => (
+                                            <div 
+                                                key={article.id}
+                                                onClick={() => navigate(article.slug ? `/education/${article.slug}` : `/education`)}
+                                                className={`p-6 bg-yellow-50 border-2 border-yellow-200 rounded-3xl cursor-pointer hover:shadow-md transition-all flex flex-col`}
+                                            >
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {article.category && (
+                                                        <span className="text-[10px] font-black uppercase tracking-widest bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full">{article.category}</span>
+                                                    )}
+                                                </div>
+                                                <h3 className="text-xl font-black text-slate-800 line-clamp-2">{getLocalizedText(article.title, lang)}</h3>
+                                                {article.summary && (
+                                                    <p className="text-sm text-slate-600 mt-2 line-clamp-2">{getLocalizedText(article.summary, lang)}</p>
+                                                )}
+                                                <div className="mt-4 text-xs font-bold text-amber-600 flex justify-between items-center">
+                                                    <span>By {article.author_name || "Petal Team"}</span>
+                                                    <span>Read →</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        </div>
+                                    </div>
+                                    )}
+
+                                    {/* Search & Categories */}
+                                    {!isArticlesLoading && (
+                                        <div className="mb-8">
+                                            <input
+                                                type="text"
+                                                placeholder={t('education.searchPlaceholder', "Search articles...")}
+                                                value={searchQuery}
+                                                onChange={e => setSearchQuery(e.target.value)}
+                                                className={`w-full px-6 py-4 rounded-2xl border-2 font-medium focus:outline-none transition-colors mb-4 ${
+                                                    darkMode 
+                                                        ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:border-pink-500' 
+                                                        : 'bg-white border-slate-100 text-slate-800 placeholder-slate-400 focus:border-pink-300'
+                                                }`}
+                                            />
+                                            <div className="flex gap-2 flex-wrap">
+                                                {categories.map(cat => (
+                                                    <button
+                                                        key={cat}
+                                                        onClick={() => setSelectedCategory(cat)}
+                                                        className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
+                                                            selectedCategory === cat
+                                                                ? 'bg-pink-500 text-white shadow-md'
+                                                                : (darkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-pink-300')
+                                                        }`}
+                                                    >
+                                                        {cat}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {isArticlesLoading ? (
+                                        <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.loadingArticles')}</p>
+                                    ) : filteredArticles.length > 0 ? (
+                                        filteredArticles.map(article => {
+                                            const isTranslatedArticle = article._translated;
+                                            return (
+                                            <div key={article.id} className={`p-6 rounded-3xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 hover:border-pink-200'} shadow-sm flex flex-col transition-all cursor-pointer`} onClick={() => navigate(article.slug ? `/education/${article.slug}` : `/article/${article.id}`)}>
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <h3 className={`text-xl font-black flex-1 line-clamp-2 ${darkMode ? 'text-white' : 'text-slate-900'} group-hover:text-pink-500 transition-colors`}>
+                                                        {getLocalizedText(article.title, lang)}
+                                                    </h3>
+                                                    {isTranslatedArticle && (
+                                                        <span className="ml-2 px-2 py-1 text-[10px] font-black uppercase bg-green-100 text-green-600 rounded-full">
+                                                            {t('education.translated')}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {article.summary && (
+                                                    <p className={`text-sm leading-relaxed mb-4 line-clamp-3 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                        {getLocalizedText(article.summary, lang)}
+                                                    </p>
+                                                )}
+                                                {!article.summary && (
+                                                    <p className={`text-sm leading-relaxed mb-4 line-clamp-3 flex-grow ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                        {getLocalizedText(article.content, lang).replace(/<[^>]*>?/gm, '')}
+                                                    </p>
+                                                )}
+                                                
+                                                <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
+                                                    <span className={`text-xs font-bold ${darkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                        {article.author_name || "Petal Team"}
+                                                    </span>
+                                                    <button onClick={(e) => { e.stopPropagation(); navigate(`/article/${article._id || article.id}`); }} className="text-xs font-black uppercase text-pink-500 hover:text-pink-600 transition-colors">
+                                                        READ →
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            );
+                                        })
+                                    ) : (
+                                        <p className={darkMode ? 'text-slate-400' : 'text-slate-500'}>{t('education.noArticles', 'No articles found.')}</p>
+                                    )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* MYTHS & FACTS SECTION */}
                         {activeTab === 'myths' && (

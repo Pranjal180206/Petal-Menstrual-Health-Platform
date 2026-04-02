@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from typing import Optional, Union
+from typing import Optional, Union, List
 from pydantic import BaseModel, Field
 from database import get_db
 from services.auth_service import get_admin_user
@@ -13,6 +13,11 @@ class ArticleCreate(BaseModel):
     title: Union[dict, str] = Field(..., min_length=1, max_length=300)
     content: Union[dict, str] = Field(..., min_length=1, max_length=50000)
     category: Optional[str] = "general"
+    summary: Optional[Union[dict, str]] = None
+    author_name: Optional[str] = None
+    tags: Optional[List[str]] = []
+    is_featured: Optional[bool] = False
+    slug: Optional[str] = None
 
 
 class ArticleUpdate(BaseModel):
@@ -20,6 +25,11 @@ class ArticleUpdate(BaseModel):
     content: Optional[Union[dict, str]] = Field(None, max_length=50000)
     category: Optional[str] = None
     is_published: Optional[bool] = None
+    summary: Optional[Union[dict, str]] = None
+    author_name: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_featured: Optional[bool] = None
+    slug: Optional[str] = None
 
 
 @router.get("/articles")

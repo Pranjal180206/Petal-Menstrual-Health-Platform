@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import Login from './pages/Login';
 import CommunityHub from './pages/CommunityHub';
 import Education from './pages/Education';
+import ArticleDetail from './pages/ArticleDetail';
 import Quizzes from './pages/Quizzes';
 import UserProfile from './pages/UserProfile';
 import Onboarding from './pages/Onboarding';
@@ -169,6 +170,8 @@ const AnimatedRoutes = () => {
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/community" element={<PageWrapper><CommunityHub /></PageWrapper>} />
           <Route path="/education" element={<PageWrapper><Education /></PageWrapper>} />
+          <Route path="/education/:slug" element={<PageWrapper><ArticleDetail /></PageWrapper>} />
+          <Route path="/article/:id" element={<PageWrapper><ArticleDetail /></PageWrapper>} />
           <Route path="/quizzes" element={<PageWrapper><Quizzes /></PageWrapper>} />
           <Route path="/contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
           <Route path="/privacy" element={<PageWrapper><PrivacyPage /></PageWrapper>} />
@@ -199,6 +202,9 @@ const AnimatedRoutes = () => {
           <Route path="/dashboard" element={<Navigate to="/cycle-tracker" replace />} />
           <Route path="/dashboard/tracker" element={<Navigate to="/cycle-tracker/tracker" replace />} />
           <Route path="/risk" element={<Navigate to="/cycle-tracker/risk" replace />} />
+          
+          <Route path="/blogs" element={<Navigate to="/education" replace />} />
+          <Route path="/blogs/:slug" element={<Navigate to="/education" replace />} />
         </Routes>
       </OnboardingRedirect>
     </AnimatePresence>

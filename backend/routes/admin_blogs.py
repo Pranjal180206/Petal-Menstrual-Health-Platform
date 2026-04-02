@@ -1,3 +1,6 @@
+# DEPRECATED IN 2026-04: Blogs merged into Articles.
+# This file is intentionally left intact for audit history but the endpoints 
+# are unmounted from main.py
 from fastapi import APIRouter, Depends, Request, HTTPException
 from database import get_db
 from services.auth_service import get_admin_user

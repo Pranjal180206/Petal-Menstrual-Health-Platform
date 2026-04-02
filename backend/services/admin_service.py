@@ -13,6 +13,27 @@ def safe_object_id(id_str: str) -> ObjectId:
 
 # ─── ARTICLES ──────────────────────────────────────────────────────────────────
 
+def generate_slug(title: str | dict) -> str:
+    """Generates URL-safe slug from title string."""
+    if isinstance(title, dict):
+        title = title.get("en", "article")
+    slug = re.sub(r"[^\w\s-]", "", title.lower())
+    slug = re.sub(r"[\s_-]+", "-", slug).strip("-")
+    return slug
+
+async def ensure_unique_slug(db, base_slug: str, exclude_id=None) -> str:
+    slug = base_slug
+    counter = 1
+    while True:
+        query = {"slug": slug}
+        if exclude_id:
+            query["_id"] = {"$ne": exclude_id}
+        exists = await db["education_content"].find_one(query)
+        if not exists:
+            return slug
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
 async def get_articles(db) -> list:
     cursor = db["education_content"].find({}).sort("created_at", -1)
     docs = await cursor.to_list(length=200)
@@ -21,9 +42,13 @@ async def get_articles(db) -> list:
     return docs
 
 async def create_article(db, data: dict) -> dict:
+    if not data.get("slug") and data.get("title"):
+        base = generate_slug(data["title"])
+        data["slug"] = await ensure_unique_slug(db, base)
+        
     doc = {
         **data,
-        "is_published": False,
+        "is_published": data.get("is_published", False),
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }
