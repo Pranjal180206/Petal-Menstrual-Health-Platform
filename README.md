@@ -1,97 +1,134 @@
-# Petal-Menstrual-Health-Platform
+# Petal Menstrual Health Platform
 
-Welcome to the Petal Menstrual Health Platform repository! This document serves as a guide for the team to understand the project structure and where to place different types of code.
+Petal is a menstrual health awareness platform built with Upay (NGO) to support young women and menstruating individuals (13+).  
+It combines cycle logging, AI-assisted prediction, risk analysis, education content, quizzes, and a moderated community space in one product.
 
-## 🗂️ Project Structure
+## Key Features
 
-The repository is organized into distinct logical components to keep our code clean, scalable, and easy to collaborate on for the entire team.
+- Cycle tracking with next-period prediction (ML + fallback logic)
+- Menstrual risk analysis with trend visuals and downloadable PDF reports
+- Personalized and population-level insights
+- Education hub (articles, myths vs facts, and videos)
+- Quizzes for menstrual health awareness
+- Moderated community forum (posts, replies, likes, reporting)
+- Multi-language support: English, Hindi, Marathi
+- Admin panel for NGO/content team management
+
+## Tech Stack
+
+### Frontend
+- React 19 + Vite 7
+- React Router v7
+- Tailwind CSS
+- Axios
+- i18next + react-i18next
+- Framer Motion
+
+### Backend
+- FastAPI + Uvicorn
+- MongoDB Atlas (Motor async driver)
+- Pydantic v2
+- JWT auth (`python-jose`)
+- `passlib` + bcrypt
+- SlowAPI (rate limiting)
+- APScheduler (background jobs)
+
+### ML
+- Python + scikit-learn
+- Random Forest Regressor
+- Model artifact served from `ml/menstrual_model.joblib`
+- Reference dataset: [Menstrual Cycle Data (Kaggle)](https://www.kaggle.com/datasets/nikitabisht/menstrual-cycle-data)
+
+## Repository Structure
 
 ```text
 Petal-Menstrual-Health-Platform/
-├── backend/          # Backend API (FastAPI/Python) services & routes
-├── frontend/         # Frontend Web Application (React/Next.js/Vue, etc.)
-├── ml/               # Machine Learning experiments, training scripts, and Jupyter notebooks
-└── README.md         # Project documentation (You are here)
+├── frontend/   # React web app
+├── backend/    # FastAPI API server
+├── ml/         # Training artifacts, notebooks, datasets, model files
+└── README.md
 ```
 
-### 🖥️ Frontend (Where to put frontend stuff)
-The `frontend/` directory is dedicated exclusively to the user interface. 
-- **What goes here:** All React/Vue/Next.js code, UI components, state management, CSS/Tailwind styles, and assets (images, icons).
-- **Rule of thumb:** If it runs in the user's browser, it belongs in this folder.
+## Getting Started (Local Development)
 
-### ⚙️ Backend
-The `backend/` directory contains our server, database connections, and business logic.
-- **`backend/routes/`**: API endpoints (e.g., `/api/users`, `/api/health`).
-- **`backend/models/`**: Database schemas and Pydantic models.
-- **`backend/services/`**: Core business logic and helper functions.
-- **`backend/database.py`**: Database connection setup.
+### 1) Clone the repository
 
-### 🤖 Machine Learning (Where to put ML codes)
-Machine Learning code should be split based on its purpose (Training vs. Serving):
-
-1. **Training & Exploration (`/ml/`)**: 
-   - Feel free to create an `ml/` folder at the root of the project.
-   - **What goes here:** Jupyter notebooks (`.ipynb`), model training scripts, dataset processing, data exploration, and saved model weights (`.pkl`, `.h5`, `.joblib`).
-   
-2. **Model Serving/Inference (`/backend/services/ml_service.py`)**:
-   - When an ML model is ready to be used in the app, the code to *load* and *run predictions* on the model should go into the `backend/` (e.g., inside `backend/services/` or a dedicated `backend/ml/` folder).
-   - **Why?** Because the backend needs to serve the ML model's predictions via API endpoints to the frontend.
-
-## 🚀 Getting Started
-
-### 📥 Clone the Repository
 ```bash
-# Clone via HTTPS
 git clone https://github.com/Pranjal180206/Petal-Menstrual-Health-Platform.git
-
-# Or clone via SSH (recommended if you have SSH keys set up)
-git clone git@github.com:Pranjal180206/Petal-Menstrual-Health-Platform.git
-
-# Navigate into the project
 cd Petal-Menstrual-Health-Platform
 ```
 
-### 🔄 Staying Up to Date
+### 2) Backend setup
+
 ```bash
-# Pull the latest changes from the main branch
-git pull origin main
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
 ```
 
-### 💾 Making and Committing Changes
+Backend API docs: `http://localhost:8000/docs`
+
+### 3) Frontend setup
+
+Open a new terminal:
+
 ```bash
-# Check what files have changed
-git status
-
-# Stage specific files
-git add path/to/your/file.py
-
-# Or stage all changed files
-git add .
-
-# Commit with a descriptive message
-git commit -m "feat: add cycle prediction model to ml/ folder"
-
-# Push your branch to GitHub
-git push origin your-branch-name
+cd frontend
+npm install
+npm run dev
 ```
 
-### 🌿 Branching (Recommended Workflow)
-```bash
-# Create and switch to a new feature branch
-git checkout -b feat/your-feature-name
+Frontend app: `http://localhost:5173`
 
-# After committing, push the branch and open a PR
-git push origin feat/your-feature-name
+## Environment Variables
+
+### Frontend (`frontend/.env`)
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
-### 🧹 Other Useful Commands
-```bash
-# See commit history
-git log --oneline
+### Backend (`backend/.env`)
 
-# Discard unstaged changes in a file
-git checkout -- path/to/file
-
-# Fetch remote changes without merging
-git fetch origin
+```env
+MONGO_URI=
+SECRET_KEY=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+ALLOWED_ORIGINS=
+RESET_PASSWORD_BASE_URL=http://localhost:5173
+# SMTP_* variables for password reset emails
 ```
+
+## Core Product Areas
+
+- **Authentication:** email/password + Google OAuth
+- **Cycle Tracker:** logging, history, settings, trends
+- **Reports & Insights:** risk analysis + downloadable PDF
+- **Education & Quizzes:** learning-first content model
+- **Community:** moderated peer discussion
+- **Admin:** content CRUD, user moderation, platform stats
+
+## Privacy & Security Highlights
+
+- Health data privacy by design
+- Account deletion workflow with data purge + post anonymization
+- Rate-limited sensitive endpoints
+- Password hashing with bcrypt
+- JWT-based protected routes and admin authorization checks
+- Input sanitization for community content
+
+## Admin Access
+
+Promote a user to admin:
+
+```bash
+python backend/scripts/promote_admin.py --email your@email.com
+```
+
+The user should log out and log back in to refresh permissions.
+
+## Notes
+
+- The chatbot endpoint currently returns a placeholder response (under active development).
+- This README is focused on project onboarding and GitHub visibility. Detailed technical references remain in `PLATFORM_OVERVIEW.txt`.
