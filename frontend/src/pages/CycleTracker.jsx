@@ -110,6 +110,12 @@ const CycleTracker = () => {
         currentMonth === today.getMonth() &&
         currentYear === today.getFullYear();
 
+    const isFutureDate = (day) => {
+        const date = new Date(currentYear, currentMonth, day);
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return date > startOfToday;
+    };
+
     const prevMonth = () => {
         if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); }
         else setCurrentMonth(m => m - 1);
@@ -128,6 +134,11 @@ const CycleTracker = () => {
 
     /* ── Save ── */
     const handleSave = async () => {
+        if (isFutureDate(selectedDay)) {
+            showToast('Cannot log symptoms for future dates.', 'warning');
+            return;
+        }
+
         if (!selectedFlow) {
             showToast('Please select a flow intensity.', 'warning');
             return;
@@ -181,6 +192,11 @@ const CycleTracker = () => {
 
     const cellClass = (day) => {
         const base = 'w-9 h-9 rounded-full flex items-center justify-center mx-auto text-sm font-bold transition-all cursor-pointer select-none';
+        
+        if (isFutureDate(day)) {
+            return `${base} opacity-30 cursor-not-allowed grayscale`;
+        }
+
         if (isToday(day))        return `${base} border-2 border-[#D81B60] bg-[#FFF0F4] text-[#D81B60]`;
         if (isPeriodDay(day))    return `${base} bg-[#D81B60] text-white shadow-md`;
         if (isPredictedDay(day)) return `${base} border-2 border-dashed border-[#F48FB1] text-[#F48FB1]`;
@@ -242,7 +258,15 @@ const CycleTracker = () => {
                             <div key={idx} className="flex flex-col items-center">
                                 {day !== null && (
                                     <>
-                                        <button onClick={() => setSelectedDay(day)} className={cellClass(day)}>
+                                        <button 
+                                            onClick={() => {
+                                                if (!isFutureDate(day)) {
+                                                    setSelectedDay(day);
+                                                }
+                                            }} 
+                                            className={cellClass(day)}
+                                            disabled={isFutureDate(day)}
+                                        >
                                             {day}
                                         </button>
                                         {hasSymptoms(day) && (
