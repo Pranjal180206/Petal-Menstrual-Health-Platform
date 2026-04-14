@@ -79,9 +79,6 @@ const Education = () => {
 
     // On mount and language change
     useEffect(() => {
-        // #region agent log
-        fetch('http://127.0.0.1:7248/ingest/b54e18c9-28e3-44a2-899c-030a6502b734',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'06837a'},body:JSON.stringify({sessionId:'06837a',runId:'pre-fix',hypothesisId:'H1',location:'frontend/src/pages/Education.jsx:89',message:'Education mounted; current videos state is placeholder',data:{activeTabInitial:activeTab,videosStateType:Array.isArray(videos)?'array':typeof videos,videosCount:Array.isArray(videos)?videos.length:null,videoKeysSample:Array.isArray(videos)&&videos[0]?Object.keys(videos[0]).slice(0,10):null},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
 
         const fetchArticles = async () => {
             try {
@@ -154,7 +151,6 @@ const Education = () => {
         const fetchVideos = async () => {
             try {
                 const res = await axiosInstance.get('/education/videos');
-                console.log("VIDEOS API:", res.data);
                 setVideos(res.data);
             } catch (err) {
                 console.error("Error fetching videos:", err);
@@ -486,7 +482,6 @@ const Education = () => {
                         
                         {/* Video Container (16:9 aspect ratio) */}
                         <div className="relative w-full pt-[56.25%]">
-                            {console.log("FINAL EMBED:", getEmbedUrl(activeVideo.videoUrl))}
                             <iframe 
                                 className="absolute inset-0 w-full h-full"
                                 src={getEmbedUrl(activeVideo.videoUrl)} 

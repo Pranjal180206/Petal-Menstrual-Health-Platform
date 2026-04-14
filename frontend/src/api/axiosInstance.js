@@ -1,10 +1,7 @@
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const baseURL = import.meta.env.VITE_API_URL;
 
-// #region agent log
-fetch('http://127.0.0.1:7248/ingest/b54e18c9-28e3-44a2-899c-030a6502b734',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'06837a'},body:JSON.stringify({sessionId:'06837a',runId:'pre-fix',hypothesisId:'H2',location:'frontend/src/api/axiosInstance.js:5',message:'axios baseURL resolved',data:{baseURL,envKeys:{VITE_API_BASE_URL:!!import.meta.env.VITE_API_BASE_URL,VITE_API_URL:!!import.meta.env.VITE_API_URL}},timestamp:Date.now()})}).catch(()=>{});
-// #endregion
 
 const axiosInstance = axios.create({
   baseURL,
@@ -28,6 +25,24 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor: Global Error Handling
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Log meaningful errors to console
+    if (error.response) {
+      console.error(`[API Error] ${error.response.status} - ${error.config.url}:`, error.response.data);
+    } else if (error.request) {
+      console.error(`[API Error] No response received from ${error.config.url}`, error.request);
+    } else {
+      console.error(`[API Error] Request setup failed:`, error.message);
+    }
     return Promise.reject(error);
   }
 );

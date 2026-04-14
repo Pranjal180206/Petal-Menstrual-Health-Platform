@@ -31,7 +31,6 @@ const Insights = () => {
         const fetchInsights = async () => {
             try {
                 const res = await axiosInstance.get('/insights/');
-                console.log("API DATA:", res.data);
                 setInsights(res.data);
             } catch (err) {
                 if (err.response && err.response.status === 401) {
