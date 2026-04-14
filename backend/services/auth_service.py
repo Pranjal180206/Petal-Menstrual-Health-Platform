@@ -13,13 +13,25 @@ import warnings
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 if not SECRET_KEY:
-    warnings.warn(
-        "[SECURITY WARNING] SECRET_KEY is not set. "
-        "Using an empty key is insecure. "
-        "Set SECRET_KEY in your .env file before deploying.",
-        stacklevel=2
-    )
-    SECRET_KEY = "dev_insecure_fallback_do_not_use_in_production"
+    # On Railway (or any production env), RAILWAY_ENVIRONMENT is set automatically.
+    # Crash immediately rather than silently running with a known-public key.
+    if os.getenv("RAILWAY_ENVIRONMENT"):
+        import sys
+        print(
+            "[FATAL] SECRET_KEY is not set. "
+            "Refusing to start in production. "
+            "Set SECRET_KEY in Railway environment variables.",
+            flush=True
+        )
+        sys.exit(1)
+    else:
+        # Local development only — warn but continue.
+        warnings.warn(
+            "[SECURITY WARNING] SECRET_KEY is not set. "
+            "Using an insecure fallback — never deploy without a real key.",
+            stacklevel=2
+        )
+        SECRET_KEY = "dev_insecure_fallback_do_not_use_in_production"
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))

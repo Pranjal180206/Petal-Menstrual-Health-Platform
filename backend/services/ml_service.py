@@ -34,11 +34,13 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 # ── CSV loading (risk_analysis_adaptive.csv) ─────────────────────────────────
+# Resolve absolute path anchored to this file — works on Railway regardless of cwd
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 try:
     import pandas as pd
-    _CSV_PATH = os.path.join(
-        os.path.dirname(__file__), "..", "..", "ml", "risk_analysis_adaptive.csv"
-    )
+    _CSV_PATH = os.path.join(_BASE_DIR, "..", "ml_assets", "risk_analysis_adaptive.csv")
+    _CSV_PATH = os.path.abspath(_CSV_PATH)
     risk_df = pd.read_csv(_CSV_PATH)
     # Normalise risk_level values — strip trailing spaces
     risk_df["risk_level"] = risk_df["risk_level"].str.strip()
@@ -50,8 +52,8 @@ except Exception as _csv_err:
     logger.warning(f"[ML] Warning: Could not load CSV — {_csv_err}")
 
 # ── Model loading (once at import time) ──────────────────────────────────────
-MODEL_PATH = os.path.join(
-    os.path.dirname(__file__), "..", "..", "ml", "menstrual_model.joblib"
+MODEL_PATH = os.path.abspath(
+    os.path.join(_BASE_DIR, "..", "ml_assets", "menstrual_model.joblib")
 )
 
 try:

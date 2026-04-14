@@ -5,6 +5,9 @@ from config import limiter
 from datetime import timedelta, datetime
 from typing import Optional
 from email_validator import validate_email, EmailNotValidError
+import logging
+
+logger = logging.getLogger(__name__)
 
 from services.auth_service import get_password_hash, verify_password, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, create_password_reset_token, reset_password, send_reset_email
 from services.user_service import user_service
@@ -130,7 +133,7 @@ class GoogleAuthRequest(BaseModel):
 @router.post("/google")
 @limiter.limit("10/minute")
 async def google_auth(request: Request, body: GoogleAuthRequest):
-    print(f"[ROUTE] POST /auth/google called, code length={len(body.code)}, redirect_uri={body.redirect_uri}")
+    logger.info(f"[ROUTE] POST /auth/google called, code length={len(body.code)}, redirect_uri={body.redirect_uri}")
     try:
         profile = await exchange_code_for_profile(body.code, body.redirect_uri)
     except HTTPException:

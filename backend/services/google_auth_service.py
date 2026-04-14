@@ -15,11 +15,14 @@ logger.info(f"[STARTUP] google_auth_service loading .env from: {_env_path}")
 logger.info(f"[STARTUP] GOOGLE_CLIENT_ID loaded: {bool(os.getenv('GOOGLE_CLIENT_ID'))}")
 logger.info(f"[STARTUP] GOOGLE_CLIENT_SECRET loaded: {bool(os.getenv('GOOGLE_CLIENT_SECRET'))}")
 
-ALLOWED_REDIRECT_URIS = [
-    os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:5173"),
-    "http://localhost:5174",
-    # add production URL here when deploying
-]
+# Configurable via ALLOWED_REDIRECT_URIS env var (comma-separated).
+# In Railway, set this to your production frontend URL(s).
+# Reuses the same env var as CORS so both lists stay in sync.
+_raw_redirect_uris = os.getenv(
+    "ALLOWED_REDIRECT_URIS",
+    "http://localhost:5173,http://localhost:5174"
+)
+ALLOWED_REDIRECT_URIS = [u.strip() for u in _raw_redirect_uris.split(",") if u.strip()]
 
 async def exchange_code_for_profile(code: str, redirect_uri: str) -> dict:
     logger.info(f"[DEBUG-FUNC] exchange_code_for_profile called with redirect_uri={redirect_uri}")

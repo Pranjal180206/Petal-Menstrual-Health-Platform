@@ -1,0 +1,12 @@
+# Pins Python 3.11 for Railway's Nixpacks builder.
+# Python 3.11 is the most stable version supported by all dependencies
+# (scikit-learn, motor, pydantic v2, APScheduler 3.x).
+
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT"
