@@ -20,7 +20,7 @@ logger.info(f"[STARTUP] GOOGLE_CLIENT_SECRET loaded: {bool(os.getenv('GOOGLE_CLI
 # Reuses the same env var as CORS so both lists stay in sync.
 _raw_redirect_uris = os.getenv(
     "ALLOWED_REDIRECT_URIS",
-    "http://localhost:5173,http://localhost:5174"
+    "https://petal-menstrual-health-platform.vercel.app"
 )
 ALLOWED_REDIRECT_URIS = [u.strip() for u in _raw_redirect_uris.split(",") if u.strip()]
 

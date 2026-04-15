@@ -245,7 +245,7 @@ class ResetPasswordRequest(BaseModel):
 @limiter.limit("3/minute")
 async def forgot_password(request: Request, body: ForgotPasswordRequest, db=Depends(get_db)):
     """Request a password reset link. Always returns the same message to prevent email enumeration."""
-    reset_base_url = os.getenv("RESET_PASSWORD_BASE_URL", "http://localhost:5173")
+    reset_base_url = os.getenv("RESET_PASSWORD_BASE_URL", "https://petal-menstrual-health-platform.vercel.app")
     try:
         token = await create_password_reset_token(body.email, db)
         if token:
