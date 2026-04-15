@@ -13,14 +13,14 @@ import warnings
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 if not SECRET_KEY:
-    # On Railway (or any production env), RAILWAY_ENVIRONMENT is set automatically.
-    # Crash immediately rather than silently running with a known-public key.
-    if os.getenv("RAILWAY_ENVIRONMENT"):
+    # On Railway (RAILWAY_ENVIRONMENT) or Render (RENDER), crash immediately 
+    # rather than silently running with a known-public key.
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RENDER"):
         import sys
         print(
             "[FATAL] SECRET_KEY is not set. "
             "Refusing to start in production. "
-            "Set SECRET_KEY in Railway environment variables.",
+            "Set SECRET_KEY in your hosting environment variables.",
             flush=True
         )
         sys.exit(1)
