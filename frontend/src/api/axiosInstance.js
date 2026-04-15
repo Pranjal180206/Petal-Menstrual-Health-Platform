@@ -23,7 +23,9 @@ axiosInstance.interceptors.request.use(
 
     // Add language preference (skip for auth/google to avoid polluting OAuth callback)
     const lang = localStorage.getItem('petal_lang') || 'en';
-    config.params = { ...config.params, lang };
+    if (config.url && !config.url.includes('/auth/google')) {
+      config.params = { ...config.params, lang };
+    }
 
     return config;
   },
